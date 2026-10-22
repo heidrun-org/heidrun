@@ -3,32 +3,35 @@
 // requests (GitLab), of the repository of the selected workspace, in two collapsible lists. A row has three lines of the
 // same height: the number and the title, then two small detail lines. A click on a row opens an information card at its
 // right, with the details that the forge gives (see `ChatReferenceDetails.vue`), and a button that opens the web page of
-// the item in the web browser. A search field above the lists filters them, and the developer keeps a search under a
-// name as a saved search. The buttons of the header save a search, edit the saved search that runs, and refresh the
-// lists. Saving and editing open a modal window (see `SavedSearchModal.vue`).
+// the item in the web browser. Each list has its own search line under its title: a search field with the buttons that
+// run the search, save it, and edit the saved search that runs, then the saved searches of the list, then a separator.
+// The developer keeps a search under a name as a saved search. The button of the header refreshes the two lists. Saving
+// and editing open a modal window (see `SavedSearchModal.vue`).
 // - issue #370
 // - issue #374
 // - issue #378
-import { computed, ref, watch } from "vue";
+// - issue #607
+import { computed, reactive, ref, watch } from "vue";
 import ChatReferenceDetails from "./ChatReferenceDetails.vue";
+import CodeHostingSearchHelp from "./CodeHostingSearchHelp.vue";
 import Icon from "./Icon.vue";
 import InformationCard from "./InformationCard.vue";
 import ScrollingLine from "./ScrollingLine.vue";
 import { codeHostingDetailLines } from "../lib/code_hosting_rows";
 import { referenceLabelStyle, type ChatReference } from "../lib/chat_references";
+import { toggleLabelInSearch } from "../lib/code_hosting_search";
 import type { Forge } from "../lib/refs";
 import { startScrolling, stopScrolling } from "../lib/scroll_on_hover";
-import {
-  loadChatReferenceDetails,
-  type ChatReferenceDetails as Details,
-  type ChatReferenceLabel,
-} from "../stores/chat_references";
+import type { ChatReferenceDetails as Details, ChatReferenceLabel } from "../stores/chat_references";
+import { loadForgeReferenceDetails } from "../stores/forge_reference_details";
 import { currentGit } from "../stores/git";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
 import {
+  CODE_HOSTING_GROUPS,
   CODE_HOSTING_LIMIT,
   codeHosting,
+  codeHostingGroupTitle,
   itemPrefix,
   loadCodeHosting,
   searchCodeHosting,
@@ -37,9 +40,6 @@ import {
 } from "../stores/code_hosting";
 import { openEditSavedSearchModal, openSaveSearchModal } from "../stores/saved_search_modal";
 import { t } from "../i18n/index";
-
-/** The two lists, from the top. */
-const GROUPS: CodeHostingGroup[] = ["issues", "requests"];
 
 /** One row of a list, ready to show. */
 type Row = {
@@ -79,7 +79,7 @@ const forge = computed<Forge>(() => codeHosting.forge ?? "github");
 /** The two lists with their rows. */
 const sections = computed((): Section[] => {
   const now = Date.now();
-  return GROUPS.map((group) => ({
+  return CODE_HOSTING_GROUPS.map((group) => ({
     group,
     rows: codeHosting[group].map((item) => {
       const lines = codeHostingDetailLines(group, item, now);
@@ -101,84 +101,155 @@ const answers = ref<Record<string, Details | null>>({});
 
 /** The title of a list: "Issues", then "Pull requests" on GitHub or "Merge requests" on GitLab. */
 function groupTitle(group: CodeHostingGroup): string {
-  if (group === "issues") {
-    return t("codeHostingPanel.group.issues");
-  }
-  return t(codeHosting.forge === "gitlab" ? "codeHostingPanel.group.mergeRequests" : "codeHostingPanel.group.pullRequests");
+  return codeHostingGroupTitle(group, codeHosting.forge);
 }
 
-/** The text of an empty list: "No open issue.", or "No issue matches the search." while a search runs. */
+/**
+ * The search that the button "All" of a list writes in the search field: `is:issue` for the issues and `is:pr` for the
+ * pull requests of GitHub. GitLab cannot read these words, so the button writes no search there.
+ * @param group - the list
+ * @returns the search, or an empty text for no search
+ */
+function allSearch(group: CodeHostingGroup): string {
+  if (codeHosting.forge !== "github") {
+    return "";
+  }
+  return group === "issues" ? "is:issue" : "is:pr";
+}
+
+/**
+ * Tells whether the search of a list shows all its open items: no search, or the search that the button "All" writes.
+ * @param group - the list
+ * @returns true when the button "All" of the list is the one that runs now
+ */
+function isAllSearch(group: CodeHostingGroup): boolean {
+  const search = codeHosting.search[group];
+  return search === "" || search === allSearch(group);
+}
+
+/** The text of an empty list: "No open issue.", or "No issue matches the search." while a search runs in the list. */
 function emptyText(group: CodeHostingGroup): string {
-  const kind = codeHosting.search === "" ? "empty" : "emptySearch";
+  const kind = isAllSearch(group) ? "empty" : "emptySearch";
   if (group === "issues") {
     return t(`codeHostingPanel.${kind}.issues`);
   }
   return t(`codeHostingPanel.${kind}.${codeHosting.forge === "gitlab" ? "mergeRequests" : "pullRequests"}`);
 }
 
-/** The text of the search field. It is the search that runs after the key Enter, not always the search that runs now. */
-const searchText = ref(codeHosting.search);
+/** The name of the search field of a list for a screen reader: "Search the issues", and so on. */
+function searchLabel(group: CodeHostingGroup): string {
+  if (group === "issues") {
+    return t("codeHostingPanel.searchLabel.issues");
+  }
+  return t(codeHosting.forge === "gitlab" ? "codeHostingPanel.searchLabel.mergeRequests" : "codeHostingPanel.searchLabel.pullRequests");
+}
 
-// A search that runs from elsewhere (the window "Save this search", a saved search button) shows in the search field.
-watch(
-  () => codeHosting.search,
-  (search) => {
-    searchText.value = search;
-  },
-);
+/** The text of the search field of each list. It is the search that runs after the key Enter, not always the search that runs now. */
+const searchTexts = reactive<Record<CodeHostingGroup, string>>({
+  issues: codeHosting.search.issues,
+  requests: codeHosting.search.requests,
+});
 
-/** The saved search that runs now, or undefined when no saved search runs. */
-const runningSearch = computed(() => {
-  if (codeHosting.search === "") {
+// A search that runs from elsewhere (the window "Save this search", a saved search button) shows in the search field of its list.
+for (const group of CODE_HOSTING_GROUPS) {
+  watch(
+    () => codeHosting.search[group],
+    (search) => {
+      searchTexts[group] = search;
+    },
+  );
+}
+
+/** True while the remote address or one of the two lists loads. */
+const isLoading = computed(() => {
+  return codeHosting.status === "loading" || CODE_HOSTING_GROUPS.some((group) => codeHosting.listStatus[group] === "loading");
+});
+
+/**
+ * The saved search of a list that runs now.
+ * @param group - the list
+ * @returns the saved search, or undefined when no saved search runs in this list
+ */
+function runningSearch(group: CodeHostingGroup) {
+  const search = codeHosting.search[group];
+  if (search === "") {
     return undefined;
   }
-  return settings.codeHostingSavedSearches.find((saved) => saved.query === codeHosting.search);
-});
-
-/** The button "Save this search" works when the field holds a search that no saved search already holds. */
-const canSaveSearch = computed(() => {
-  const search = searchText.value.trim();
-  return search !== "" && settings.codeHostingSavedSearches.some((saved) => saved.query === search) === false;
-});
-
-/** Runs the search of the search field. */
-function runSearch() {
-  void searchCodeHosting(currentGit.value?.root ?? null, searchText.value);
+  return settings.codeHostingSavedSearches[group].find((saved) => saved.query === search);
 }
 
 /**
- * Puts a search in the search field and runs it.
+ * The button "Save this search" of a list works when its field holds a search that no saved search of the list holds.
+ * @param group - the list
+ * @returns true when the search of the field can be saved
+ */
+function canSaveSearch(group: CodeHostingGroup): boolean {
+  const search = searchTexts[group].trim();
+  return search !== "" && settings.codeHostingSavedSearches[group].some((saved) => saved.query === search) === false;
+}
+
+/**
+ * Runs the search of the search field of a list.
+ * @param group - the list
+ */
+function runSearch(group: CodeHostingGroup) {
+  void searchCodeHosting(currentGit.value?.root ?? null, group, searchTexts[group]);
+}
+
+/**
+ * Puts a search in the search field of a list and runs it.
+ * @param group - the list
  * @param query - the search, or an empty text for all the open items
  */
-function applySearch(query: string) {
-  searchText.value = query;
-  runSearch();
+function applySearch(group: CodeHostingGroup, query: string) {
+  searchTexts[group] = query;
+  runSearch(group);
 }
 
-/** Opens the window "Save this search" for the search of the search field. */
-function saveCurrentSearch() {
-  openSaveSearchModal(searchText.value.trim());
+/**
+ * Adds a label to the search field of a list, or removes it when the field already asks for it, then runs the search of
+ * this list.
+ * @param group - the list
+ * @param labelName - the name of the label that the developer clicked in the information card
+ */
+function toggleLabel(group: CodeHostingGroup, labelName: string) {
+  searchTexts[group] = toggleLabelInSearch(searchTexts[group], labelName);
+  runSearch(group);
 }
 
-/** Opens the window "Edit the saved search" for the saved search that runs now. */
-function editRunningSearch() {
-  if (runningSearch.value !== undefined) {
-    openEditSavedSearchModal(runningSearch.value.name);
+/**
+ * Opens the window "Save this search" for the search of the search field of a list.
+ * @param group - the list
+ */
+function saveCurrentSearch(group: CodeHostingGroup) {
+  openSaveSearchModal(group, searchTexts[group].trim());
+}
+
+/**
+ * Opens the window "Edit the saved search" for the saved search of a list that runs now.
+ * @param group - the list
+ */
+function editRunningSearch(group: CodeHostingGroup) {
+  const running = runningSearch(group);
+  if (running !== undefined) {
+    openEditSavedSearchModal(group, running.name);
   }
 }
+
 function toggleGroup(group: CodeHostingGroup) {
   codeHosting.folded[group] = codeHosting.folded[group] === false;
 }
 
-/** Reads the details of a row from the forge when its card opens. The Tauri command keeps each answer for ten minutes. */
+/**
+ * Reads the details of a row from the forge. The card of the row opens when this reading is done, so it never shows less
+ * than the whole answer. The Tauri command keeps each answer for ten minutes, so a second reading is immediate.
+ */
 async function readDetails(row: Row) {
   const folder = currentGit.value?.root;
   if (folder === undefined) {
     return;
   }
-  const { [row.key]: _forgotten, ...others } = answers.value;
-  answers.value = others;
-  const answer = await loadChatReferenceDetails(folder, forge.value, row.reference);
+  const answer = await loadForgeReferenceDetails(folder, forge.value, row.reference);
   answers.value = { ...answers.value, [row.key]: answer };
 }
 </script>
@@ -190,123 +261,131 @@ async function readDetails(row: Row) {
     <template v-else>
       <header class="d-flex align-items-center">
         <span class="title me-auto">{{ t("codeHostingPanel.title") }}</span>
-        <div class="btn-group" role="group" :aria-label="t('codeHostingPanel.buttonsLabel')">
-          <template v-if="codeHosting.status !== 'noRemote'">
-            <button
-              type="button"
-              class="btn btn-sm icon-button"
-              data-save-search
-              :aria-label="t('codeHostingPanel.saveSearch')"
-              :title="t('codeHostingPanel.saveSearch')"
-              :disabled="canSaveSearch === false"
-              @click="saveCurrentSearch"
-            >
-              <Icon name="bookmark-plus" />
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm icon-button"
-              data-edit-saved-search
-              :aria-label="t('codeHostingPanel.editSearch')"
-              :title="t('codeHostingPanel.editSearch')"
-              :disabled="runningSearch === undefined"
-              @click="editRunningSearch"
-            >
-              <Icon name="pencil" />
-            </button>
-          </template>
-          <button
-            type="button"
-            class="btn btn-sm icon-button"
-            :aria-label="t('codeHostingPanel.refresh')"
-            :title="t('codeHostingPanel.refresh')"
-            :disabled="codeHosting.status === 'loading'"
-            @click="loadCodeHosting(currentGit.root, true)"
-          >
-            <Icon name="arrow-clockwise" />
-          </button>
-        </div>
-      </header>
-
-      <template v-if="codeHosting.status !== 'noRemote'">
-        <form class="search d-flex align-items-center gap-1" role="search" @submit.prevent="runSearch">
-          <input
-            v-model="searchText"
-            type="text"
-            class="form-control form-control-sm"
-            spellcheck="false"
-            autocomplete="off"
-            :placeholder="t('codeHostingPanel.searchPlaceholder')"
-            :title="t('codeHostingPanel.searchHint')"
-            :aria-label="t('codeHostingPanel.searchLabel')"
-          />
-          <button
-            type="submit"
-            class="btn btn-sm icon-button"
-            :aria-label="t('codeHostingPanel.searchRun')"
-            :title="t('codeHostingPanel.searchRun')"
-          >
-            <Icon name="search" />
-          </button>
-        </form>
-        <div
-          v-if="settings.codeHostingSavedSearches.length > 0"
-          class="saved d-flex flex-wrap align-items-center gap-1"
-          role="group"
-          :aria-label="t('codeHostingPanel.savedSearches')"
+        <button
+          type="button"
+          class="btn icon btn-sm icon-button"
+          :aria-label="t('codeHostingPanel.refresh')"
+          :title="t('codeHostingPanel.refresh')"
+          :disabled="isLoading"
+          @click="loadCodeHosting(currentGit.root, true)"
         >
-          <button
-            type="button"
-            class="btn btn-sm saved-button"
-            data-saved-search="all"
-            :class="{ active: codeHosting.search === '' }"
-            :aria-pressed="codeHosting.search === ''"
-            @click="applySearch('')"
-          >
-            {{ t("codeHostingPanel.allItems") }}
-          </button>
-          <button
-            v-for="saved in settings.codeHostingSavedSearches"
-            :key="saved.name"
-            type="button"
-            class="btn btn-sm saved-button"
-            data-saved-search
-            :class="{ active: codeHosting.search === saved.query }"
-            :aria-pressed="codeHosting.search === saved.query"
-            :title="saved.query"
-            @click="applySearch(saved.query)"
-          >
-            <span class="saved-name">{{ saved.name }}</span>
-          </button>
-        </div>
-      </template>
+          <Icon name="arrow-clockwise" />
+        </button>
+      </header>
 
       <div class="scroll-area">
         <div v-if="codeHosting.status === 'noRemote'" class="muted">{{ t("codeHostingPanel.noRemote") }}</div>
         <div v-else-if="codeHosting.status === 'failed'" class="failure">{{ codeHosting.error }}</div>
         <div v-else-if="codeHosting.status !== 'ready'" class="muted">{{ t("codeHostingPanel.loading") }}</div>
         <div v-else class="groups">
-          <section v-for="section in sections" :key="section.group" class="group">
-            <div class="group-header d-flex align-items-center">
+          <section v-for="section in sections" :key="section.group" class="group" :data-group="section.group">
+            <div class="group-header d-flex align-items-center" @click="toggleGroup(section.group)">
               <button
                 type="button"
-                class="group-toggle d-flex align-items-center gap-2 me-auto"
+                class="group-toggle list-action d-flex align-items-center gap-2"
                 :aria-expanded="codeHosting.folded[section.group] === false"
-                @click="toggleGroup(section.group)"
               >
                 <Icon :name="codeHosting.folded[section.group] ? 'chevron-right' : 'chevron-down'" />
                 {{ groupTitle(section.group) }}
               </button>
-              <span class="badge count">{{ section.rows.length }}</span>
+              <CodeHostingSearchHelp
+                class="ms-1 me-auto"
+                :forge="forge"
+                :title="groupTitle(section.group)"
+                :is-requests="section.group === 'requests'"
+                @click.stop
+              />
+              <span v-if="codeHosting.listStatus[section.group] === 'ready'" class="badge count">{{ section.rows.length }}</span>
             </div>
             <template v-if="codeHosting.folded[section.group] === false">
-              <ul v-if="section.rows.length > 0" class="items">
+              <form class="search d-flex align-items-center gap-1" role="search" @submit.prevent="runSearch(section.group)">
+                <input
+                  v-model="searchTexts[section.group]"
+                  type="text"
+                  class="form-control form-control-sm"
+                  spellcheck="false"
+                  autocomplete="off"
+                  :placeholder="t('codeHostingPanel.searchPlaceholder')"
+                  :title="t('codeHostingPanel.searchHint')"
+                  :aria-label="searchLabel(section.group)"
+                />
+                <button
+                  type="submit"
+                  class="btn icon btn-sm icon-button"
+                  data-run-search
+                  :aria-label="t('codeHostingPanel.searchRun')"
+                  :title="t('codeHostingPanel.searchRun')"
+                >
+                  <Icon name="search" />
+                </button>
+                <button
+                  type="button"
+                  class="btn icon btn-sm icon-button"
+                  data-save-search
+                  :aria-label="t('codeHostingPanel.saveSearch')"
+                  :title="t('codeHostingPanel.saveSearch')"
+                  :disabled="canSaveSearch(section.group) === false"
+                  @click="saveCurrentSearch(section.group)"
+                >
+                  <Icon name="bookmark-plus" />
+                </button>
+                <button
+                  type="button"
+                  class="btn icon btn-sm icon-button"
+                  data-edit-saved-search
+                  :aria-label="t('codeHostingPanel.editSearch')"
+                  :title="t('codeHostingPanel.editSearch')"
+                  :disabled="runningSearch(section.group) === undefined"
+                  @click="editRunningSearch(section.group)"
+                >
+                  <Icon name="pencil" />
+                </button>
+              </form>
+              <div
+                v-if="settings.codeHostingSavedSearches[section.group].length > 0"
+                class="saved d-flex flex-wrap align-items-center gap-1"
+                role="group"
+                :aria-label="t('codeHostingPanel.savedSearches')"
+              >
+                <button
+                  type="button"
+                  class="btn btn-sm saved-button"
+                  data-saved-search="all"
+                  :class="{ active: isAllSearch(section.group) }"
+                  :aria-pressed="isAllSearch(section.group)"
+                  @click="applySearch(section.group, allSearch(section.group))"
+                >
+                  {{ t("codeHostingPanel.allItems") }}
+                </button>
+                <button
+                  v-for="saved in settings.codeHostingSavedSearches[section.group]"
+                  :key="saved.name"
+                  type="button"
+                  class="btn btn-sm saved-button"
+                  data-saved-search
+                  :class="{ active: codeHosting.search[section.group] === saved.query }"
+                  :aria-pressed="codeHosting.search[section.group] === saved.query"
+                  :title="saved.query"
+                  @click="applySearch(section.group, saved.query)"
+                >
+                  <span class="saved-name">{{ saved.name }}</span>
+                </button>
+              </div>
+              <div class="list-separator" role="separator"></div>
+              <div v-if="codeHosting.listStatus[section.group] === 'loading'" class="muted empty">
+                {{ t("codeHostingPanel.loading") }}
+              </div>
+              <div v-else-if="codeHosting.listStatus[section.group] === 'failed'" class="failure empty">
+                {{ codeHosting.listError[section.group] }}
+              </div>
+              <ul v-else-if="section.rows.length > 0" class="items">
                 <li v-for="row in section.rows" :key="row.key">
                   <InformationCard
                     class="row-card"
                     placement="end"
                     :label="t('codeHostingPanel.cardLabel', { name: row.name })"
-                    @open="readDetails(row)"
+                    :busy-label="t('codeHostingPanel.cardBusy', { name: row.name })"
+                    :prepare="() => readDetails(row)"
                   >
                     <div
                       class="item d-flex align-items-center gap-2"
@@ -341,6 +420,10 @@ async function readDetails(row: Row) {
                           :folder="currentGit.root"
                           :forge="forge"
                           :web-base="codeHosting.webBase"
+                          :title="row.item.title"
+                          :name="row.name"
+                          :search="searchTexts[section.group]"
+                          @toggle-label="toggleLabel(section.group, $event)"
                         />
                       </div>
                     </template>
@@ -348,7 +431,7 @@ async function readDetails(row: Row) {
                 </li>
               </ul>
               <div v-else class="muted empty">{{ emptyText(section.group) }}</div>
-              <div v-if="section.rows.length >= CODE_HOSTING_LIMIT" class="muted empty">
+              <div v-if="section.rows.length >= CODE_HOSTING_LIMIT && codeHosting.listStatus[section.group] === 'ready'" class="muted empty">
                 {{ t("codeHostingPanel.truncated", { limit: CODE_HOSTING_LIMIT }) }}
               </div>
             </template>
@@ -362,22 +445,24 @@ async function readDetails(row: Row) {
 <style scoped>
 .code-hosting { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .code-hosting > .muted { padding: 12px 16px; }
-/* The header, the search field, and the saved searches stay at the top of the sidebar section: only the scroll area under them scrolls. */
+/* The header stays at the top of the sidebar section: only the scroll area under it scrolls, with the search lines of the two lists. */
 .code-hosting > header { flex: 0 0 auto; padding: 12px 16px 8px; }
-.code-hosting > .search, .code-hosting > .saved { flex: 0 0 auto; padding: 0 16px 8px; }
+/* The search line and the line of saved searches of a list sit under its title, with the same side space as the header. */
+.search { padding: 4px 16px 8px; }
+.saved { padding: 0 16px 8px; }
+.list-separator { border-top: 1px solid var(--line); }
 .scroll-area { flex: 1; min-height: 0; padding: 0 16px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
 .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .code-hosting :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
 .code-hosting :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
 .search .form-control { flex: 1 1 auto; min-width: 0; }
 /* A saved search is a small button with a round border: the one that runs now is filled. */
-.saved-button { display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border: 1px solid var(--line); border-radius: 11px; color: var(--text-2); max-width: 100%; white-space: nowrap; }
+.saved-button { display: inline-flex; align-items: center; max-width: 100%; white-space: nowrap; }
 /* A name that does not fit ends with an ellipsis. A button cannot show one itself, so the name is in its own span. */
 .saved-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.saved-button:hover { background: var(--hover-soft); color: var(--text); }
-.saved-button.active { background: var(--hover); border-color: var(--line-strong); color: var(--text); }
 .groups { display: flex; flex-direction: column; gap: 4px; margin: 0 -16px; }
-.group-header { height: 26px; margin: 0 8px; padding: 0 8px; border-radius: 5px; }
+/* A click anywhere on the header folds or unfolds the list: the button inside it gives the keyboard access. */
+.group-header { height: 26px; margin: 0 8px; padding: 0 8px; border-radius: 5px; cursor: pointer; }
 .group-header:hover { background: var(--hover-soft); }
 .group-toggle { border: none; background: none; padding: 0; color: var(--text); font-size: var(--font-size); text-align: left; min-width: 0; font-weight: 600; }
 .count { background: var(--line-strong); color: var(--text-2); margin-left: 4px; }
@@ -386,6 +471,8 @@ async function readDetails(row: Row) {
 .items .row-card { margin: 0; padding: 0; border-radius: 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
 /* Every row has the same height: each line has its own height, and a text that does not fit ends with an ellipsis. */
 .item { padding: 4px 16px 4px 32px; }
+/* The spinning wheel of a row that waits for its details is on the bottom line of the row, near its right end. */
+.row-card :deep(.information-card-busy) { top: auto; bottom: 5px; margin-top: 0; }
 .item-lines { flex: 1 1 auto; min-width: 0; }
 .title-line, .detail-line { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .title-line { display: flex; gap: 0.35em; height: 1.5em; line-height: 1.5; }

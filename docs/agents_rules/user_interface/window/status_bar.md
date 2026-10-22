@@ -1,26 +1,29 @@
 # User interface of Heidrun: status bar
 
 - Created: 13 October 2026
-- Last updated: 15 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 290](https://github.com/heidrun-org/heidrun/issues/290), [issue 293](https://github.com/heidrun-org/heidrun/issues/293), [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 311](https://github.com/heidrun-org/heidrun/issues/311), [issue 324](https://github.com/heidrun-org/heidrun/issues/324), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 475](https://github.com/heidrun-org/heidrun/issues/475)
+- Related issue: [issue 290](https://github.com/heidrun-org/heidrun/issues/290), [issue 293](https://github.com/heidrun-org/heidrun/issues/293), [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 311](https://github.com/heidrun-org/heidrun/issues/311), [issue 324](https://github.com/heidrun-org/heidrun/issues/324), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 694](https://github.com/heidrun-org/heidrun/issues/694)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
 ## Status bar
 
-- The status bar sits at the bottom of the window, over the whole width.
-- Each status bar section shows one piece of information, for example the selected workspace, the usage of Claude, the usage of Codex, the Git branch, and the connection to Herdr. The number of agents that are blocked, working, or done is not in the status bar: the top right corner of the window already shows it.
+- In normal mode, the status bar sits at the bottom of the window, over the whole width. Zen Mode hides the status bar.
+- Each status bar section shows one piece of information, for example the selected workspace, the usage of Claude, Codex, or Antigravity, the Git branch, and the connection to Herdr. The number of agents that are blocked, working, or done is not in the status bar: the top right corner of the window already shows it.
 - A click on a status bar section opens its information card above the section.
-- Each status bar section looks like a button of the status bar of Visual Studio Code: while the mouse pointer is over it, and while its information card is open, it has a rounded background (6 pixels radius), white at 12 percent strength in the dark theme and black at 12 percent strength in the light theme. The background leaves 6 pixels of the status bar above and below it. The three components of the status bar sections share the class `status-section` of the file `styles.css` ([issue #324](https://github.com/heidrun-org/heidrun/issues/324)).
-- The ring of the usage of Claude and the ring of the usage of Codex have the same track as the usage wheel in the header of a pane: the part of the ring that is not filled is drawn in the faint color (`--faint`), so that the whole ring shows against the status bar in the dark theme and in the light theme ([issue 475](https://github.com/heidrun-org/heidrun/issues/475)).
-- The information card of the usage of Claude, the information card of the usage of Codex, and the information card of the Workspace status bar section are 408 pixels wide, which is 20 percent more than the 340 pixels of the other information cards of the status bar ([issue #290](https://github.com/heidrun-org/heidrun/issues/290), [issue #303](https://github.com/heidrun-org/heidrun/issues/303)).
+- How each status bar section looks under the pointer and while its information card is open is in [status_bar_appearance.md](../../web_styling/status_bar_appearance.md).
+- Quota data appears in the status bar only when quota monitoring is on in the section "Coding agents" of the Settings window and its coding agent is on. When Claude is on but no Claude quota report has arrived, the status bar says "Claude quota: unspecified"; this means the quota is unknown, not zero. The status bar never offers to turn quota monitoring on; the setting controls the Claude Code status line integration too ([issue #694](https://github.com/heidrun-org/heidrun/issues/694)).
+- The track of the rings of the usage of Claude, Codex, and Antigravity is in [status_bar_appearance.md](../../web_styling/status_bar_appearance.md).
+- The information card of the usage of Claude, Codex, and Antigravity, and the information card of the Workspace status bar section are 408 pixels wide, which is 20 percent more than the 340 pixels of the other information cards of the status bar ([issue #290](https://github.com/heidrun-org/heidrun/issues/290), [issue #303](https://github.com/heidrun-org/heidrun/issues/303)).
 
 The Git branch section has its own file, [status_bar_git.md](status_bar_git.md).
 
 ## Menu of the status item
+
+- The status item tooltip names the application. In Heidrun Development, the first menu line is "Open Heidrun Development", so two running applications can be distinguished.
 
 - The status item sits in the macOS menu bar. A click on it opens a menu. From top to bottom, the menu has the line "Open Heidrun", then the three sections "Blocked", "Finished", and "Working". The menu ends with the last line of the section "Working", with no separator after it. The menu shows no quota ([issue #311](https://github.com/heidrun-org/heidrun/issues/311)).
 - The picture of the status item shows only the icon of Heidrun and the three discs "Blocked", "Finished", and "Working", with little empty space around them. A disc without agent is gray inside, the same gray for the three statuses, and its border keeps the color of the status (red, green, or violet) and is thicker than the border of a disc with agents, so that it stays visible on the blue menu bar. The color of the status "Working" is violet, not blue, because blue is hard to see on the blue menu bar, above all on the lighter pill that macOS draws behind the status item while the pointer is over it. The same violet colors the dot before each working agent in the menu ([issue #313](https://github.com/heidrun-org/heidrun/issues/313)). The picture shows no quota: the status bar of the Heidrun window shows it. On a MacBook with a camera notch, macOS hides, with no message, the menu bar icons that do not fit to the right of the notch, so the picture stays as narrow as possible ([issue #311](https://github.com/heidrun-org/heidrun/issues/311)).

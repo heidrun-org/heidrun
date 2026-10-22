@@ -13,9 +13,10 @@ import { t } from "../i18n/index";
 // The line of the summary of a chat that names the issues and the pull requests that the chat mentions. When the line is
 // clicked, an information card lists every issue, then every pull request, one row for each. A row shows the title and the
 // name with the state ("Issue #250 · Closed"). A click on a row opens its details under it, one row at a time, with the
-// layout of the card that GitHub shows (see `ChatReferenceDetails.vue`). The forge is read each time the card opens, a few
-// rows at a time. The Tauri command keeps each answer on the disk for ten minutes. A repository without a remote has no
-// forge to read, so its numbers stay plain text.
+// layout of the card that GitHub shows (see `ChatReferenceDetails.vue`). The details are read each time the card opens, a few
+// rows at a time, from the issues and pull requests that the data layer stored; the store of the references synchronizes a
+// folder once for ten minutes. A repository on GitLab is still read live. A repository without a remote has no forge to
+// read, so its numbers stay plain text.
 
 const props = defineProps<{
   /** The text of the line: the numbers of the first issues, then of the first pull requests. */
@@ -112,7 +113,7 @@ function toggle(key: string) {
         <template v-for="row in rows" :key="row.key">
           <button
             type="button"
-            class="list-group-item list-group-item-action d-flex align-items-center gap-3 text-start"
+            class="list-action list-group-item list-group-item-action d-flex align-items-center gap-3 text-start"
             data-reference
             :aria-expanded="expandedKey === row.key"
             @click="toggle(row.key)"

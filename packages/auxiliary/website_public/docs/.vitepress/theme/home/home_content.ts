@@ -323,8 +323,8 @@ export const FEATURES: HomeFeatureSection[] = [
 		id: 'valhalla-fits-in-a-pocket',
 		title: 'Valhalla fits in a pocket',
 		paragraphs: [
-			'Leave your desk. From your iPhone, see which coding agent waits, allow or refuse its request, send a prompt, and read the end of its output.',
-			'The phone access works only through Tailscale, never on the open Internet. Each phone pairs once, with a QR code.',
+			'Leave your desk. From your phone, see which coding agent waits, allow or refuse its request, send a prompt, and read the end of its output.',
+			'The phone connects through an ngrok tunnel, and every call needs a pairing key. Each phone pairs once, with a QR code.',
 		],
 		joke: 'Go get your coffee. Your coding agents will find you.',
 		readMore: {
@@ -445,7 +445,8 @@ export const QUICK_START = {
 	joke: 'Four commands. A longship needs more oars than that.',
 	download: {
 		title: 'Download the application',
-		text: 'Download the file for macOS on Apple silicon from the latest release, and drag Heidrun into the folder Applications. Heidrun needs Herdr 0.9 or later.',
+		text: 'Download the file for macOS on Apple silicon from the latest release, and drag Heidrun into the folder Applications. First install Herdr 0.9 or later: Heidrun needs it, and does not install it. The program ngrok is optional: only the mobile access uses it.',
+		herdrInstallCommand: 'curl -fsSL https://herdr.dev/install.sh | sh',
 		buttonText: 'Download for macOS',
 		herdrLinkText: 'Get Herdr',
 	},

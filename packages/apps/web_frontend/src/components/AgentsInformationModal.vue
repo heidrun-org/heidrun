@@ -68,11 +68,12 @@ function runLabel(a: (typeof state.activity)[number]): string {
 // Account quotas are shared by all agents of a provider: shown for every provider in use, and for every provider whose quota is known
 // (the status bar shows it), even when no pane runs an agent of that provider now.
 const providers = computed(() => {
-  const list: ("claude" | "codex")[] = [];
+  const list: ("claude" | "codex" | "antigravity")[] = [];
   const kinds = allPanes.value.map((x) => x.agent ?? "");
-  const hasQuota = (provider: "claude" | "codex") => quotas.value.some((block) => block.provider === provider);
-  if (kinds.some((k) => k.includes("claude")) || hasQuota("claude")) list.push("claude");
-  if (kinds.some((k) => k.includes("codex")) || hasQuota("codex")) list.push("codex");
+  const hasQuota = (provider: "claude" | "codex" | "antigravity") => quotas.value.some((block) => block.provider === provider);
+  if (settings.quotaMonitoring && settings.ownedAgents.includes("claude") && (kinds.some((k) => k.includes("claude")) || hasQuota("claude"))) list.push("claude");
+  if (settings.quotaMonitoring && settings.ownedAgents.includes("codex") && (kinds.some((k) => k.includes("codex")) || hasQuota("codex"))) list.push("codex");
+  if (settings.quotaMonitoring && settings.ownedAgents.includes("antigravity") && (kinds.some((k) => k.includes("antigravity")) || hasQuota("antigravity"))) list.push("antigravity");
   return list;
 });
 
@@ -100,11 +101,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
       <header>
         <h2>{{ t("agentsInformationModal.title") }}</h2>
         <span class="detail">{{ t("agentsInformationModal.detail") }}</span>
-        <button :title="t('agentsInformationModal.closeTitle')" class="close" :aria-label="t('agentsInformationModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
+        <button :title="t('agentsInformationModal.closeTitle')" class="btn icon close" :aria-label="t('agentsInformationModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
       </header>
 
       <div class="content">
-        <button type="button" class="hist-line" :title="t('agentsInformationModal.historyTitle')" @click="history.open = true">
+        <button type="button" class="list-action hist-line" :title="t('agentsInformationModal.historyTitle')" @click="history.open = true">
           <span class="muted">{{ t("agentsInformationModal.today") }}</span>
           <strong v-if="todaySummary.total">{{ hm(todaySummary.total) }}<template v-if="todaySummary.cost"> · ${{ todaySummary.cost.toFixed(2) }}</template></strong>
           <!-- On one line: the workspaces end with "…" rather than wrapping. -->
@@ -120,17 +121,17 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <div v-if="state.activity.length" class="block">
           <div class="act-head">
             <span class="eyebrow">{{ t("agentsInformationModal.activity") }}</span>
-            <button v-if="hasFinished" type="button" class="clear" :title="t('agentsInformationModal.clearFinishedTitle')" @click="clearFinishedRuns()">{{ t("agentsInformationModal.clearFinished") }}</button>
+            <button v-if="hasFinished" type="button" class="btn text small clear" :title="t('agentsInformationModal.clearFinishedTitle')" @click="clearFinishedRuns()">{{ t("agentsInformationModal.clearFinished") }}</button>
             <span class="grow"></span>
             <span v-if="p" class="seg" role="group" :aria-label="t('agentsInformationModal.activityShown')">
-              <button :title="t('agentsInformationModal.scopeAllTitle')" type="button" :class="{ on: activityScope === 'all' }" @click="activityScope = 'all'">{{ t("agentsInformationModal.scopeAll") }}</button>
-              <button :title="t('agentsInformationModal.scopePaneTitle')" type="button" :class="{ on: activityScope === 'pane' }" @click="activityScope = 'pane'">{{ t("agentsInformationModal.scopePane") }}</button>
+              <button class="btn small" :title="t('agentsInformationModal.scopeAllTitle')" type="button" :class="{ on: activityScope === 'all' }" @click="activityScope = 'all'">{{ t("agentsInformationModal.scopeAll") }}</button>
+              <button class="btn small" :title="t('agentsInformationModal.scopePaneTitle')" type="button" :class="{ on: activityScope === 'pane' }" @click="activityScope = 'pane'">{{ t("agentsInformationModal.scopePane") }}</button>
             </span>
           </div>
           <div v-for="a in activity" :key="a.id" class="act-row">
             <button
               type="button"
-              class="act"
+              class="list-action act"
               :class="{ current: a.paneId === p?.pane_id, gone: !a.pane }"
               :disabled="!a.pane"
               :title="a.pane ? t('agentsInformationModal.goToPane') : t('agentsInformationModal.paneClosed')"
@@ -153,7 +154,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <button
               v-if="a.end"
               type="button"
-              class="act-x"
+              class="btn icon small act-x"
               :aria-label="t('agentsInformationModal.removeFromListLabel', { name: a.where || a.kind })"
               :title="t('agentsInformationModal.removeFromList')"
               @click="dismissRun(a.id)"
@@ -168,17 +169,16 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
-:where(button) { background: transparent; border: 0; }
-.overlay { position: fixed; inset: 0; z-index: 57; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
+:where(button:not(.btn)) { background: transparent; border: 0; }
+.overlay { position: fixed; inset: 0; z-index: 57; background: var(--shadow); display: flex; align-items: center; justify-content: center; padding: 32px; }
 .window-box {
   width: min(560px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow);
 }
 header { display: flex; align-items: baseline; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .detail { flex: 1; min-width: 0; font-size: var(--font-size); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.close { align-self: center; width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
+.close { align-self: center; }
 .content { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 22px; }
 .block { display: flex; flex-direction: column; gap: 8px; }
 .muted { font-size: var(--font-size); color: var(--muted); }
@@ -188,29 +188,19 @@ h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 }
 .hist-line:hover { border-color: var(--line-strong); background: var(--hover); }
 .hist-ws { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-2); }
-.hist-go { flex-shrink: 0; color: var(--done); font-size: var(--font-size); }
+.hist-go { flex-shrink: 0; color: var(--done-text); font-size: var(--font-size); }
 .act-head { display: flex; align-items: center; gap: 10px; }
-.clear { border: none; background: none; padding: 0; font-size: var(--font-size); color: var(--faint); }
-.clear:hover { color: var(--text-2); }
 .act-row { position: relative; }
-.act-x {
-  position: absolute; bottom: 5px; right: 0; width: 22px; height: 22px; border: none; border-radius: 6px;
-  background: var(--panel); color: var(--muted); font-size: var(--font-size); line-height: 1; padding: 0;
-  display: none; align-items: center; justify-content: center;
-}
+.act-x { position: absolute; bottom: 5px; right: 0; display: none; align-items: center; justify-content: center; }
 .act-row:hover .act-x { display: inline-flex; }
-.act-x:hover { background: var(--hover); color: var(--text); }
 .seg { display: inline-flex; padding: 2px; border-radius: 7px; background: var(--field); }
-.seg button {
-  border: none; background: transparent; color: var(--muted); font-size: var(--font-size); padding: 2px 8px; border-radius: 5px;
-}
 .seg button.on { background: var(--hover); color: var(--text); }
 .act {
   display: flex; align-items: flex-start; gap: 8px; width: calc(100% + 12px); padding: 6px; margin: 0 -6px;
   border: none; border-radius: 7px; background: transparent; color: var(--text); text-align: left; font-size: var(--font-size);
 }
 .act:hover:not(:disabled) { background: var(--hover); }
-.act.current { background: rgba(110, 168, 254, 0.07); }
+.act.current { background: var(--overlay-hover); }
 .act.gone { opacity: 0.55; }
 .dot-s { line-height: 18px; }
 .act-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }

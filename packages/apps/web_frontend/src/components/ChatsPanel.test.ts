@@ -46,7 +46,7 @@ function snapshotWith(folder: string) {
     version: "test",
     protocol: 1,
     workspaces: [
-      { workspace_id: "w1", number: 1, label: "heidrun", focused: true, pane_count: 1, tab_count: 1, active_tab_id: "w1:t1", agent_status: "unknown", worktree: { path: folder } },
+      { workspace_id: "w1", number: 1, label: "heidrun", focused: true, pane_count: 1, tab_count: 1, active_tab_id: "w1:t1", agent_status: "unknown", workspace_folder: folder },
     ],
     tabs: [],
     panes: [],
@@ -59,11 +59,21 @@ function snapshotWith(folder: string) {
 function answer(claudeTitles: string[], codexTitles: string[], hasMore: { claude?: boolean; codex?: boolean } = {}) {
   const meta = { first_at: null, last_at: null, user_messages: 0, first_messages: [], folders: [], issues: [], pull_requests: [], files_written: [] };
   const toChats = (prefix: string, titles: string[]) => titles.map((title, index) => ({ id: `${prefix}${index}`, title, updated_at: 1, meta }));
-  vi.mocked(invoke).mockResolvedValue({
-    root: "/work/app",
-    claude: { chats: toChats("c", claudeTitles), has_more: hasMore.claude ?? false },
-    codex: { chats: toChats("x", codexTitles), has_more: hasMore.codex ?? false },
+  vi.mocked(invoke).mockImplementation(async (command) => {
+    if (command === "chats_synchronize") {
+      return { root: "/work/app", chat_session_count: 0 };
+    }
+    return {
+      root: "/work/app",
+      claude: { chats: toChats("c", claudeTitles), has_more: hasMore.claude ?? false },
+      codex: { chats: toChats("x", codexTitles), has_more: hasMore.codex ?? false },
+    };
   });
+}
+
+/** How many times the Tauri command `name` ran. */
+function commandCalls(name: string): number {
+  return vi.mocked(invoke).mock.calls.filter(([command]) => command === name).length;
 }
 
 /** The titles that the list shows. */
@@ -108,11 +118,14 @@ afterEach(() => {
 });
 
 describe("ChatsPanel", () => {
-  it("asks for the conversations of the folder of the selected workspace", async () => {
+  it("reads the stored conversations of the folder of the selected workspace, then synchronizes, then reads again", async () => {
     answer([], []);
     mount(ChatsPanel);
     await flushPromises();
     expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "descending" });
+    expect(invoke).toHaveBeenCalledWith("chats_synchronize", { folder: "/work/app" });
+    const chatCommands = vi.mocked(invoke).mock.calls.map(([command]) => command).filter((command) => command.startsWith("chats_"));
+    expect(chatCommands).toEqual(["chats_list", "chats_synchronize", "chats_list"]);
   });
 
   it("shows the header first, with the agent group and the right side, then a separator, then the title of each conversation of Claude", async () => {
@@ -259,12 +272,12 @@ describe("ChatsPanel", () => {
     answer(["Fix the tab bar"], []);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(commandCalls("chats_synchronize")).toBe(1);
     await vi.advanceTimersByTimeAsync(10_000);
-    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(commandCalls("chats_synchronize")).toBe(2);
     wrapper.unmount();
     await vi.advanceTimersByTimeAsync(30_000);
-    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(commandCalls("chats_synchronize")).toBe(2);
   });
 
   it("reads the files again after the delay of the Settings window, and starts again when the delay changes", async () => {
@@ -273,17 +286,17 @@ describe("ChatsPanel", () => {
     answer(["Fix the tab bar"], []);
     mount(ChatsPanel);
     await flushPromises();
-    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(commandCalls("chats_synchronize")).toBe(1);
     await vi.advanceTimersByTimeAsync(29_000);
-    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(commandCalls("chats_synchronize")).toBe(1);
     await vi.advanceTimersByTimeAsync(1_000);
-    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(commandCalls("chats_synchronize")).toBe(2);
     settings.chatsRefreshSeconds = 5;
     await flushPromises();
     await vi.advanceTimersByTimeAsync(5_000);
-    expect(invoke).toHaveBeenCalledTimes(3);
+    expect(commandCalls("chats_synchronize")).toBe(3);
     await vi.advanceTimersByTimeAsync(10_000);
-    expect(invoke).toHaveBeenCalledTimes(5);
+    expect(commandCalls("chats_synchronize")).toBe(5);
     settings.chatsRefreshSeconds = 10;
   });
 
@@ -565,12 +578,19 @@ describe("ChatsPanel", () => {
     expect(wrapper.findAll(".chat-topics")).toHaveLength(2);
   });
 
-  it("reads the titles of the issues of a chat on the forge, and shows their words as topics", async () => {
+  it("reads the stored titles of the issues of a chat, and shows their words as topics", async () => {
     const meta = { first_at: null, last_at: 100, user_messages: 0, first_messages: [], folders: [], issues: [260], pull_requests: [], files_written: [] };
     const plain = { ...meta, issues: [] };
     vi.mocked(invoke).mockImplementation(async (command) => {
-      if (command === "forge_cli_cached") {
-        return JSON.stringify({ title: "Zebra", state: "OPEN", body: "", labels: [], author: { login: "me" }, createdAt: "2026-10-11T10:00:00Z" });
+      if (command === "chat_references_synchronize") {
+        return { repository: "heidrun-org/heidrun", codeHostingError: null };
+      }
+      if (command === "chats_synchronize") {
+        return { root: "/work/app", chat_session_count: 0 };
+      }
+      if (command === "chat_references_find") {
+        const row = { number: 260, title: "Zebra", state: "OPEN", body: "", labels: [], labelColors: {}, author: "me", createdAt: "2026-10-11T10:00:00Z" };
+        return { issues: [row], pullRequests: [] };
       }
       return {
         root: "/work/app",
@@ -618,7 +638,7 @@ describe("ChatsPanel", () => {
       expect(prepareTopicClusters).not.toHaveBeenCalled();
       expect(prepareLanguageModelTopics).not.toHaveBeenCalled();
       expect(callsOf("coding_agent_ask")).toBe(0);
-      expect(callsOf("forge_cli_cached")).toBe(0);
+      expect(callsOf("chat_references_find")).toBe(0);
     });
 
     it("shows no dynamic topic bar and no dynamic topic label, and never asks the coding agent, with the method Language model", async () => {
@@ -1095,6 +1115,7 @@ describe("ChatsPanel", () => {
       answer(["Fix the tab bar"], []);
       const wrapper = mount(ChatsPanel);
       await flushPromises();
+      const callsBeforeMenu = vi.mocked(invoke).mock.calls.length;
       await sortButton(wrapper).trigger("click");
       await flushPromises();
       document.body.querySelector(".menu-header")?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
@@ -1109,7 +1130,7 @@ describe("ChatsPanel", () => {
       document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
       await flushPromises();
       expect(sortMenu()).toBeNull();
-      expect(invoke).toHaveBeenCalledTimes(1);
+      expect(invoke).toHaveBeenCalledTimes(callsBeforeMenu);
     });
 
     it("closes the dropdown menu on a second click on the sort button", async () => {

@@ -7,6 +7,7 @@ import { paneName } from "../lib/format";
 import { PaneLayoutWithoutPanes } from "../lib/pane_layout_without_panes";
 import type { AgentInfo, PaneLayoutSnapshot } from "../lib/types";
 import { t } from "../i18n/index";
+import { ZenMode } from "./zen_mode";
 
 export const MAX_PINNED_PANES = 4;
 
@@ -20,7 +21,8 @@ export const allPinnedPanes = computed(() =>
 );
 
 /** The pane with the keyboard: a pinned one when clicked, else the tab's selection. */
-export const activePaneId = () => pinnedPaneState.focus ?? state.selectedPaneId;
+export const activePaneId = () =>
+  ZenMode.state.isActive ? ZenMode.state.paneId : (pinnedPaneState.focus ?? state.selectedPaneId);
 
 export const isPinned = (paneId: string) => settings.pinnedPanes.includes(paneId);
 

@@ -16,30 +16,36 @@ import {
   type UserActivityWorkspaceChoice,
   type UserActivityWorkspaceSlots,
 } from "../lib/user_activity_workspaces";
-import { workspaceCwd } from "../stores/project";
-import { workspaces } from "../stores/session";
-import { activePeriodStartedAt, selectedWorkspaceFolder } from "../stores/user_activity";
+import { settings } from "../stores/settings";
+import { activePeriodStartedAt, openWorkspaces, selectedWorkspaceFolder } from "../stores/user_activity";
 import { t } from "../i18n/index";
 
 // The tab "User activity" of the Statistics window: the histogram of the user activity time, and three choices. Each bar
 // of the histogram is stacked, with one color for each chosen workspace, and the legend of the histogram gives the colors. The
-// time range is the last hour, the last day, or the last week. The slot length depends on the time range, and it goes back
+// time range is the last day, the last week, or the last month. The slot length depends on the time range, and it goes back
 // to the slot length that the time range starts with each time that the time range changes. The workspaces are all of them
 // at first, and the developer can hide any workspace. The records are read once, for the longest time range, when the
-// window opens. Each choice then cuts the same records again, so a choice never reads the data layer again.
+// window opens. Each choice then cuts the same records again, so a choice never reads the data layer again. Each choice is
+// saved in the settings as soon as it changes, and the tab starts with the saved choices (issue 707).
 
 /** The choices of the radio button group of the time range, from left to right. */
 const RANGE_CHOICES = [
-  { id: "hour", labelKey: "statisticsModal.rangeHour", titleKey: "statisticsModal.rangeHourTitle" },
   { id: "day", labelKey: "statisticsModal.rangeDay", titleKey: "statisticsModal.rangeDayTitle" },
   { id: "week", labelKey: "statisticsModal.rangeWeek", titleKey: "statisticsModal.rangeWeekTitle" },
+  { id: "month", labelKey: "statisticsModal.rangeMonth", titleKey: "statisticsModal.rangeMonthTitle" },
 ] as const satisfies readonly { id: UserActivityRangeId; labelKey: string; titleKey: string }[];
 
-/** The time range of the histogram. The tab starts with the last hour. */
-const rangeId = ref<UserActivityRangeId>("hour");
+/** The time range of the histogram. The tab starts with the saved time range, or else with the last day. */
+const rangeId = ref<UserActivityRangeId>(settings.statisticsUserActivityRange);
 
-/** The slot length of the histogram. The tab starts with the slot length that the last hour starts with. */
-const slotLengthId = ref<UserActivitySlotLengthId>(USER_ACTIVITY_RANGES.hour.defaultSlotLengthId);
+/** Gives the slot length that the tab starts with: the saved slot length when the time range offers it, else the default one. */
+function firstSlotLengthId(): UserActivitySlotLengthId {
+  const range = USER_ACTIVITY_RANGES[rangeId.value];
+  return range.slotLengthIds.includes(settings.statisticsUserActivitySlotLength) ? settings.statisticsUserActivitySlotLength : range.defaultSlotLengthId;
+}
+
+/** The slot length of the histogram. The tab starts with the saved slot length, or else with the one that its time range starts with. */
+const slotLengthId = ref<UserActivitySlotLengthId>(firstSlotLengthId());
 
 /** The slot lengths that the developer can choose in the time range, from the shortest to the longest. */
 const slotLengthIds = computed(() => USER_ACTIVITY_RANGES[rangeId.value].slotLengthIds);
@@ -57,10 +63,65 @@ const runningPeriodFolder = ref<string | null>(null);
 const runningPeriodStartedAt = ref<number | null>(null);
 
 /** The workspaces that the developer can choose. */
-const workspaceChoices = ref<UserActivityWorkspaceChoice[]>([]);
+const workspaceChoices = computed<UserActivityWorkspaceChoice[]>(() =>
+  UserActivityWorkspaces.choices(openWorkspaces.value.map((workspace) => ({
+    folder: workspace.folder,
+    label: workspace.label,
+  }))),
+);
 
-/** The folders of the workspaces that the histogram shows. All the workspaces at first. */
+/** The folders of the workspaces that the histogram shows. */
 const chosenFolders = ref<string[]>([]);
+
+/**
+ * The folders of the workspaces that the histogram shows, for the buttons of the workspaces. A choice of the developer is
+ * saved in the settings. A change that the tab makes by itself, when a workspace opens or closes, is not saved, so a
+ * workspace that closes for a while does not lose its place in the saved choice.
+ */
+const chosenFoldersChoice = computed({
+  get: () => chosenFolders.value,
+  set: (folders: string[]) => {
+    chosenFolders.value = folders;
+    settings.statisticsUserActivityWorkspaces = {
+      isEveryWorkspaceChosen: workspaceChoices.value.length > 0 && workspaceChoices.value.every((choice) => folders.includes(choice.folder)),
+      folders: [...folders],
+    };
+  },
+});
+
+/**
+ * Gives the folders to choose when the workspaces appear: the saved choice when it still names an open workspace, else every
+ * workspace.
+ *
+ * @param choices - The workspaces that the developer can choose.
+ * @returns The folders of the workspaces to show.
+ */
+function firstChosenFolders(choices: UserActivityWorkspaceChoice[]): string[] {
+  const everyFolder = choices.map((choice) => choice.folder);
+  const saved = settings.statisticsUserActivityWorkspaces;
+  if (saved.isEveryWorkspaceChosen === true) {
+    return everyFolder;
+  }
+  const stillOpen = saved.folders.filter((folder) => everyFolder.includes(folder));
+  return saved.folders.length === 0 || stillOpen.length > 0 ? stillOpen : everyFolder;
+}
+
+watch(workspaceChoices, (choices, previousChoices) => {
+  if (previousChoices === undefined || previousChoices.length === 0) {
+    chosenFolders.value = firstChosenFolders(choices);
+    return;
+  }
+  if (chosenFolders.value.length === 0) {
+    return;
+  }
+  const wasEveryWorkspaceChosen = previousChoices.every((choice) => chosenFolders.value.includes(choice.folder));
+  const stillOpen = chosenFolders.value.filter((folder) => choices.some((choice) => choice.folder === folder));
+  if (wasEveryWorkspaceChosen === true) {
+    chosenFolders.value = choices.map((choice) => choice.folder);
+    return;
+  }
+  chosenFolders.value = stillOpen.length > 0 ? stillOpen : choices.slice(0, 1).map((choice) => choice.folder);
+}, { immediate: true });
 
 const errorText = ref("");
 
@@ -68,6 +129,9 @@ const errorText = ref("");
 const isEveryWorkspaceChosen = computed(
   () => workspaceChoices.value.length > 0 && workspaceChoices.value.every((choice) => chosenFolders.value.includes(choice.folder)),
 );
+
+/** True when the histogram shows no workspace. */
+const isNoWorkspaceChosen = computed(() => chosenFolders.value.length === 0);
 
 /** The slots of the histogram, or `null` while the records are read. */
 const slots = computed<UserActivitySlot[] | null>(() => {
@@ -102,29 +166,37 @@ const workspaceSlots = computed<UserActivityWorkspaceSlots[]>(() => {
 
 watch(rangeId, (newRangeId) => {
   slotLengthId.value = USER_ACTIVITY_RANGES[newRangeId].defaultSlotLengthId;
+  settings.statisticsUserActivityRange = newRangeId;
 });
 
-/** Chooses every workspace when one is hidden, and no workspace when every one is shown. */
-function toggleEveryWorkspace(): void {
-  chosenFolders.value = isEveryWorkspaceChosen.value === true ? [] : workspaceChoices.value.map((choice) => choice.folder);
+watch(slotLengthId, (newSlotLengthId) => {
+  settings.statisticsUserActivitySlotLength = newSlotLengthId;
+});
+
+/** Chooses every workspace. */
+function chooseEveryWorkspace(): void {
+  chosenFoldersChoice.value = workspaceChoices.value.map((choice) => choice.folder);
 }
 
-/** Reads the records of the longest time range through the data layer, and lists the workspaces that they hold. */
+/** Chooses no workspace. */
+function chooseNoWorkspace(): void {
+  chosenFoldersChoice.value = [];
+}
+
+/**
+ * Copies the new lines of the file of the records into the SQLite file of the data layer, then reads the records of the longest
+ * time range from the SQLite file.
+ */
 async function load(): Promise<void> {
   const now = Date.now();
   try {
+    await invoke("user_activity_synchronize");
     const loaded = await invoke<UserActivityRecord[]>("user_activity_records_in_range", {
       since: UserActivity.formatTime(UserActivitySlots.earliestSlotStartedAt(now)),
       until: UserActivity.formatTime(now),
     });
     runningPeriodStartedAt.value = activePeriodStartedAt.value;
     runningPeriodFolder.value = activePeriodStartedAt.value === null ? null : selectedWorkspaceFolder.value;
-    const openWorkspaces = workspaces.value.map((workspace) => ({
-      folder: workspaceCwd(workspace.workspace_id),
-      label: workspace.label,
-    }));
-    workspaceChoices.value = UserActivityWorkspaces.choices(loaded, runningPeriodFolder.value, openWorkspaces);
-    chosenFolders.value = workspaceChoices.value.map((choice) => choice.folder);
     readAt.value = now;
     records.value = loaded;
   } catch (error) {
@@ -139,7 +211,7 @@ onMounted(load);
   <div class="d-flex flex-column" style="height: 100%">
     <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
       <div class="btn-group" role="group" :aria-label="t('statisticsModal.rangeLabel')">
-        <label v-for="choice in RANGE_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+        <label v-for="choice in RANGE_CHOICES" :key="choice.id" class="btn btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
           <input
             :id="`statistics-range-${choice.id}`"
             v-model="rangeId"
@@ -157,7 +229,7 @@ onMounted(load);
           <label
             v-for="id in slotLengthIds"
             :key="id"
-            class="btn-check btn-outline theme-secondary"
+            class="btn btn-check btn-outline theme-secondary"
             :title="t('statisticsModal.slotTitle', { slotLength: UserActivitySlotLengthText.of(id) })"
           >
             <input
@@ -175,26 +247,40 @@ onMounted(load);
     </div>
     <div v-if="workspaceChoices.length > 0" class="d-flex flex-wrap align-items-center gap-2 mb-3">
       <span class="form-text">{{ t("statisticsModal.workspacesLabel") }}</span>
-      <div class="d-flex flex-wrap gap-2" role="group" :aria-label="t('statisticsModal.workspacesLabel')">
-        <label class="btn-check btn-outline theme-secondary" :title="t('statisticsModal.workspacesAllTitle')">
+      <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.workspacesEveryLabel')">
+        <label class="btn btn-check btn-outline theme-secondary" :title="t('statisticsModal.workspacesAllTitle')">
           <input
             id="statistics-workspace-all"
-            type="checkbox"
+            type="radio"
+            name="statistics-workspace-every"
             autocomplete="off"
             :checked="isEveryWorkspaceChosen"
-            @change="toggleEveryWorkspace"
+            @change="chooseEveryWorkspace"
           />
-          {{ t("statisticsModal.workspacesAll") }}
+          {{ t("statisticsModal.workspacesAllButton") }}
         </label>
+        <label class="btn btn-check btn-outline theme-secondary" :title="t('statisticsModal.workspacesNoneTitle')">
+          <input
+            id="statistics-workspace-none"
+            type="radio"
+            name="statistics-workspace-every"
+            autocomplete="off"
+            :checked="isNoWorkspaceChosen"
+            @change="chooseNoWorkspace"
+          />
+          {{ t("statisticsModal.workspacesNoneButton") }}
+        </label>
+      </div>
+      <div class="btn-group btn-group-sm flex-wrap" role="group" :aria-label="t('statisticsModal.workspacesLabel')">
         <label
           v-for="(choice, index) in workspaceChoices"
           :key="choice.folder"
-          class="btn-check btn-outline theme-secondary"
+          class="btn btn-check btn-outline theme-secondary"
           :title="t('statisticsModal.workspaceTitle', { folder: choice.folder })"
         >
           <input
             :id="`statistics-workspace-${index}`"
-            v-model="chosenFolders"
+            v-model="chosenFoldersChoice"
             type="checkbox"
             autocomplete="off"
             :value="choice.folder"

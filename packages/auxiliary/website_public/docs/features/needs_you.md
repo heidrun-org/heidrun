@@ -1,3 +1,7 @@
+---
+description: "Heidrun shows one card for each coding agent that is blocked, asks a question, or has finished, so that you know which one needs you."
+---
+
 # The Needs you sidebar section
 
 You run several coding agents at the same time. Each coding agent stops from time to time: it asks for a permission, it asks a question, or it has finished and waits for your review. Without help, you find these coding agents only when you look at their terminals one by one.

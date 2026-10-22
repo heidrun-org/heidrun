@@ -1,15 +1,15 @@
-//! The file `.env` of the developer: its variables go into the environment of the application, in a development build
+//! The file `.env` of the developer: its variables go into the environment of the application, in Heidrun Development
 //! only. The file `.env.example` at the root of the repository lists and explains every variable.
 
 use std::path::PathBuf;
 
 /// Loads the file `.env` of the current folder, or of the nearest parent folder, into the environment. A variable that
-/// is already set keeps its value, so a variable of the shell wins over the file. Loads nothing in a release build,
+/// is already set keeps its value, so a variable of the shell wins over the file. Loads nothing for the installed application,
 /// because the application of a user must never read a file of the folder that started it.
 ///
 /// Returns the path of the loaded file, or `None` when nothing was loaded.
-pub fn load() -> Option<PathBuf> {
-    if cfg!(debug_assertions) == false {
+pub fn load(is_development: bool) -> Option<PathBuf> {
+    if is_development == false {
         return None;
     }
     let loaded = keep_loaded_path(dotenvy::dotenv());
@@ -88,6 +88,9 @@ mod tests {
     /// The variables that the tests read and the application does not.
     const READ_BY_TESTS_ONLY: [&str; 1] = ["HOME"];
 
+    /// The variables of the system that the application reads and changes, and that a developer never sets in `.env`.
+    const SYSTEM_VARIABLES: [&str; 1] = ["PATH"];
+
     /// The path of the file `.env.example`, at the root of the repository.
     fn example_path() -> PathBuf {
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../.env.example")
@@ -143,15 +146,23 @@ mod tests {
     fn the_file_env_example_lists_exactly_the_variables_that_the_sources_read() {
         let mut read = BTreeSet::new();
         let manifest_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
-        // The package `data_layer_chat_sessions` reads the variables `CLAUDE_CONFIG_DIR` and `CODEX_HOME` for the application.
-        let source_folders = [manifest_folder.join("src"), manifest_folder.join("../../data_layers/data_layer_chat_sessions/src")];
+        // The package `data_layer_coding_agents` reads the variables `CLAUDE_CONFIG_DIR` and `CODEX_HOME` for the application.
+        // The package `mobile_server` reads the variables `HEIDRUN_DIR` and `HEIDRUN_NGROK` for the application.
+        // The package `data_layer_operation_log` reads the variables `HEIDRUN_OPERATION_LOG_FILE` and `HEIDRUN_OPERATION_LOG_CALLER` for the
+        // application and for the four data layer packages.
+        let source_folders = [
+            manifest_folder.join("src"),
+            manifest_folder.join("../../data_layers/data_layer_coding_agents/src"),
+            manifest_folder.join("../../auxiliary/mobile_server/src"),
+            manifest_folder.join("../../data_layers/data_layer_operation_log/src"),
+        ];
         for file in source_folders.iter().flat_map(|folder| rust_files(folder)) {
             if file.file_name().is_some_and(|name| name == "environment_file.rs") {
                 continue;
             }
             read.extend(read_variable_names(&std::fs::read_to_string(&file).unwrap()));
         }
-        for name in READ_BY_TESTS_ONLY {
+        for name in READ_BY_TESTS_ONLY.into_iter().chain(SYSTEM_VARIABLES) {
             read.remove(name);
         }
         let listed = example_variable_names(&std::fs::read_to_string(example_path()).unwrap());

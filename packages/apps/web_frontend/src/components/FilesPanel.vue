@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The File explorer sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
-// workspace. A click on a folder folds or unfolds it. A click on a file opens it in the large Git window. The only
+// workspace. A click on a folder folds or unfolds it. A click on a file opens it in the Files window. The only
 // changes that the section makes are a new empty file and a new empty folder. It has no button to rename, move,
 // delete, or edit a file. A right click on the row of a file or of a folder opens a context menu that copies the
 // absolute path or the relative path to the clipboard. The option "Ignored files" of the menu shows the files and the
@@ -28,6 +28,7 @@ import {
   visibleRows,
   type TreeRow,
 } from "../stores/files";
+import { FileViewPanes } from "../stores/file_view_panes";
 import { state, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { fileIconName } from "../lib/chat_files";
@@ -50,7 +51,11 @@ function select(path: string | null, isFolder: boolean) {
   filesPanelSelections[workspaceId] = { path, isFolder };
 }
 
-const tree = computed(() => buildTree(files.list, filesPanelNewFolders[files.root] ?? [], files.ignored));
+const tree = computed(() => buildTree(
+  files.list,
+  [...(filesPanelNewFolders[files.root] ?? []), ...files.submodules],
+  files.ignored,
+));
 const rows = computed(() => visibleRows(tree.value, files.expanded, files.status, filesPanelIgnoredChildren));
 
 /** The width in pixels that each level of a folder adds at the left of a row, for each choice of the menu. */
@@ -301,7 +306,18 @@ function chooseRow(row: TreeRow) {
     toggleFolder(row);
     return;
   }
-  void openFiles(files.root, { path: row.path });
+  void openFileInPane(row.path);
+}
+
+/**
+ * Shows a file in a file view pane, read only. Without a selected pane to put it next to, the Files window opens the file.
+ * Issue: https://github.com/heidrun-org/heidrun/issues/714
+ */
+async function openFileInPane(path: string) {
+  if (await FileViewPanes.open(`${files.root}/${path}`)) {
+    return;
+  }
+  await openFiles(files.root, { path });
 }
 
 /** The context menu of a file row or a folder row: the relative path, and where the pointer was. Null when closed. */
@@ -380,6 +396,9 @@ onBeforeUnmount(closeFileMenu);
 /** The icon of a row: a folder that is closed or open, or the kind of the file. */
 function rowIcon(row: TreeRow): string {
   if (row.dir) {
+    if (files.submodules.includes(row.path)) {
+      return "file-submodule";
+    }
     return files.expanded.has(row.path) ? "folder2-open" : "folder2";
   }
   return fileIconName(row.name);
@@ -416,7 +435,7 @@ function letterClass(letter: string): string {
         <span class="title me-auto">{{ t("filesPanel.title") }}</span>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('filesPanel.newFile')"
           :title="t('filesPanel.newFile')"
           @click="startNaming('file')"
@@ -425,7 +444,7 @@ function letterClass(letter: string): string {
         </button>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('filesPanel.newFolder')"
           :title="t('filesPanel.newFolder')"
           @click="startNaming('dir')"
@@ -434,7 +453,7 @@ function letterClass(letter: string): string {
         </button>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('filesPanel.refresh')"
           :title="t('filesPanel.refresh')"
           :disabled="files.loading"
@@ -444,7 +463,7 @@ function letterClass(letter: string): string {
         </button>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('filesPanel.collapseAll')"
           :title="t('filesPanel.collapseAll')"
           @click="collapseAll()"
@@ -483,7 +502,7 @@ function letterClass(letter: string): string {
           <li v-else-if="entry.type === 'row'">
             <button
               type="button"
-              class="row btn d-flex align-items-center text-start"
+              class="row list-action d-flex align-items-center text-start"
               :class="{ selected: entry.row.path === selection?.path, ignored: entry.row.isGitIgnored }"
               :title="entry.row.path"
               :aria-expanded="entry.row.dir ? files.expanded.has(entry.row.path) : undefined"
@@ -538,9 +557,9 @@ function letterClass(letter: string): string {
 .rows { list-style: none; margin: 0; padding: 0; }
 .row { width: 100%; height: var(--row-height); padding: 0 8px; border: none; border-radius: 5px; color: var(--text); font-size: var(--font-size); white-space: nowrap; }
 .row:hover { background: var(--files-row-hover); }
+.row.ignored { color: var(--muted); }
 /* The selected row is darker than a row under the pointer, and has a blue line, as the selected row of VS Code. */
 .row.selected { background: var(--line-strong); box-shadow: inset 0 0 0 1px var(--done); }
-.row.ignored { color: var(--muted); }
 /* One guide for each level: its line sits under the arrow of the folder of that level. */
 .guide { position: relative; flex: 0 0 var(--indent-width); align-self: stretch; }
 .guide::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; border-left: 1px solid var(--line); }
@@ -550,8 +569,8 @@ function letterClass(letter: string): string {
 .letter { width: 18px; flex-shrink: 0; text-align: center; font: 600 var(--font-size) var(--mono); }
 .letter.modified { color: var(--accent); }
 .letter.added { color: var(--ok); }
-.letter.deleted { color: var(--blocked); }
-.letter.renamed { color: var(--done); }
+.letter.deleted { color: var(--blocked-text); }
+.letter.renamed { color: var(--done-text); }
 .naming-row { height: var(--row-height); padding: 0 8px; }
 .naming-row .form-control { flex: 1 1 auto; min-width: 0; }
 .error { font-size: var(--font-size); color: var(--fail); }

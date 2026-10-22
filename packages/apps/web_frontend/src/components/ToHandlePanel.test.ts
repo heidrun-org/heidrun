@@ -106,7 +106,7 @@ describe("ToHandlePanel cards", () => {
     const themeOf = (cardClass: string) => cards.find((card) => card.classes(cardClass))?.classes().filter((name) => name.startsWith("theme-"));
     expect(themeOf("blocked")).toEqual(["theme-danger"]);
     expect(themeOf("question")).toEqual(["theme-accent"]);
-    expect(themeOf("done")).toEqual(["theme-primary"]);
+    expect(themeOf('done')).toEqual(['theme-success']);
     for (const card of cards) {
       expect(card.get(".badge").classes()).toEqual(expect.arrayContaining(["badge", "badge-outline"]));
       expect(card.get(".badge").classes().some((name) => name.startsWith("t-"))).toBe(false);

@@ -1,0 +1,35 @@
+# Web styling of Heidrun: appearance of the viewport and the panes
+
+- Created: 22 October 2026
+- Last updated: 22 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../AGENTS.md)
+- Related rules: [Shared design rules](shared_design.md), [Colors and scroll bars](colors_and_scroll_bars.md), [Glossary of Heidrun](../glossary/index.md)
+- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 345](https://github.com/heidrun-org/heidrun/issues/345), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 749](https://github.com/heidrun-org/heidrun/issues/749), [issue 784](https://github.com/heidrun-org/heidrun/issues/784), [issue 786](https://github.com/heidrun-org/heidrun/issues/786), [issue 799](https://github.com/heidrun-org/heidrun/issues/799)
+
+This file gives the rules about how the frames of the window, the panes, the pane header, the composition bar, and the file view pane look. What each part contains and does is in the folder `user_interface`. Each rule names its test, and the paths of the tests start at `packages/apps/web_frontend/src`.
+
+## Frames of the window
+
+- The left sidebar, the viewport, and the right sidebar are three frames with the same border and the same rounded corners. Their backgrounds, and the lighter background of the panes, are in [colors_and_scroll_bars.md](colors_and_scroll_bars.md). No automated test compares the borders and the corners of the three frames.
+
+## Panes
+
+- The frame of the viewport has no padding, so a pane at the edge of the viewport touches the border of the viewport: the border of the viewport is the only line there, with no gap and no second border. A pane has no rounded corner. A pane that touches a corner of the viewport follows the rounded corner of the viewport, because the frame of the viewport clips it. The top corners of the viewport belong to the tab bar, so no pane touches them ([issue #326](https://github.com/heidrun-org/heidrun/issues/326)). Test: `pane_joints.test.ts`.
+- Two panes that touch have one thin line between them and no gap, as in VS Code. This holds for two panes side by side, for two panes one above the other, for three panes that meet, and for the pinned panes in the column of pinned panes. The line is the 1 pixel border of the panes: a pane that has a neighbour on its left or above it starts 1 pixel early, so the borders of two panes make one line, and every pane ends exactly at the edge of its share. The place to grab the line shows a color while the pointer is over it. The line is never a gap, and no corner of a pane is rounded where lines meet. Tests: `pane_joints.test.ts` and `components/PaneGrid.test.ts`.
+- The border of the panes goes 1 pixel past the frame of the viewport on its left, on its right, and at its bottom, so the frame clips it. At the top, the border of the panes is the line under the tab bar. The ring of the selected pane and the ring of a blocked pane have the color of the state. At the top, the ring is the top border of the pane, so that it joins the selected tab. On the left, on the right, and at the bottom, the ring is drawn just inside the border of the pane, so that it also shows at the edge of the viewport, where the frame hides the border ([issue #326](https://github.com/heidrun-org/heidrun/issues/326)). Test: `pane_joints.test.ts`.
+
+## Pane header
+
+- When the viewport shows several panes, the selected pane has a tinted header (the color `--pane-head-selected` of [colors_and_scroll_bars.md](colors_and_scroll_bars.md)), while other panes use muted names and folders (`--muted`), using the readable secondary text color of the shared design rules. A viewport with one pane has no selection highlight. The state ring is unchanged. A blocked pane keeps its red header and text. This works in both themes and in the grid and the column of pinned panes ([issue #345](https://github.com/heidrun-org/heidrun/issues/345)). Tests: `components/PaneCard.test.ts` and `pane_backgrounds.test.ts`.
+- The gap between the usage wheel and the first button of the pane header is 2 pixels, the same as the gap between two buttons. The group of the usage wheel and the buttons has no extra margin on its left side ([issue 786](https://github.com/heidrun-org/heidrun/issues/786)). Test: `components/PaneCard.test.ts`.
+
+## Composition bar
+
+- The layer of a drop of images covers the whole composition bar under the pointer: a solid border of 3 pixels in the color `--accent` (orange) and a background of the same color at 12 percent strength, with no text, so that the composition bar stays visible under it. No automated test checks the colors of the layer.
+- The composition bar has air: 14 pixels of space above and below, 16 pixels at each side, 16 pixels between two lines, and 4 pixels between two controls of the last line. The last line is the exception at the sides: it starts and ends 8 pixels from the edge of the bar, half of the 16 pixels, so that the icon of the plus button lines up with the left edge of the pictures. The controls of the last line are 46 pixels high, and the text of the text input is 20% bigger than the other text of the window. The buttons of this line, the push-to-talk button included, are icon buttons (`btn icon`), 46 pixels high, with a width that leaves 6.3 pixels at each side of the icon, with no text, no border, and no background at rest: only the icon shows, and the hover background of the shared icon button (`--hover`) shows under the pointer. Tests: `components/CompositionBar.test.ts` and `components/PushToTalkButton.test.ts` check the buttons with no border; no automated test measures the spaces.
+- While the microphone is open, the icon of the push-to-talk button is red (the color `--danger-fg` of the theme). While Whisper works, the spinner of the button is green (the color `--success-fg` of the theme) and is not dimmed ([issue 662](https://github.com/heidrun-org/heidrun/issues/662)). Test: `components/PushToTalkButton.test.ts` checks the class of the red state; no automated test checks the two color variables.
+
+## File view pane
+
+- The front matter card has rounded corners and a background that differs from the background of the rendered text ([issue 784](https://github.com/heidrun-org/heidrun/issues/784)). No automated test checks the look of the card: `components/FileView.test.ts` checks its content.

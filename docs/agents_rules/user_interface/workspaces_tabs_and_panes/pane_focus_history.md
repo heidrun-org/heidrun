@@ -1,11 +1,11 @@
 # User interface of Heidrun: pane focus history
 
 - Created: 13 October 2026
-- Last updated: 14 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Glossary of Heidrun: pane focus history](../../glossary/pane_focus_history.md), [Panes](panes.md), [Layout of the window](../window/layout.md)
-- Related issue: [issue 380](https://github.com/heidrun-org/heidrun/issues/380)
+- Related issue: [issue 380](https://github.com/heidrun-org/heidrun/issues/380), [issue 690](https://github.com/heidrun-org/heidrun/issues/690)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md) and in [glossary/pane_focus_history.md](../../glossary/pane_focus_history.md).
 
@@ -21,13 +21,14 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 
 ## The Back button and the Forward button
 
-- The two buttons sit at the very top of the window, in the top bar, just on the left of the search button. The Back button is first, with an arrow that points left. The Forward button is second, with an arrow that points right.
+- The two buttons sit at the very top of the window, in the top bar, just on the left of the search button. The Back button is first, with an arrow that points left. The Forward button is second, with an arrow that points right. Each button is an icon button (`btn icon`) of the [shared design rules](../../web_styling/shared_design.md).
 - A click on the Back button gives the focus to the pane of the entry before the current entry. A click on the Forward button gives the focus to the pane of the entry after the current entry. Heidrun selects the workspace and the tab of that pane, as a click on the pane does.
 - The Back button is disabled when no entry exists before the current entry. The Forward button is disabled when no entry exists after the current entry.
 - A press that lasts 500 milliseconds opens a list of entries under the button. The list of the Back button holds the entries before the current entry, the nearest first. The list of the Forward button holds the entries after the current entry, the nearest first. A press on a disabled button opens nothing.
 - Each row of the list shows the name of the pane, with its workspace and its tab. A click on a row gives the focus to the pane of that entry, and closes the list. The list also closes on a click outside, and on the key Escape.
 - The click that ends a long press does not move in the history.
 - The keys ⌘[ and ⌘] do the same as a click on the Back button and on the Forward button, as in Chrome on macOS. Heidrun matches the characters "[" and "]", not the place of the keys, so a French keyboard works. The file explorer keeps the two keys for its editor.
+- These keyboard shortcuts also work in Zen Mode while the top bar and its Back and Forward buttons are hidden.
 - The history of Back and Forward is a navigation inside the panes, like "Go Back" and "Go Forward" in a code editor. It never closes, opens, moves, or changes a pane.
 
 ## Files

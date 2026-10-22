@@ -118,7 +118,7 @@ watch(() => props.selected, showSelected);
     <div ref="strip" class="topic-strip d-flex gap-2" @scroll="measure">
       <button
         type="button"
-        class="topic-chip"
+        class="btn small topic-chip"
         :class="{ 'is-selected': selected === null }"
         :aria-pressed="selected === null"
         :title="t('chatsPanel.topicAllTitle')"
@@ -130,7 +130,7 @@ watch(() => props.selected, showSelected);
         v-for="topic in topics"
         :key="topic"
         type="button"
-        class="topic-chip"
+        class="btn small topic-chip"
         :class="{ 'is-selected': selected === topic }"
         :aria-pressed="selected === topic"
         :title="t('chatsPanel.topicTitle', { topic, count: chatCounts.get(topic) ?? 0 })"
@@ -142,7 +142,7 @@ watch(() => props.selected, showSelected);
     <button
       v-if="canShowPrevious"
       type="button"
-      class="topic-arrow is-previous"
+      class="btn icon small topic-arrow is-previous"
       :title="t('chatsPanel.topicsPreviousTitle')"
       :aria-label="t('chatsPanel.topicsPreviousTitle')"
       @click="showPrevious"
@@ -152,7 +152,7 @@ watch(() => props.selected, showSelected);
     <button
       v-if="canShowNext"
       type="button"
-      class="topic-arrow is-next"
+      class="btn icon small topic-arrow is-next"
       :title="t('chatsPanel.topicsNextTitle')"
       :aria-label="t('chatsPanel.topicsNextTitle')"
       @click="showNext"
@@ -165,17 +165,8 @@ watch(() => props.selected, showSelected);
 <style scoped>
 .topic-bar { position: relative; }
 .topic-strip { position: relative; overflow: hidden; }
-.topic-chip {
-  flex: none; white-space: nowrap; border: 0; border-radius: var(--radius-pill); padding: 0.2rem 0.75rem;
-  background: var(--bg-2); color: var(--fg-body); font-size: 0.9em;
-}
-.topic-chip:hover { background: var(--border-color); }
-.topic-chip.is-selected { background: var(--fg-body); color: var(--bg-body); }
-.topic-arrow {
-  position: absolute; top: 0; bottom: 0; width: 44px; border: 0; padding: 0; color: var(--fg-body);
-  display: flex; align-items: center;
-}
-.topic-arrow.is-previous { left: 0; justify-content: flex-start; background: linear-gradient(to right, var(--side) 55%, transparent); }
-.topic-arrow.is-next { right: 0; justify-content: flex-end; background: linear-gradient(to left, var(--side) 55%, transparent); }
-.topic-arrow:hover { color: var(--fg-body); }
+.topic-chip { flex: none; white-space: nowrap; }
+.topic-arrow { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; }
+.topic-arrow.is-previous { left: 0; justify-content: flex-start; }
+.topic-arrow.is-next { right: 0; justify-content: flex-end; }
 </style>

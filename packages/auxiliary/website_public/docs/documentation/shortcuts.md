@@ -17,9 +17,9 @@ In the application, press **⌘/** (or the **?** button at the top) to show this
 | Esc | Close the open window |
 | **Terminals and agents** | |
 | ⌘T | New tab (default command of a new tab) |
-| ⇧⌘T | New agent (Claude, Codex, project agents) |
+| ⇧⌘T | New terminal tab |
 | ⌘D / ⇧⌘D | Split the pane to the right / to the bottom |
-| ⌘W ⌘W | Close the selected pane (twice, to avoid accidents) |
+| ⌘W ⌘W | Close the selected tab (twice, to avoid accidents) |
 | **Navigation** | |
 | ⌥⌘← / ⌥⌘→ | Previous / next tab |
 | ⌥⌘↑ / ⌥⌘↓ | Previous / next workspace |

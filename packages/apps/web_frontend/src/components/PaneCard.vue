@@ -1,19 +1,25 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import TerminalView from "./TerminalView.vue";
+import FileView from "./FileView.vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import MacroMenu from "./MacroMenu.vue";
 import UsageWheel from "./UsageWheel.vue";
+import CompositionBar from "./CompositionBar.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, startRename, state } from "../stores/session";
 import { allPinnedPanes, gridPanes, isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
-import { onSplitPaneClick } from "../stores/newPane";
+import { NewPane } from "../stores/new_pane";
 import { git } from "../stores/git";
 import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
+import { CompositionBar as CompositionBarStore } from '../stores/composition_bar';
+import { ImageDrop } from "../lib/image_drop";
+import { FileViewLabel } from "../lib/file_view_label";
 import { paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
+import { ZenMode } from "../stores/zen_mode";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
@@ -21,30 +27,49 @@ import { t } from "../i18n/index";
 const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean }>();
 
 // A pinned pane that is the selected pane of the selected tab has the keyboard until another pinned pane takes it.
-const selected = computed(() =>
-  props.isInColumnOfPinnedPanes
+const selected = computed(() => {
+  if (ZenMode.state.isActive) {
+    return ZenMode.state.paneId === props.pane.pane_id;
+  }
+  return props.isInColumnOfPinnedPanes
     ? pinnedPaneState.focus === props.pane.pane_id ||
-      (pinnedPaneState.focus === null && state.selectedPaneId === props.pane.pane_id)
-    : state.selectedPaneId === props.pane.pane_id && !pinnedPaneState.focus,
-);
+        (pinnedPaneState.focus === null && state.selectedPaneId === props.pane.pane_id)
+    : state.selectedPaneId === props.pane.pane_id && !pinnedPaneState.focus;
+});
 // The highlight of the selected pane shows only when the viewport shows several panes: the panes of the selected tab that the
 // grid draws, and the pinned panes of the column of pinned panes.
 const hasSeveralPanes = computed(() => gridPanes.value.length + allPinnedPanes.value.length > 1);
 const pinned = computed(() => isPinned(props.pane.pane_id));
+const compositionBar = computed(() => CompositionBarStore.forPane(props.pane.pane_id));
 // A click in a pinned pane gives it the keyboard without leaving the current tab.
 function onDown() {
-  if (props.isInColumnOfPinnedPanes) pinnedPaneState.focus = props.pane.pane_id;
-  else {
+  if (props.isInColumnOfPinnedPanes) {
+    pinnedPaneState.focus = props.pane.pane_id;
+    ZenMode.focusPane(props.pane.pane_id, props.pane.tab_id);
+  } else {
     selectPane(props.pane);
     pinnedPaneState.focus = null;
   }
+}
+const paneElement = ref<HTMLElement | null>(null);
+// The header of a file view pane holds the controls of the file, which the file view draws there.
+const fileViewControlsHost = ref<HTMLElement | null>(null);
+// After the composition bar sends its images and its text, the keyboard goes back to the terminal, so that the developer can speak or type, then send.
+function focusTerminal() {
+  paneElement.value?.querySelector<HTMLTextAreaElement>("textarea.xterm-helper-textarea")?.focus();
 }
 const status = computed(() => (props.pane.agent ? props.pane.agent_status : "process"));
 const ctx = computed(() => contextFor(props.pane));
 const shellFolder = computed(() => props.pane.foreground_cwd || props.pane.cwd || "");
 const displayName = computed(() => paneName(props.pane));
+// A file view pane shows a file, read only, in place of its terminal. The label of the pane holds the absolute path of the file.
+const fileViewPath = computed(() => FileViewLabel.parse(props.pane.label));
+function closePaneFromHeader() {
+  closePane(props.pane.pane_id);
+}
 const subtitle = computed(() => {
   const p = props.pane;
+  if (fileViewPath.value !== null) return shortPath(fileViewPath.value);
   if (props.isInColumnOfPinnedPanes) return paneFullName(p);
   if (p.agent) return `${p.agent} · ${p.pane_id}`;
   const branch = git.branchByFolder[shellFolder.value];
@@ -56,13 +81,14 @@ const subtitle = computed(() => {
 
 <template>
   <section
+    ref="paneElement"
     class="pane"
     :class="[status, { selected, 'several-panes': hasSeveralPanes, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
     @mousedown="onDown"
   >
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
     <header class="head">
-      <span class="dot" :class="[status, state.pulse[pane.pane_id] ? 'pulse' : '']"></span>
+      <span class="dot" :class="status"></span>
       <InlineRename
         v-if="state.renaming === `pane:${pane.pane_id}`"
         class="pane-rename"
@@ -72,16 +98,30 @@ const subtitle = computed(() => {
         @save="(v) => finishRename('pane', pane.pane_id, v)"
         @cancel="state.renaming = null"
       />
+      <span v-else-if="fileViewPath !== null" class="name" :title="fileViewPath">{{ displayName }}</span>
       <span v-else class="name" :title="t('paneCard.nameTitle', { name: displayName })" @dblclick="startRename('pane', pane.pane_id)">{{ displayName }}</span>
-      <span class="sub">{{ subtitle }}</span>
+      <span class="sub" :class="{ 'file-view-path': fileViewPath !== null }">{{ subtitle }}</span>
+      <span v-if="fileViewPath !== null" ref="fileViewControlsHost" class="file-view-controls"></span>
       <span class="spacer"></span>
-      <UsageWheel v-if="ctx" :usage="ctx" />
       <span class="tools">
-        <MacroMenu :pane-id="pane.pane_id" />
+        <UsageWheel v-if="ctx" :usage="ctx" />
+        <button
+          v-if="fileViewPath === null"
+          class="btn icon small tool"
+          :class="{ on: compositionBar.isOpen }"
+          :aria-pressed="compositionBar.isOpen"
+          :aria-label="t('paneCard.compositionBar')"
+          :title="t('paneCard.compositionBarTitle')"
+          @mousedown.stop="onDown"
+          @click="ImageDrop.toggleBar(pane.pane_id)"
+        >
+          <Icon name="input-cursor-text" />
+        </button>
+        <MacroMenu v-if="fileViewPath === null" :pane-id="pane.pane_id" />
         <template v-if="isInColumnOfPinnedPanes">
-          <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
+          <button class="btn icon small tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
           <button
-            class="tool on"
+            class="btn icon small tool on"
             aria-pressed="true"
             :aria-label="t('paneCard.unpin')"
             :title="t('paneCard.unpinTitle')"
@@ -94,14 +134,14 @@ const subtitle = computed(() => {
         <template v-else>
         <button
           v-if="(pane.agent ?? '').includes('claude')"
-          class="tool"
+          class="btn icon small tool"
           :title="t('paneCard.mosaicTitle')"
           :aria-label="t('paneCard.mosaic')"
           @mousedown.stop
           @click="mosaic.paneId = pane.pane_id"
         ><Icon name="grid-3x3-gap" /></button>
         <button
-          class="tool"
+          class="btn icon small tool"
           :class="{ on: pinned }"
           :aria-pressed="pinned"
           :title="pinned ? t('paneCard.unpin') : t('paneCard.pinTitle')"
@@ -110,23 +150,37 @@ const subtitle = computed(() => {
         >
           <Icon :name="pinned ? 'pin-fill' : 'pin'" />
         </button>
-        <button class="tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="onSplitPaneClick($event, 'right', pane.pane_id)">
+        <button class="btn icon small tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="NewPane.onSplitPaneClick($event, 'right', pane.pane_id)">
           <Icon name="layout-split" />
         </button>
-        <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="onSplitPaneClick($event, 'down', pane.pane_id)">
+        <button class="btn icon small tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="NewPane.onSplitPaneClick($event, 'down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
+        </template>
+        <button
+          class="btn icon small tool"
+          :class="{ on: ZenMode.state.isActive }"
+          :aria-pressed="ZenMode.state.isActive"
+          :aria-label="ZenMode.state.isActive ? t('paneCard.zenModeExit') : t('paneCard.zenModeEnter')"
+          :title="ZenMode.state.isActive ? t('paneCard.zenModeExit') : t('paneCard.zenModeEnter')"
+          @mousedown.stop
+          @click="ZenMode.toggle(pane.pane_id, pane.tab_id)"
+        >
+          <Icon :name="ZenMode.state.isActive ? 'fullscreen-exit' : 'arrows-fullscreen'" />
+        </button>
         <ConfirmButton
+          v-if="isInColumnOfPinnedPanes !== true || ZenMode.state.isActive"
           icon="x-lg"
           :confirm-label="t('paneCard.closeConfirm')"
           :question="t('paneCard.close')"
           :is-confirm-required="settings.confirmPaneClose"
-          @confirm="closePane(pane.pane_id)"
+          @confirm="closePaneFromHeader"
         />
-        </template>
       </span>
     </header>
+    <FileView v-if="fileViewPath !== null" :pane="pane" :controls-host="fileViewControlsHost" />
     <TerminalView
+      v-else
       :key="pane.terminal_id"
       :terminal-id="pane.terminal_id"
       :pane-id="pane.pane_id"
@@ -135,6 +189,7 @@ const subtitle = computed(() => {
       :focused="selected"
       @pin="(text) => pinText(text, pane)"
     />
+    <CompositionBar v-if="fileViewPath === null && compositionBar.isOpen" :pane-id="pane.pane_id" @sent="focusTerminal" />
   </section>
 </template>
 
@@ -160,10 +215,10 @@ const subtitle = computed(() => {
 .pane.blocked::after { border-color: var(--pane-ring-blocked); }
 .pane.selected::after { border-color: var(--pane-ring-selected); }
 .pane.blocked.selected::after { border-color: var(--pane-ring-blocked-selected); }
-.sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
+.sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: var(--tint-working); z-index: 1; }
 .sweep span {
   position: absolute; top: 0; left: 0; width: 40%; height: 2px;
-  background: linear-gradient(90deg, rgba(63, 184, 175, 0), var(--working), rgba(63, 184, 175, 0));
+  background: linear-gradient(90deg, transparent, var(--working), transparent);
   animation: sweep 2.4s ease-in-out infinite;
 }
 .head {
@@ -176,23 +231,27 @@ const subtitle = computed(() => {
 .pane.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
 .pane.blocked .head { background: var(--tint-err); border-bottom-color: var(--pane-head-line-blocked); }
 .pane.several-panes:not(.selected):not(.blocked) .name { color: var(--muted); }
-.pane.several-panes:not(.selected):not(.blocked) .sub { color: var(--faint); }
+.pane.several-panes:not(.selected):not(.blocked) .sub { color: var(--muted); }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* In a file view pane, a narrow header shortens the short path first, then the name. The controls of the file stay visible. */
+.sub.file-view-path { min-width: 0; flex-shrink: 10000; }
+.file-view-controls { flex-shrink: 0; display: flex; align-items: center; gap: 8px; margin-left: 4px; }
 .spacer { flex: 1; }
 /* The information card of the usage wheel is inside the pane, so the pane that holds the open card goes above the panes
    that come after it. Without this, the next pane hides the part of the card that goes over it. */
 .pane:has(.information-card-part.is-open) { z-index: 3; }
-.tools { flex-shrink: 0; display: flex; align-items: center; gap: 2px; margin-left: 16px; opacity: 0.55; transition: opacity 0.15s; }
-.pane:hover .tools, .pane.selected .tools { opacity: 1; }
-.tool {
-  width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; padding: 0;
+/* The usage wheel is the first item of the tools, so it appears and disappears with the buttons, and it is 2 pixels from the first button. */
+.tools {
+  flex-shrink: 0; display: flex; align-items: center; gap: 2px;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0s linear 0.15s;
 }
-.tool:hover { background: var(--hover); color: var(--text); }
-.tool.txt { font-size: var(--font-size); line-height: 1; }
-.tool.on { color: var(--accent); }
+.pane:hover .tools {
+  opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s;
+}
+.tool { display: inline-flex; align-items: center; justify-content: center; }
 .pane.in-column-of-pinned-panes .head { background: var(--bar); }
 .pane.in-column-of-pinned-panes.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
 </style>

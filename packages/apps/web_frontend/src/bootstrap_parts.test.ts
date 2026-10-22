@@ -97,6 +97,7 @@ describe('bootstrap_parts.scss', () => {
 			'.justify-content-start',
 			'.justify-content-center',
 			'.justify-content-between',
+			'.justify-content-end',
 			'.border-0',
 			'.border-top',
 			'.d-block',
@@ -105,7 +106,9 @@ describe('bootstrap_parts.scss', () => {
 			'.flex-column',
 			'.flex-wrap',
 			'.flex-fill',
+			'.align-items-start',
 			'.align-items-center',
+			'.align-items-end',
 			'.align-self-start',
 			'.gap-1',
 			'.gap-2',
@@ -113,12 +116,18 @@ describe('bootstrap_parts.scss', () => {
 			'.m-0',
 			'.ms-1',
 			'.ms-3',
+			'.ms-auto',
 			'.me-2',
 			'.me-auto',
 			'.my-auto',
+			'.mt-1',
+			'.mt-2',
+			'.mb-2',
 			'.mb-3',
 			'.p-2',
 			'.ps-3',
+			'.pe-2',
+			'.pe-5',
 			'.pt-2',
 			'.fs-4',
 			'.fw-medium',
@@ -165,10 +174,10 @@ describe('bootstrap_parts.scss', () => {
 		expect(layerText).toMatch(/^ {2}\.d-flex \{\s*display: flex !important;/m);
 	});
 
-	it('has the Bootstrap parts of the dialog, the menu, the close button, the form fields, the switch, the popover, the tooltip, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
+	it('has the Bootstrap parts of the dialog, the menu, the close button, the form fields, the radio button, the switch, the popover, the tooltip, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(BootstrapPartsTestHelper.compile()).toContain('.popover-arrow {');
-		for (const selector of ['.dialog', '.dialog-header', '.dialog-title', '.dialog-body', '.dialog-footer', '.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.switch', '.popover', '.popover-body', '.tooltip', '.tooltip-inner', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
+		for (const selector of ['.dialog', '.dialog-header', '.dialog-title', '.dialog-body', '.dialog-footer', '.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.form-field', '.form-field-content', '.radio', '.switch', '.popover', '.popover-body', '.tooltip', '.tooltip-inner', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
 			expect(cssText).toMatch(new RegExp(`^\\s*${selector.replace('.', '\\.')}[ ,{]`, 'm'));
 		}
 	});
@@ -208,7 +217,7 @@ describe('bootstrap_parts.scss', () => {
 
 	it('draws the focus ring of a field on its border, so that no dark border shows inside the ring', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		expect(cssText).toMatch(/\.form-control:focus-visible,\n\.form-control:focus-within \{[^}]*outline: 2px solid var\(--done\);[^}]*outline-offset: -1px/);
+		expect(cssText).toMatch(/\.form-control:focus-visible,\n\.form-control:focus-within \{[^}]*outline: 2px solid var\(--focus\);[^}]*outline-offset: -1px/);
 	});
 
 	it('draws the text of a field with the variable --font-size, so that the font size setting reaches it', () => {
@@ -222,18 +231,11 @@ describe('bootstrap_parts.scss', () => {
 		expect(cssText).not.toContain('transition-property: var(--btn-transition-property)');
 	});
 
-	it('does not clash with the class names of the components of the application: those components use no Bootstrap class name for their own box', () => {
-		const componentFolder = Path.resolve(__dirname, 'components');
-		for (const [fileName, className] of [
-			['MoreMenu.vue', 'menu'],
-			['ThemeMenu.vue', 'menu'],
-		]) {
-			const filePath = fileName.startsWith('Settings') ? Path.join(componentFolder, 'settings', fileName) : Path.join(componentFolder, fileName);
-			const sourceText = Fs.readFileSync(filePath, 'utf8');
-			expect({ fileName, isClassUsed: new RegExp(`class="${className}[" ]`).test(sourceText) }).toEqual({
-				fileName,
-				isClassUsed: false,
-			});
+	it('uses Bootstrap menus and menu items for the application popup menus', () => {
+		for (const fileName of ['MoreMenu.vue', 'ThemeMenu.vue']) {
+			const source = Fs.readFileSync(Path.resolve(__dirname, 'components', fileName), 'utf8');
+			expect(source).toContain('class="menu show popup-menu"');
+			expect(source).toMatch(/class="menu-item [^"]*"/);
 		}
 	});
 

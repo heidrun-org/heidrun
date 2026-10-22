@@ -26,7 +26,9 @@ describe('macOS message "Heidrun is damaged"', () => {
 	});
 
 	it('is explained after the sentence about the installation', () => {
-		const installation = prefix.indexOf('To install Heidrun, download the disk image');
+		const installation = prefix.indexOf(
+			'To install Heidrun on a Mac with Apple silicon, run this command in a terminal.',
+		);
 		const section = prefix.indexOf('## If macOS says that Heidrun is damaged');
 		expect(installation).toBeGreaterThan(-1);
 		expect(section).toBeGreaterThan(installation);

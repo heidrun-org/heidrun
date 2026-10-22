@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use super::types::is_valid_name;
 
 /// The ids of the coding agents that Heidrun knows: the ids of `lib/agents.ts` of the frontend.
-pub(super) const AGENTS: [&str; 2] = ["claude", "codex"];
+pub(super) const AGENTS: [&str; 3] = ["claude", "codex", "antigravity"];
 /// The agent whose skills folder holds the real files. Every other agent gets a link to them.
 pub(super) const REAL_FILES_AGENT: &str = "codex";
 
@@ -27,6 +27,8 @@ pub(super) fn skills_dir(agent: &str, level: &str, cwd: Option<&str>) -> Result<
         ("claude", "user") => Ok(crate::claude::claude_dir().join("skills")),
         ("claude", _) => Ok(root.join(".claude").join("skills")),
         ("codex", _) => Ok(root.join(".agents").join("skills")),
+        ("antigravity", "user") => Ok(root.join(".gemini").join("antigravity-cli").join("skills")),
+        ("antigravity", _) => Ok(root.join(".agents").join("skills")),
         _ => Err(format!("skills_unknown_agent: {agent}")),
     }
 }
@@ -49,6 +51,9 @@ pub(super) fn skill_locations(level: &str, cwd: Option<&str>, name: &str) -> Res
     for agent in AGENTS {
         let path = skills_dir(agent, level, cwd)?.join(name);
         if let Ok(metadata) = std::fs::symlink_metadata(&path) {
+            if locations.iter().any(|location: &SkillLocation| location.path == path) {
+                continue;
+            }
             locations.push(SkillLocation { agent, path, is_link: metadata.file_type().is_symlink() });
         }
     }
@@ -85,6 +90,9 @@ pub(super) fn make_link(_target: &Path, _link: &Path) -> Result<(), String> {
 pub(super) fn link_agents(level: &str, cwd: Option<&str>, name: &str, target: &Path, agents: &[String]) -> Result<(), String> {
     for agent in agents.iter().filter(|agent| agent.as_str() != REAL_FILES_AGENT) {
         let folder = skills_dir(agent, level, cwd)?;
+        if folder == target.parent().unwrap_or(Path::new("")) {
+            continue;
+        }
         std::fs::create_dir_all(&folder).map_err(|e| format!("skills_install_failed: {e}"))?;
         let link = folder.join(name);
         make_link(&relative_link_target(&link, target), &link)?;
@@ -100,6 +108,10 @@ pub(super) fn link_installed_skill(level: &str, cwd: Option<&str>, name: &str, a
     }
     let locations = skill_locations(level, cwd, name)?;
     if locations.iter().any(|location| location.agent == agent) {
+        return Err(format!("skills_already_linked: {name}"));
+    }
+    let agent_folder = skills_dir(agent, level, cwd)?;
+    if locations.iter().any(|location| location.path.parent() == Some(agent_folder.as_path())) {
         return Err(format!("skills_already_linked: {name}"));
     }
     let Some(real) = locations.iter().find(|location| location.is_link == false && location.path.join("SKILL.md").is_file()) else {

@@ -75,24 +75,50 @@ export class TauriMock {
 				};
 			case 'history_read':
 				return [];
+			case 'chats_synchronize':
+				return { root: (payload as { folder: string }).folder, chat_session_count: 0 };
 			case 'chats_list':
 				return TauriMockFixture.buildChats(
 					(payload as { limit: number }).limit,
 					(payload as { sortKey?: ChatSortKey }).sortKey,
 					(payload as { order?: ChatSortOrder }).order,
 				);
+			case 'user_activity_synchronize':
+				return { recordCount: 0 };
 			case 'user_activity_records_in_range':
 				return TauriMockFixture.buildUserActivityRecords(Date.parse((payload as { until: string }).until));
+			case 'person_work_synchronize':
+				return { repository: 'heidrun-org/heidrun', codeHostingError: null };
 			case 'person_work_in_range':
 				return TauriMockFixture.buildPersonWorkItems(Date.parse((payload as { until: string }).until));
+			case 'ai_cost_synchronize':
+				return TauriMockFixture.buildAiCostSynchronization(
+					(payload as { folders: string[] }).folders,
+					(payload as { isImportAllowed: boolean }).isImportAllowed,
+				);
 			case 'ai_cost_in_range':
-				return TauriMockFixture.buildAiCostItems(Date.parse((payload as { until: string }).until));
+				return TauriMockFixture.buildAiCostAnswer(
+					(payload as { folders: string[] }).folders,
+					Date.parse((payload as { until: string }).until),
+				);
 			case 'project_refs':
 				return {
 					root: '/Users/demo/webwork/heidrun',
 					remote: 'git@github.com:heidrun-org/heidrun.git',
 					references: null,
 				};
+			case 'project_load':
+				return TauriMockFixture.buildProject((payload as { cwd: string }).cwd);
+			case 'project_save':
+				TauriMockFixture.setProjectConfig((payload as { config: unknown }).config);
+				return null;
+			case 'chat_references_synchronize':
+				return { repository: 'heidrun-org/heidrun', codeHostingError: null };
+			case 'chat_references_find':
+				return TauriMockFixture.buildStoredReferences(
+					(payload as { issues: number[] }).issues,
+					(payload as { pullRequests: number[] }).pullRequests,
+				);
 			case 'forge_cli_cached': {
 				const args = (payload as { args: string[] }).args;
 				return args[1] === 'list' ? TauriMockFixture.buildForgeListAnswer(args) : TauriMockFixture.buildForgeAnswer(args);

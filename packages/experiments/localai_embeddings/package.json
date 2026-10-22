@@ -1,0 +1,11 @@
+{
+  "name": "localai_embeddings",
+  "private": true,
+  "license": "MIT",
+  "version": "0.2.7",
+  "scripts": {
+    "build": "cargo build",
+    "cli": "cargo run --release --quiet --",
+    "test": "cargo test"
+  }
+}

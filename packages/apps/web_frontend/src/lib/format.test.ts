@@ -81,9 +81,11 @@ describe("isAgent", () => {
 });
 
 describe("agentKind", () => {
-  it("names Claude and Codex whatever the letter case", () => {
+  it("names Claude, Codex, and Antigravity whatever the letter case", () => {
     expect(agentKind({ agent: "CLAUDE-code" })).toBe("Claude");
     expect(agentKind({ agent: "codex" })).toBe("Codex");
+    expect(agentKind({ agent: "agy" })).toBe("Antigravity");
+    expect(agentKind({ agent: "Google-ANTIGRAVITY" })).toBe("Antigravity");
   });
 
   it("falls back to the display name, then to Terminal", () => {

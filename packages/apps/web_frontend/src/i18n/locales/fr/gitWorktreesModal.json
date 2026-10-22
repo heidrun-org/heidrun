@@ -1,0 +1,20 @@
+{
+  "title": "Ouvrir un workspace depuis les worktrees du dépôt sélectionné",
+  "close": "Fermer",
+  "loading": "Lecture des worktrees Git actuels…",
+  "tryAgain": "Réessayer",
+  "empty": "Ce dépôt n’a aucun worktree Git disponible.",
+  "detached": "Aucune branche (HEAD détachée)",
+  "alreadyOpen": "Déjà ouvert : {name}",
+  "sortBy": "Trier par",
+  "updated": "Dernier commit",
+  "created": "Créé",
+  "name": "Nom",
+  "oldestFirst": "Afficher les plus anciens en premier",
+  "newestFirst": "Afficher les plus récents en premier",
+  "azFirst": "Trier de A à Z",
+  "zaFirst": "Trier de Z à A",
+  "copyFolder": "Copier le chemin du dossier",
+  "folderCopied": "Chemin du dossier copié",
+  "refresh": "Actualiser"
+}

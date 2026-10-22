@@ -1,0 +1,99 @@
+import type { AgentView } from '../src/mobile_types';
+import { FakeComputer } from './fake_computer';
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//	Fixtures — the coding agents and the fake computer that most tests start from
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Builds the same four coding agents for the tests of the screens.
+ */
+export class Fixtures {
+	/**
+	 * A coding agent that waits for a yes or no about a command.
+	 * @returns The coding agent.
+	 */
+	static blocked(): AgentView {
+		return FakeComputer.agent({
+			paneId: 'p-blocked',
+			status: 'blocked',
+			menu: {
+				question: 'Run this command?',
+				detail: 'rm -rf build',
+				options: [
+					{
+						n: 1,
+						label: 'Yes',
+					},
+					{
+						n: 2,
+						label: 'Yes, and do not ask again',
+					},
+					{
+						n: 3,
+						label: 'No',
+					},
+				],
+			},
+		});
+	}
+
+	/**
+	 * A coding agent that finished its work and asks a question.
+	 * @returns The coding agent.
+	 */
+	static asking(): AgentView {
+		return FakeComputer.agent({
+			paneId: 'p-asking',
+			tab: 'review-12',
+			status: 'done',
+			question: 'Which file should I change?',
+		});
+	}
+
+	/**
+	 * A coding agent that finished its work and asks nothing.
+	 * @returns The coding agent.
+	 */
+	static finished(): AgentView {
+		return FakeComputer.agent({
+			paneId: 'p-finished',
+			tab: 'docs',
+			status: 'done',
+		});
+	}
+
+	/**
+	 * A coding agent that is still working, so it does not need the developer.
+	 * @returns The coding agent.
+	 */
+	static working(): AgentView {
+		return FakeComputer.agent({
+			paneId: 'p-working',
+			name: 'Codex',
+			kind: 'codex',
+			status: 'working',
+		});
+	}
+
+	/**
+	 * A fake computer with the four coding agents. The three that need the developer are listed in the wrong order
+	 * on purpose.
+	 * @returns The fake computer.
+	 */
+	static computer(): FakeComputer {
+		const snapshot = FakeComputer.snapshotOf(
+			[Fixtures.working(), Fixtures.finished(), Fixtures.asking(), Fixtures.blocked()],
+			['p-finished', 'p-asking', 'p-blocked'],
+		);
+		snapshot.quotas = [
+			{
+				name: '5-hour limit',
+				percent: 42,
+			},
+		];
+		return new FakeComputer(snapshot);
+	}
+}

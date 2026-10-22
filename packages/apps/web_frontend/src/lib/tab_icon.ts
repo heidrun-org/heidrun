@@ -1,7 +1,7 @@
 import type { AgentStatus, PaneInfo } from "./types";
 
 /** The Bootstrap Icons name of the icon of a tab. */
-export type TabIconName = "claude" | "openai" | "terminal";
+export type TabIconName = "claude" | "openai" | "google" | "terminal";
 
 /** The fields of a pane that choose the icon of its tab. */
 export type PaneForTabIcon = Pick<PaneInfo, "pane_id" | "agent" | "agent_status" | "focused">;
@@ -23,6 +23,9 @@ function agentIconName(pane: PaneForTabIcon): TabIconName | null {
   }
   if (agent.includes("codex")) {
     return "openai";
+  }
+  if (agent.includes("agy") || agent.includes("antigravity")) {
+    return "google";
   }
   return null;
 }

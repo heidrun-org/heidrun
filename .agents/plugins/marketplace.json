@@ -1,0 +1,32 @@
+{
+  "name": "heidrun",
+  "interface": {
+    "displayName": "Heidrun Agent Plugins"
+  },
+  "plugins": [
+    {
+      "name": "heidrun-control",
+      "source": {
+        "source": "local",
+        "path": "./packages/auxiliary/heidrun_ctrl"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "heidrun-data",
+      "source": {
+        "source": "local",
+        "path": "./packages/data_layers/heidrun_data"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

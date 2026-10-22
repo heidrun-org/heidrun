@@ -4,18 +4,19 @@ The macOS application of [Heidrun](../../../README.md): the Rust backend and the
 
 ## What it does
 
-- Talks to the Herdr server of its own named session, `heidrun`, and starts the server in the background if it is not running. A development build that runs from a worktree uses the session `heidrun_` followed by the name of the worktree, because Herdr allows one attach client for each terminal. The environment variables `HERDR_SESSION` and `HERDR_SOCKET_PATH` choose another session.
+- Talks to the Herdr server of its own named session, `heidrun`, and starts the server in the background if it is not running. Heidrun Development in the main checkout uses `heidrun_development`; Heidrun Development from a worktree uses the session `heidrun_` followed by the name of the worktree, because Herdr allows one attach client for each terminal. Installed Heidrun accepts `HERDR_SESSION` and `HERDR_SOCKET_PATH`. Development ignores inherited session selectors; see [the installation guide](../../../docs/architecture/application_installations.md).
 - Stops its session when the user quits, unless the setting "Keep agents running after quit" is on. The default Herdr session of a terminal is never stopped.
 - Runs the terminals of the panes with `portable-pty`.
 - Reads the git state, the project files, the job history, and the Claude and Codex usage.
-- Serves the mobile access (iPhone and iPad over Tailscale) with `axum`.
+- Runs the mobile access (a phone through an ngrok tunnel) with the package `mobile_server`, which serves the mobile website, opens the tunnel with the program `ngrok`, and hands each call of the phone to the window. It stops the tunnel when the developer turns the mobile access off, and when Heidrun quits.
 
 ## Commands
 
 Run these commands from the root of the repository.
 
 ```sh
-pnpm dev     # start the application in development
+pnpm dev     # start Heidrun Development, with separate settings, data and Herdr session
+pnpm build:development # build a separate Heidrun Development.app
 pnpm build   # build Heidrun.app in packages/apps/desktop_tauri/target/release/bundle/macos/
 ```
 

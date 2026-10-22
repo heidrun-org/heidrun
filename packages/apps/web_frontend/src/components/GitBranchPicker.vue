@@ -126,7 +126,7 @@ function chooseFirst() {
           <div v-for="branch in shownBranches" :key="branch.name" class="branch-item">
             <button
               type="button"
-              class="list-group-item list-group-item-action branch-row d-flex flex-column text-start"
+              class="list-action list-group-item list-group-item-action branch-row d-flex flex-column text-start"
               role="option"
               :aria-selected="branch.is_current"
               :data-branch="branch.name"
@@ -192,5 +192,5 @@ function chooseFirst() {
   display: flex; align-items: center; justify-content: center;
 }
 /* The application never fades a disabled button, so the link of a branch that is only local fades itself. */
-.branch-link:disabled { opacity: 0.35; cursor: default; }
+.branch-link:disabled { cursor: default; }
 </style>

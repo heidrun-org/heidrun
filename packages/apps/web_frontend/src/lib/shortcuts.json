@@ -37,11 +37,11 @@
     "items": [
       {
         "keys": "⌘T",
-        "actionKey": "action.newTerminal"
+        "actionKey": "action.newTab"
       },
       {
         "keys": "⇧⌘T",
-        "actionKey": "action.newAgent"
+        "actionKey": "action.newTerminal"
       },
       {
         "keys": "⌘D / ⇧⌘D",
@@ -49,7 +49,7 @@
       },
       {
         "keys": "⌘W ⌘W",
-        "actionKey": "action.closePane"
+        "actionKey": "action.closeTab"
       }
     ]
   },

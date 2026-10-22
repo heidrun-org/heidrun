@@ -319,12 +319,12 @@ describe('GenerateChangeLog', () => {
 
 	describe('the script in a new process', () => {
 		beforeAll(() => {
-			// The option --ai runs the executable of the package raw_coding_agent_cli with `cargo run`. Building it here, once,
+			// The option --ai runs the executable of the package coding_agent_cli with `cargo run`. Building it here, once,
 			// keeps the compilation out of the tests, which then run the executable that is already built.
-			const packagePath = Path.join(__dirname, '..', '..', '..', 'auxiliary', 'raw_coding_agent_cli');
+			const packagePath = Path.join(__dirname, '..', '..', '..', 'auxiliary', 'coding_agent_cli');
 			const build = ChildProcess.spawnSync('cargo', ['build', '--quiet'], { cwd: packagePath, encoding: 'utf8' });
 			if (build.status !== 0) {
-				throw new Error(`The build of raw_coding_agent_cli failed.\n${build.stderr}`);
+				throw new Error(`The build of coding_agent_cli failed.\n${build.stderr}`);
 			}
 		}, 600_000);
 
@@ -336,7 +336,7 @@ describe('GenerateChangeLog', () => {
 			expect(Fs.readFileSync(Path.join(repositoryPath, 'CHANGELOG.md'), 'utf8')).toContain(MECHANICAL_SECTION);
 		});
 
-		it('runs the real executable of raw_coding_agent_cli with the option --ai, with codex by default', () => {
+		it('runs the real executable of coding_agent_cli with the option --ai, with codex by default', () => {
 			const repositoryPath = TestRepository.createWithRelease();
 			const promptFilePath = Path.join(Os.tmpdir(), `change_log_prompt_${process.pid}_codex.txt`);
 			const result = ScriptRunner.run(repositoryPath, ['--ai'], promptFilePath);

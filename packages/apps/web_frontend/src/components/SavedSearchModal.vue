@@ -1,11 +1,13 @@
 <script setup lang="ts">
 // The window "Save this search" and the window "Edit the saved search" of the Code hosting sidebar section: one modal
 // window that opens over the application. In the mode "save", it asks for the name of a search. In the mode "edit", it
-// changes the name and the search of a saved search, or deletes it, after a confirmation dialog.
+// changes the name and the search of a saved search, or deletes it, after a confirmation dialog. It works for one list,
+// and it shows the title of this list.
 // - issue #378
+// - issue #607
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "./Icon.vue";
-import { codeHosting, searchCodeHosting } from "../stores/code_hosting";
+import { codeHosting, codeHostingGroupTitle, searchCodeHosting } from "../stores/code_hosting";
 import { deleteSavedSearch, saveSearch, updateSavedSearch } from "../stores/code_hosting_searches";
 import { askConfirm } from "../stores/confirm";
 import { currentGit } from "../stores/git";
@@ -16,11 +18,22 @@ import { t } from "../i18n/index";
 /** True for the window "Edit the saved search", false for the window "Save this search". */
 const isEdit = savedSearchModal.mode === "edit";
 
+/** The list that the window works for. */
+const group = savedSearchModal.group;
+
+/** The title of the list that the window works for: "Issues", "Pull requests", or "Merge requests". */
+const groupTitle = codeHostingGroupTitle(group, codeHosting.forge);
+
+/** The saved searches of the list that the window works for. */
+function savedSearches() {
+  return settings.codeHostingSavedSearches[group];
+}
+
 /** In the mode "edit": the name of the saved search that the window edits, as it was when the window opened. */
 const editedName = savedSearchModal.name;
 
 /** In the mode "edit": the saved search that the window edits, or undefined when it no longer exists. */
-const editedSaved = settings.codeHostingSavedSearches.find((saved) => saved.name === editedName);
+const editedSaved = savedSearches().find((saved) => saved.name === editedName);
 
 /** The text of the field "Name". */
 const nameText = ref(isEdit ? (editedSaved?.name ?? "") : "");
@@ -39,7 +52,7 @@ const cleanQuery = computed(() => queryText.value.trim());
 
 /** The place of the edited saved search in the list, or -1 when it no longer exists. */
 function editedIndex(): number {
-  return settings.codeHostingSavedSearches.findIndex((saved) => saved.name === editedName);
+  return savedSearches().findIndex((saved) => saved.name === editedName);
 }
 
 /** In the mode "edit": the reason why the window cannot save, or an empty text. */
@@ -54,7 +67,7 @@ const problem = computed((): string => {
     return t("savedSearchModal.problemQueryEmpty");
   }
   const index = editedIndex();
-  const isUsed = settings.codeHostingSavedSearches.some((saved, savedIndex) => {
+  const isUsed = savedSearches().some((saved, savedIndex) => {
     return savedIndex !== index && saved.name === cleanName.value;
   });
   return isUsed ? t("savedSearchModal.problemNameUsed") : "";
@@ -65,7 +78,7 @@ const canSave = computed(() => (isEdit ? problem.value === "" : cleanName.value 
 
 /** In the mode "save": another saved search has the name, so "Save" replaces its search. */
 const isReplacing = computed(() => {
-  return isEdit === false && settings.codeHostingSavedSearches.some((saved) => saved.name === cleanName.value);
+  return isEdit === false && savedSearches().some((saved) => saved.name === cleanName.value);
 });
 
 /**
@@ -74,7 +87,7 @@ const isReplacing = computed(() => {
  * @returns nothing
  */
 async function runSearch(query: string): Promise<void> {
-  await searchCodeHosting(currentGit.value?.root ?? null, query);
+  await searchCodeHosting(currentGit.value?.root ?? null, group, query);
 }
 
 /**
@@ -87,9 +100,9 @@ async function submit(): Promise<void> {
     return;
   }
   if (isEdit === false) {
-    saveSearch(cleanName.value, cleanQuery.value);
+    saveSearch(group, cleanName.value, cleanQuery.value);
     closeSavedSearchModal();
-    if (codeHosting.search !== cleanQuery.value) {
+    if (codeHosting.search[group] !== cleanQuery.value) {
       await runSearch(cleanQuery.value);
     }
     return;
@@ -99,9 +112,9 @@ async function submit(): Promise<void> {
     closeSavedSearchModal();
     return;
   }
-  const oldQuery = settings.codeHostingSavedSearches[index].query;
-  const wasRunning = codeHosting.search === oldQuery;
-  updateSavedSearch(index, cleanName.value, cleanQuery.value);
+  const oldQuery = savedSearches()[index].query;
+  const wasRunning = codeHosting.search[group] === oldQuery;
+  updateSavedSearch(group, index, cleanName.value, cleanQuery.value);
   closeSavedSearchModal();
   if (wasRunning && cleanQuery.value !== oldQuery) {
     await runSearch(cleanQuery.value);
@@ -124,7 +137,7 @@ async function remove(): Promise<void> {
   }
   const index = editedIndex();
   if (index !== -1) {
-    deleteSavedSearch(index);
+    deleteSavedSearch(group, index);
   }
   closeSavedSearchModal();
 }
@@ -164,7 +177,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <h2>{{ t(isEdit ? "savedSearchModal.titleEdit" : "savedSearchModal.titleSave") }}</h2>
         <button
           type="button"
-          class="close"
+          class="btn icon close"
           :title="t('savedSearchModal.closeTitle')"
           :aria-label="t('savedSearchModal.closeLabel')"
           @click="closeSavedSearchModal()"
@@ -174,11 +187,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
       </header>
 
       <div class="content">
+        <div class="field-label">{{ t("savedSearchModal.list") }}</div>
+        <div class="list-title" data-saved-search-list>{{ groupTitle }}</div>
         <label class="field-label" for="saved-search-name">{{ t("savedSearchModal.name") }}</label>
-        <input id="saved-search-name" ref="nameField" v-model="nameText" spellcheck="false" autocomplete="off" />
+        <input class="form-control" id="saved-search-name" ref="nameField" v-model="nameText" spellcheck="false" autocomplete="off" />
         <template v-if="isEdit">
           <label class="field-label" for="saved-search-query">{{ t("savedSearchModal.search") }}</label>
-          <input id="saved-search-query" v-model="queryText" class="mono" spellcheck="false" autocomplete="off" />
+          <input id="saved-search-query" v-model="queryText" class="form-control mono" spellcheck="false" autocomplete="off" />
         </template>
         <template v-else>
           <div class="field-label">{{ t("savedSearchModal.search") }}</div>
@@ -211,26 +226,21 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
 :where(button:not(.btn)) { background: transparent; border: 0; }
-.overlay { position: fixed; inset: 0; z-index: 57; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
+.overlay { position: fixed; inset: 0; z-index: 57; background: var(--shadow); display: flex; align-items: center; justify-content: center; padding: 32px; }
 .window-box {
   width: min(520px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow);
 }
 header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 h2 { flex: 1; margin: 0; font-size: var(--font-size); font-weight: 600; }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
 .content { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
 .field-label { color: var(--muted); font-size: calc(var(--font-size) * 0.85); }
-.content input {
-  height: 32px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--bg);
-  outline: none; font-size: var(--font-size);
-}
+.list-title { font-weight: 600; }
+.content input { height: 32px; }
 .content input.mono { font-family: var(--mono); }
 .query { padding: 6px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--bg); font-family: var(--mono); font-size: var(--font-size); overflow-wrap: anywhere; user-select: text; }
 .problem { color: var(--fail); font-size: calc(var(--font-size) * 0.85); }
 .hint { color: var(--muted); font-size: calc(var(--font-size) * 0.85); }
 .row { display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px; }
-.delete { margin-right: auto; color: var(--fail); }
-.btn:disabled { opacity: 0.5; cursor: default; }
+.delete { margin-right: auto; }
 </style>

@@ -7,14 +7,17 @@ The scripts that the maintainers run from the root of the repository: the releas
 - `release_dmg.ts`: builds the macOS disk image and uploads it to the GitHub release, twice: with its version in its name, and as `Heidrun_aarch64.dmg`, the file that `install.sh` downloads. Command: `pnpm release:dmg`.
 - `shortcuts-readme.mjs`: writes the page of shortcuts of the website. Command: `pnpm docs:shortcuts`.
 - `identity-texts.mjs`: writes the title, the motto, and the description of Heidrun from `data/identity.json` into `README.md`, and the description into `AGENTS.md` and `docs/release_notes/prefix.md`. Command: `pnpm docs:identity`.
-- `install.sh`: installs the latest Heidrun in `/Applications`, with no macOS message "damaged". The users run it with `curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh`, so this path never changes. Its tests are the package `packages/dev_tools/install_script_tests`.
+- `install.sh`: installs the latest Heidrun in `/Applications`, with no macOS message "damaged", and links its command lines in `~/.local/bin`. The users run it with `curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh`, so this path never changes. Its tests are the package `packages/dev_tools/install_script_tests`.
+- `build_command_line_tools.sh`: builds `heidrun_ctrl` and `heidrun_data` into the resources of the Heidrun application bundle before Tauri packages the app.
 - `claude-statusline.sh`: the status line of Claude Code for this repository.
+- `antigravity-statusline.sh`: reports Antigravity quota to Herdr and keeps the previous Antigravity status line visible.
 
 ## Rules
 - A script that needs its own dependencies, tests, or several files is a full npm package in the folder `packages/dev_tools`, not in this folder. See the `CONTEXT.md` of that folder.
 - A script reads the repository from the folder where it runs.
 - `install.sh` uses only the commands of macOS and `curl`, and runs with `sh`, because the users pipe it to `sh`.
 - `install.sh` downloads only the file `Heidrun_aarch64.dmg` of the latest release, and `release_dmg.ts` must upload that file with every release.
+- `install.sh` links the bundled command lines without replacing an existing program in `~/.local/bin`.
 
 ## Background
 - `install.sh` comes from [issue #515](https://github.com/heidrun-org/heidrun/issues/515). `curl` puts no quarantine mark on a file, so macOS does not check the signature of the application.

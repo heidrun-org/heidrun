@@ -68,7 +68,7 @@ function sendTo(n: Note, paneId: string) {
           @cancel="renaming = null"
         />
         <h3 v-else :title="t('notesPanel.doubleClickToRename')" @dblclick="renaming = n.id">{{ n.title }}</h3>
-        <button class="tool" :aria-label="t('notesPanel.openLarge')" :title="t('notesPanel.openLarge')" @click="notes.openId = n.id">
+        <button class="btn icon small tool" :aria-label="t('notesPanel.openLarge')" :title="t('notesPanel.openLarge')" @click="notes.openId = n.id">
           <Icon name="arrows-angle-expand" />
         </button>
         <ConfirmButton icon="x-lg" :confirm-label="t('notesPanel.deleteConfirm')" :question="t('notesPanel.deleteNote')" @confirm="removeNote(n.id)" />
@@ -81,7 +81,7 @@ function sendTo(n: Note, paneId: string) {
         <select
           v-if="agents.length"
           :id="`send-${n.id}`"
-          class="send"
+          class="form-control send"
           @change="(e) => { sendTo(n, (e.target as HTMLSelectElement).value); (e.target as HTMLSelectElement).value = ''; }"
         >
           <option value="">{{ t("notesPanel.sendTo") }}</option>
@@ -102,11 +102,7 @@ kbd { font-family: var(--mono); color: var(--text-2); }
 .note header { display: flex; align-items: center; gap: 6px; }
 h3 { flex: 1; min-width: 0; margin: 0; font-size: var(--font-size); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: text; }
 .origin { font-size: var(--font-size); color: var(--muted); }
-.tool {
-  width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.tool:hover { background: var(--hover); color: var(--text); }
+.tool { display: inline-flex; align-items: center; justify-content: center; }
 pre {
   margin: 0; padding: 8px 10px; border-radius: 7px; background: var(--bg); color: var(--text-2);
   font-size: var(--font-size); line-height: 1.5; white-space: pre-wrap; word-break: break-word;
@@ -114,10 +110,7 @@ pre {
 }
 pre.open { max-height: none; }
 .actions { display: flex; gap: 6px; }
-.send {
-  flex: 1; height: 30px; border-radius: 7px; border: 1px solid var(--line-strong); background: transparent;
-  color: var(--text-2); font-size: var(--font-size); padding: 0 8px;
-}
+.send { flex: 1; height: 30px; }
 .dragging { opacity: 0.4; }
 .drop-before, .drop-after { position: relative; }
 .drop-before::before, .drop-after::after {
@@ -125,6 +118,6 @@ pre.open { max-height: none; }
 }
 .drop-before::before { top: -5px; }
 .drop-after::after { bottom: -5px; }
-.grip { color: var(--faint); cursor: grab; font-size: var(--font-size); letter-spacing: -2px; padding: 0 2px; user-select: none; }
+.grip { color: var(--muted); cursor: grab; font-size: var(--font-size); letter-spacing: -2px; padding: 0 2px; user-select: none; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

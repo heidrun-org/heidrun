@@ -2,10 +2,10 @@
 //!
 //! The web frontend knows which command line prints the models of each coding agent, for example `codex debug models`,
 //! and how to read the output. This file does only what the web frontend cannot do: it runs the command line on this
-//! computer, with the function `run_tool` of the package `raw_coding_agent_cli`. The call goes through the login shell, so
+//! computer, with the function `run_tool` of the package `coding_agent_cli`. The call goes through the login shell, so
 //! the commands that the developer installed are found.
 
-use raw_coding_agent_cli::{run_tool, AgentShell};
+use coding_agent_cli::{run_tool, AgentShell};
 
 /// How long the call waits for the command line, in seconds.
 const MODELS_TIMEOUT: u64 = 15;

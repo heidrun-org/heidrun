@@ -63,11 +63,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </div>
         <div class="tools">
           <div class="seg" role="radiogroup" :aria-label="t('issueModal.readingWidth')">
-            <button :title="t('issueModal.centeredTitle')" :class="{ on: settings.mdWidth === 'center' }" @click="settings.mdWidth = 'center'">{{ t("issueModal.centered") }}</button>
-            <button :title="t('issueModal.fullWidthTitle')" :class="{ on: settings.mdWidth === 'full' }" @click="settings.mdWidth = 'full'">{{ t("issueModal.fullWidth") }}</button>
+            <button class="btn small" :title="t('issueModal.centeredTitle')" :class="{ on: settings.mdWidth === 'center' }" @click="settings.mdWidth = 'center'">{{ t("issueModal.centered") }}</button>
+            <button class="btn small" :title="t('issueModal.fullWidthTitle')" :class="{ on: settings.mdWidth === 'full' }" @click="settings.mdWidth = 'full'">{{ t("issueModal.fullWidth") }}</button>
           </div>
           <button :title="t('issueModal.openTitle')" v-if="webUrl" class="btn" @click="openUrl(webUrl!)">{{ t("issueModal.openOn", { forge: forgeName }) }} <Icon name="box-arrow-up-right" /></button>
-          <button :title="t('issueModal.closeTitle')" class="close" :aria-label="t('issueModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
+          <button :title="t('issueModal.closeTitle')" class="btn icon close" :aria-label="t('issueModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
         </div>
       </header>
 
@@ -101,10 +101,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 55; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; }
+.overlay { position: fixed; inset: 0; z-index: 55; background: var(--overlay); display: flex; align-items: center; justify-content: center; }
 .window-box {
   outline: none; width: 94vw; height: 90vh; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
-  background: var(--panel); border: 1px solid var(--line-modal); box-shadow: 0 24px 72px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-modal); box-shadow: 0 24px 72px var(--shadow);
 }
 .top { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .title { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
@@ -112,13 +112,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .label { font-size: var(--font-size); padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--text-2); }
 .chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: var(--font-size); font-weight: 600; background: var(--chip); color: var(--text-2); }
 .chip.ok { background: var(--tint-ok); color: var(--ok); } .chip.merged { background: var(--tint-merged); color: var(--question); }
-.chip.crit { background: var(--tint-crit); color: var(--blocked); } .chip.muted { color: var(--muted); }
+.chip.crit { background: var(--tint-crit); color: var(--blocked-text); } .chip.muted { color: var(--muted); }
 .tools { display: flex; align-items: center; gap: 8px; }
 .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; }
-.seg button { border: none; background: transparent; color: var(--muted); font-size: var(--font-size); padding: 4px 10px; border-radius: 6px; }
-.seg button.on { background: var(--hover); color: var(--text); }
-.close { width: 30px; height: 30px; border: none; border-radius: 8px; background: transparent; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
 .scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 40px 60px; }
 .scroll .md-doc { font-size: inherit; }
 .head-doc .t { border: none; margin-bottom: 0.2em; }

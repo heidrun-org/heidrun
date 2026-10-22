@@ -7,5 +7,7 @@
   "default.reviewMergeRequestDescription": "Security, bugs, tests, summary",
   "default.handoverNoteDescription": "Commit, then write what is done and what remains",
   "default.progressDescription": "Five lines on what is done and what remains",
-  "default.explainSelectionDescription": "Explain the selected text"
+  "default.explainSelectionDescription": "Explain the selected text",
+  "personalFileInvalid": "The file of the personal macros cannot be read, so nothing is saved: {reason}",
+  "personalFileNotRead": "Heidrun is still reading the file of the personal macros. Try again in a moment."
 }

@@ -134,7 +134,7 @@ onBeforeUnmount(() => {
   <button
     ref="button"
     type="button"
-    class="btn history-button justify-content-center"
+    class="btn icon history-button"
     :data-direction="direction"
     :aria-label="t(isBack ? 'paneFocusHistoryButton.backLabel' : 'paneFocusHistoryButton.forwardLabel')"
     :title="t(isBack ? 'paneFocusHistoryButton.backTitle' : 'paneFocusHistoryButton.forwardTitle')"
@@ -171,12 +171,5 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.history-button {
-  --btn-padding-x: 0;
-  --btn-border-width: 0;
-  --btn-color: var(--muted);
-  --btn-hover-color: var(--text);
-  --btn-disabled-color: var(--faint);
-  width: 30px;
-}
+.history-button { width: 30px; }
 </style>

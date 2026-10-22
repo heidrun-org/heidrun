@@ -1,17 +1,18 @@
 # Directory Context: `/packages/data_layers/data_layer_code_hosting`
 
 ## Purpose
-A Rust library and a command line tool that read every issue and every pull request of a GitHub repository, and write the facts of each one in two tables of a SQLite file. It is the Code hosting source of the data layer of Heidrun. The desktop application can use the library. The name `data_layer_code_hosting` is the name of the package and the name of the executable.
+The Code hosting source of Heidrun: reads GitHub issues and pull requests into SQLite. The library and executable are named `data_layer_code_hosting`; desktop callers use `refresh_code_hosting` and `find_*`.
 
 ## Key Exports & Entry Points
-- `src/lib.rs`: the only public interface of the library. It exports `CodeHostingDatabase`, `GithubReader`, `GraphqlRunner`, `GhGraphqlRunner`, `synchronize`, `to_table`, `to_json`, `find_repository`, `default_database_path`, `validate_issue_value`, `validate_pull_request_value`, and the data types.
+- `src/lib.rs`: the only public interface; its `pub use` lines list the readers, databases, synchronization and query functions, schemas, and data types.
+- `src/refresh.rs`: changed issues and pull requests. `src/query.rs`: stored rows by date or number, with empty answers for absent tables.
 - `src/main.rs`: the command line, and the executable `data_layer_code_hosting`. The module `src/command_line.rs` reads its arguments.
 - `src/github/`: the reading of the issues and of the pull requests of GitHub, through a `GraphqlRunner` — see its own CONTEXT.md.
 - `src/storage/`: the SQLite file, and the text form of the rows of a query — see its own CONTEXT.md.
 - `src/model/`: the data types, and the JSON schema checks — see its own CONTEXT.md.
 - `src/synchronization.rs`: the two modes, `initialize` and `update`.
 - `schemas/`: the two JSON schema files `issue.schema.json` and `pull_request.schema.json`. They are the only place that says which fields the database stores.
-- `tests/`: the tests of the executable, with a fake `gh` command put at the start of the PATH. The tests of the library sit at the end of each source file, and `src/test_samples.rs` holds their sample data and their fake GitHub.
+- `tests/`: executable tests; library tests sit beside their implementation.
 - Command to run this folder: `pnpm --silent data_layer:code_hosting --help`
 - Command to test this folder: `pnpm --filter data_layer_code_hosting test`
 
@@ -22,15 +23,16 @@ A Rust library and a command line tool that read every issue and every pull requ
 - The date of the last read is the largest `updatedAt` of the table for the repository. The package keeps no other state, and no extra table.
 - Only `src/github/graphql_runner.rs` runs the command `gh`. The tests give a fake runner or a fake `gh` command, so they need no network.
 - The package stores facts only: no review, no reaction, no milestone, and no comment text.
-- `query` and `CodeHostingDatabase::query` only work on a database that is open read only, so a query never changes the file and never creates it. `src/storage/query_formatter.rs` only turns rows into text.
-- The default SQLite file is `~/.config/heidrun/data_layer.sqlite`. The option `--database` changes it.
-- The option `--verbose` prints the progress on the standard error output. The code sends the progress lines to a log function and never prints them itself, except `src/main.rs`.
+- `query` and `CodeHostingDatabase::query` open SQLite read only, never changing or creating a file; `src/storage/query_formatter.rs` only formats rows.
+- The default SQLite file is `data_layer.sqlite` in `HEIDRUN_DIR`, or `~/.config/heidrun/data_layer.sqlite` when the variable is unset or empty. The option `--database` changes it.
+- `--verbose` sends progress through a log function; only `src/main.rs` prints it.
 - The folder `src/model/` imports from no other folder of `src/`. The folder `src/github/` and the folder `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` uses `src/github/` and `src/storage/` together.
-- The library calls are blocking. The package imports nothing from another package of the repository, and it knows nothing about Tauri.
-- The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`, so the folder that `pnpm worktree:create` clones is the only one. Cargo reads this file only when it runs inside this folder.
+- Calls are blocking; the package imports only `data_layer_operation_log` from other repository packages and knows nothing about Tauri. Every public function records its operation and tests its events ([rule](../../../docs/agents_rules/data_layer_operation_log.md)).
+- `.cargo/config.toml` selects the target folder of `desktop_tauri`, cloned by `pnpm worktree:create`; Cargo reads this configuration only from inside the package.
+- Desktop callers use only `refresh_*` and `find_*`, as [data_layer_access.md](../../../docs/agents_rules/data_layer_access.md) requires; `data_layer_boundary_checker` enforces the boundary.
 
 ## Background
 - The package comes from [issue #455](https://github.com/heidrun-org/heidrun/issues/455). The data layer as a whole is [issue #452](https://github.com/heidrun-org/heidrun/issues/452).
-- The package was first written in TypeScript, and then rewritten in Rust, because the application cannot run TypeScript. Both versions wrote the same bytes in the database for all the 255 issues and the 199 pull requests of this repository.
 - The field `closingIssuesReferences` of GitHub is empty for every pull request here, because the pull requests merge into `dev_jerome` and not into `main`. The link from a pull request to its issue is the text `Fixes #N` in the `body`.
 - The support for GitLab is not written yet.
+- Operation logging follows [data_layer_operation_log](../data_layer_operation_log/CONTEXT.md).

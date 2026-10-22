@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
-import { FOLDER_URL, RESULT, prepare } from "./skills_test_support";
+import { FOLDER_URL, GITLAB_URL, LOCAL_PATH, RESULT, pending, prepare } from "./skills_test_support";
 
 const invoke = vi.hoisted(() => vi.fn());
+const chooseFolder = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
+vi.mock("@tauri-apps/plugin-dialog", () => ({ open: chooseFolder }));
 
 beforeEach(() => {
   localStorage.clear();
@@ -20,21 +22,63 @@ async function mountFind(answers: Record<string, unknown> = {}) {
   return { wrapper: mount(FindSkills), ...prepared };
 }
 
-describe("FindSkills", () => {
-  it("shows the search field", async () => {
+describe("FindSkills: the line Source of the skill", () => {
+  it("shows three buttons: skills.sh, Local folder, Code hosting", async () => {
     const { wrapper } = await mountFind();
+    expect(wrapper.findAll(".sourceChoice label").map((label) => label.text())).toEqual(["skills.sh", "Local folder", "Code hosting"]);
+  });
+
+  it("starts on skills.sh, with the field of the search", async () => {
+    const { wrapper } = await mountFind();
+    const radios = wrapper.findAll(".sourceChoice input[type=radio]");
+    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([true, false, false]);
+    expect(wrapper.find(".search").exists()).toBe(true);
+    expect(wrapper.find("input[placeholder='/Users/you/skills/pdf']").exists()).toBe(false);
+  });
+
+  it("shows the field of the chosen source, and only that field", async () => {
+    const { wrapper } = await mountFind();
+    await wrapper.findAll(".sourceChoice input[type=radio]")[1].setValue(true);
+    expect(wrapper.find(".search").exists()).toBe(false);
+    expect(wrapper.findAll("button").map((button) => button.text())).toContain("Choose folder…");
+    await wrapper.findAll(".sourceChoice input[type=radio]")[2].setValue(true);
+    expect(wrapper.findAll("button").map((button) => button.text())).not.toContain("Choose folder…");
+    expect(wrapper.find("input[type=text]").exists()).toBe(true);
+    await wrapper.findAll(".sourceChoice input[type=radio]")[0].setValue(true);
     expect(wrapper.find(".search").exists()).toBe(true);
   });
 
-  it("shows a magnifying glass at the start of the field, and the hint about the web address below it", async () => {
+  it("keeps the text of each source when the developer goes to another source and comes back", async () => {
+    const { wrapper } = await mountFind({ skills_search: [RESULT] });
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      await wrapper.get(".search").setValue("docx");
+      vi.advanceTimersByTime(300);
+    } finally {
+      vi.useRealTimers();
+    }
+    await flushPromises();
+    expect(wrapper.findAll(".list .row")).toHaveLength(1);
+    await wrapper.findAll(".sourceChoice input[type=radio]")[2].setValue(true);
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
+    await wrapper.findAll(".sourceChoice input[type=radio]")[0].setValue(true);
+    await flushPromises();
+    expect((wrapper.get(".search").element as HTMLInputElement).value).toBe("docx");
+    expect(wrapper.findAll(".list .row")).toHaveLength(1);
+  });
+});
+
+describe("FindSkills: source skills.sh", () => {
+  it("shows a magnifying glass at the start of the field, a visible label above it, and the help below the label", async () => {
     const { wrapper } = await mountFind();
     const field = wrapper.get(".searchField");
     expect(field.find(".bi-search").exists()).toBe(true);
-    expect(field.find(".search").exists()).toBe(true);
-    const hint = wrapper.get(".hint");
-    expect(hint.text()).toBe("You can also paste the web address of a skill folder in a GitHub repository.");
-    expect(wrapper.get(".search").attributes("aria-describedby")).toBe(hint.attributes("id"));
-    expect(field.element.nextElementSibling).toBe(hint.element);
+    const label = wrapper.get("label[for]");
+    expect(label.text()).toBe("Search on skills.sh");
+    expect(wrapper.get(".search").attributes("id")).toBe(label.attributes("for"));
+    const help = wrapper.get(".form-text");
+    expect(help.text()).toBe("Type a word. The search starts when you stop typing.");
+    expect(wrapper.get(".search").attributes("aria-describedby")).toBe(help.attributes("id"));
   });
 
   it("lists the results of the search", async () => {
@@ -46,26 +90,12 @@ describe("FindSkills", () => {
     expect(wrapper.get(".row").text()).toContain("anthropics/skills · 198,891 installs");
   });
 
-  it("shows one result for the web address of a skill folder, and does not search on skills.sh", async () => {
-    const { wrapper, skills } = await mountFind({ skills_search: [RESULT] });
+  it("does not search on skills.sh for a web address, because the web address belongs to Code hosting", async () => {
+    const { wrapper, skills } = await mountFind({ skills_search: [] });
     await skills.searchSkills(FOLDER_URL);
     await flushPromises();
-    expect(invoke).not.toHaveBeenCalledWith("skills_search", expect.anything());
-    const rows = wrapper.findAll(".list .row");
-    expect(rows).toHaveLength(1);
-    expect(rows[0].get(".name").text()).toBe("pdf");
-    expect(rows[0].get(".sub").text()).toBe("anthropics/skills · GitHub folder");
-    const buttons = rows[0].findAll("button").map((button) => button.text());
-    expect(buttons).toEqual(["Inspect", "Install"]);
-  });
-
-  it("goes back to the search on skills.sh when the text is not a web address of a skill folder", async () => {
-    const { wrapper, skills } = await mountFind({ skills_search: [RESULT] });
-    await skills.searchSkills(FOLDER_URL);
-    await skills.searchSkills("https://github.com/anthropics/skills");
-    await flushPromises();
-    expect(invoke).toHaveBeenCalledWith("skills_search", { query: "https://github.com/anthropics/skills" });
-    expect(wrapper.get(".row").text()).toContain("198,891 installs");
+    expect(invoke).toHaveBeenCalledWith("skills_search", { query: FOLDER_URL });
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
   });
 
   it("says that nothing was found", async () => {
@@ -73,7 +103,12 @@ describe("FindSkills", () => {
     await skills.searchSkills("zzz");
     await flushPromises();
     expect(wrapper.find(".list").exists()).toBe(false);
-    expect(wrapper.get(".keys").text()).toBe("No skill found.");
+    expect(wrapper.findAll("p.keys").map((line) => line.text())).toEqual(["No skill found."]);
+  });
+
+  it("says No result yet while nothing was asked", async () => {
+    const { wrapper } = await mountFind();
+    expect(wrapper.findAll("p.keys").map((line) => line.text())).toEqual(["No result yet."]);
   });
 
   it("shows the error of the search", async () => {
@@ -102,5 +137,185 @@ describe("FindSkills", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("clears the result when the field is emptied", async () => {
+    const { wrapper, skills } = await mountFind({ skills_search: [RESULT] });
+    await skills.searchSkills("docx");
+    await flushPromises();
+    await skills.searchSkills("");
+    await flushPromises();
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
+    expect(wrapper.get("p.keys").text()).toBe("No result yet.");
+  });
+
+  it("ignores an answer that comes after the developer chose another source", async () => {
+    const { wrapper, skills } = await mountFind();
+    const slow = pending();
+    invoke.mockImplementation(async (command: string) => (command === "skills_search" ? slow.promise : []));
+    const search = skills.searchSkills("docx");
+    await skills.setSkillSource("codeHosting");
+    slow.finish([RESULT]);
+    await search;
+    await flushPromises();
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
+    expect(skills.skills.results).toEqual([]);
+  });
+});
+
+describe("FindSkills: source Local folder", () => {
+  async function mountLocal(answers: Record<string, unknown> = {}) {
+    const mounted = await mountFind({ skills_preview_local_folder: "---\nname: pdf\n---", ...answers });
+    await mounted.wrapper.findAll(".sourceChoice input[type=radio]")[1].setValue(true);
+    return mounted;
+  }
+
+  it("shows a visible label, the help below the label, a text field, and the button Choose folder", async () => {
+    const { wrapper } = await mountLocal();
+    const label = wrapper.get("label[for]");
+    expect(label.text()).toBe("Folder of the skill");
+    const input = wrapper.get("input[type=text]");
+    expect(input.attributes("id")).toBe(label.attributes("for"));
+    expect(input.attributes("placeholder")).toBe("/Users/you/skills/pdf");
+    expect(wrapper.get(".form-text").text()).toBe("The folder that holds the file SKILL.md.");
+    expect(input.attributes("aria-describedby")).toBe(wrapper.get(".form-text").attributes("id"));
+    expect(wrapper.findAll("button").map((button) => button.text())).toEqual(["Choose folder…"]);
+  });
+
+  it("checks the folder 300 milliseconds after the last key typed, and shows one row", async () => {
+    const { wrapper } = await mountLocal();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const input = wrapper.get("input[type=text]");
+      await input.setValue("/Users/me");
+      await input.setValue(LOCAL_PATH);
+      vi.advanceTimersByTime(299);
+      expect(invoke).not.toHaveBeenCalledWith("skills_preview_local_folder", expect.anything());
+      vi.advanceTimersByTime(1);
+    } finally {
+      vi.useRealTimers();
+    }
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_preview_local_folder", { path: LOCAL_PATH });
+    expect(invoke).not.toHaveBeenCalledWith("skills_preview_local_folder", { path: "/Users/me" });
+    const rows = wrapper.findAll(".list .row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].get(".name").text()).toBe("pdf");
+    expect(rows[0].get(".sub").text()).toBe(`${LOCAL_PATH} · Local folder`);
+    expect(rows[0].findAll("button").map((button) => button.text())).toEqual(["Inspect", "Install"]);
+  });
+
+  it("shows the error of the backend when the folder has no SKILL.md file", async () => {
+    const { wrapper, skills } = await mountLocal();
+    invoke.mockImplementation(async () => {
+      throw `skills_local_folder_no_skill_file: ${LOCAL_PATH}`;
+    });
+    await skills.findLocalFolder(LOCAL_PATH);
+    await flushPromises();
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
+    expect(wrapper.get(".err").text()).toBe(`This folder has no SKILL.md file: ${LOCAL_PATH}`);
+  });
+
+  it("shows the error of the backend when the folder does not exist", async () => {
+    const { wrapper, skills } = await mountLocal();
+    invoke.mockImplementation(async () => {
+      throw `skills_local_folder_not_found: ${LOCAL_PATH}`;
+    });
+    await skills.findLocalFolder(LOCAL_PATH);
+    await flushPromises();
+    expect(wrapper.get(".err").text()).toBe(`This folder was not found on this computer: ${LOCAL_PATH}`);
+  });
+
+  it("opens the folder chooser, and shows the row of the folder that the developer chooses", async () => {
+    const { wrapper } = await mountLocal();
+    chooseFolder.mockResolvedValue(LOCAL_PATH);
+    await wrapper.get("button").trigger("click");
+    await flushPromises();
+    expect(chooseFolder).toHaveBeenCalledWith(expect.objectContaining({ directory: true, multiple: false }));
+    expect((wrapper.get("input[type=text]").element as HTMLInputElement).value).toBe(LOCAL_PATH);
+    expect(invoke).toHaveBeenCalledWith("skills_preview_local_folder", { path: LOCAL_PATH });
+    expect(wrapper.findAll(".list .row")).toHaveLength(1);
+  });
+
+  it("changes nothing when the developer cancels the folder chooser", async () => {
+    const { wrapper } = await mountLocal();
+    chooseFolder.mockResolvedValue(null);
+    await wrapper.get("button").trigger("click");
+    await flushPromises();
+    expect(invoke).not.toHaveBeenCalledWith("skills_preview_local_folder", expect.anything());
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
+  });
+
+  it("clears the result when the field is emptied", async () => {
+    const { wrapper, skills } = await mountLocal();
+    await skills.findLocalFolder(LOCAL_PATH);
+    await flushPromises();
+    expect(wrapper.findAll(".list .row")).toHaveLength(1);
+    await skills.findLocalFolder("");
+    await flushPromises();
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
+    expect(wrapper.get("p.keys").text()).toBe("No result yet.");
+  });
+});
+
+describe("FindSkills: source Code hosting", () => {
+  async function mountCodeHosting() {
+    const mounted = await mountFind();
+    await mounted.wrapper.findAll(".sourceChoice input[type=radio]")[2].setValue(true);
+    return mounted;
+  }
+
+  it("shows a visible label, the help below the label, and a text field", async () => {
+    const { wrapper } = await mountCodeHosting();
+    const label = wrapper.get("label[for]");
+    expect(label.text()).toBe("Web address of the skill folder");
+    const input = wrapper.get("input[type=text]");
+    expect(input.attributes("id")).toBe(label.attributes("for"));
+    expect(input.attributes("placeholder")).toBe("https://github.com/owner/repository/tree/main/skills/pdf");
+    expect(input.attributes("aria-describedby")).toBe(wrapper.get(".form-text").attributes("id"));
+    expect(wrapper.find("button").exists()).toBe(false);
+  });
+
+  it("shows one row for a web address of a folder on GitHub, without any call to the backend", async () => {
+    const { wrapper } = await mountCodeHosting();
+    invoke.mockClear();
+    await wrapper.get("input[type=text]").setValue(FOLDER_URL);
+    expect(invoke).not.toHaveBeenCalled();
+    const rows = wrapper.findAll(".list .row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].get(".name").text()).toBe("pdf");
+    expect(rows[0].get(".sub").text()).toBe("anthropics/skills · GitHub folder");
+    expect(rows[0].findAll("button").map((button) => button.text())).toEqual(["Inspect", "Install"]);
+  });
+
+  it("shows one row for a web address of a folder on GitLab", async () => {
+    const { wrapper } = await mountCodeHosting();
+    await wrapper.get("input[type=text]").setValue(GITLAB_URL);
+    const rows = wrapper.findAll(".list .row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].get(".name").text()).toBe("pdf");
+    expect(rows[0].get(".sub").text()).toBe("acme/agent-skills · GitLab folder");
+  });
+
+  it("shows an error for a text that is not the web address of a skill folder, and no row", async () => {
+    const { wrapper } = await mountCodeHosting();
+    await wrapper.get("input[type=text]").setValue("https://github.com/anthropics/skills");
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
+    expect(wrapper.get(".err").text()).toBe(
+      "This is not the web address of a skill folder on GitHub or GitLab: https://github.com/anthropics/skills",
+    );
+  });
+
+  it("replaces the row at each key, and removes the error when the address becomes right", async () => {
+    const { wrapper } = await mountCodeHosting();
+    const input = wrapper.get("input[type=text]");
+    await input.setValue("https://gitlab.com/acme");
+    expect(wrapper.find(".err").exists()).toBe(true);
+    await input.setValue(GITLAB_URL);
+    expect(wrapper.find(".err").exists()).toBe(false);
+    expect(wrapper.findAll(".list .row")).toHaveLength(1);
+    await input.setValue("");
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
+    expect(wrapper.get("p.keys").text()).toBe("No result yet.");
   });
 });

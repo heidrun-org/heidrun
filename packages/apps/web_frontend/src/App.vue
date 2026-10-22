@@ -1,28 +1,30 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import TopBar from "./components/TopBar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import PaneGrid from "./components/PaneGrid.vue";
 import TabBar from "./components/TabBar.vue";
 import MacroEditor from "./components/MacroEditor.vue";
-import { macroEditor } from "./stores/macros";
+import { macroEditor, startMacros } from "./stores/macros";
 import RightPanel from "./components/RightPanel.vue";
 import NoteModal from "./components/NoteModal.vue";
 import Resizer from "./components/Resizer.vue";
 import RcModal from "./components/RcModal.vue";
 import ConfirmModal from "./components/ConfirmModal.vue";
 import DangerModal from "./components/DangerModal.vue";
+import GuardModal from "./components/GuardModal.vue";
 import GitModal from "./components/GitModal.vue";
 import { git, merging } from "./stores/git";
 import MergeModal from "./components/MergeModal.vue";
 import IssueModal from "./components/IssueModal.vue";
 import { issueView } from "./stores/issues";
-import NewAgentModal from "./components/NewAgentModal.vue";
-import { newAgent } from "./stores/agents";
+import WorkspaceFolderRecovery from './components/WorkspaceFolderRecovery.vue';
 import SearchModal from "./components/SearchModal.vue";
 import ColumnOfPinnedPanes from "./components/ColumnOfPinnedPanes.vue";
 import ShortcutsModal from "./components/ShortcutsModal.vue";
 import MosaicModal from "./components/MosaicModal.vue";
+import ImageViewer from "./components/ImageViewer.vue";
+import { CompositionBar, compositionBarsByPane } from './stores/composition_bar';
 import { mosaic } from "./stores/mosaic";
 import { activePaneId, allPinnedPanes } from "./stores/pinned_panes";
 import { goBackInPaneFocusHistory, goForwardInPaneFocusHistory } from "./stores/pane_focus_history";
@@ -35,7 +37,8 @@ import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
 import {
   allPanes,
-  closePane,
+  newTerminal,
+  closeTab,
   cycleTab,
   cycleWorkspace,
   selectWorkspaceAt,
@@ -46,7 +49,8 @@ import {
   state,
   toast,
 } from "./stores/session";
-import { startDefaultNewTab, startDefaultSplit } from "./stores/newPane";
+import { NewPane } from "./stores/new_pane";
+import { guardWindow } from "./stores/guard_window";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
 import { newCustomLauncherModal } from "./stores/newCustomLauncher";
@@ -54,6 +58,7 @@ import { savedSearchModal } from "./stores/saved_search_modal";
 import { findNewSkillsModal, installedSkillModal, skills } from "./stores/skills";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { ImageDrop } from "./lib/image_drop";
+import { DropTarget } from "./lib/drop_target";
 import Icon from "./components/Icon.vue";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
@@ -77,6 +82,7 @@ import InstalledSkillModal from "./components/InstalledSkillModal.vue";
 import FindNewSkillsModal from "./components/FindNewSkillsModal.vue";
 import FilesModal from "./components/FilesModal.vue";
 import AboutModal from "./components/AboutModal.vue";
+import MissingProgramsModal from "./components/MissingProgramsModal.vue";
 import ThreeJsDemoModal from "./components/ThreeJsDemoModal.vue";
 import { threeJsDemoModal } from "./stores/three_js_demo_modal";
 import StatisticsModal from "./components/StatisticsModal.vue";
@@ -84,20 +90,58 @@ import { statisticsModal } from "./stores/statistics_modal";
 import SplashScreen from "./components/SplashScreen.vue";
 import { files, openFiles } from "./stores/files";
 import { startMobile } from "./stores/mobile";
-import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
+import { claudeLink, disableClaudeLink, enableClaudeLink, loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
+import { loadAntigravityLink } from "./stores/antigravity";
 import { t } from "./i18n/index";
 import { ResizerWidth } from "./lib/resizer_width";
 import type { PaneOuterEdge } from "./lib/pane_separators";
+import { ZenMode } from "./stores/zen_mode";
 
 // The column of pinned panes never squeezes the panes of the selected tab below 420 px, whatever the window size.
 const winW = ref(window.innerWidth);
 const onResize = () => (winW.value = window.innerWidth);
+
+// Claude Code reports quota data through its status line. Keep that integration in step with Settings.
+let lastQuotaMonitoringRequest: boolean | undefined;
+watch(
+  () => [settings.quotaMonitoring && settings.ownedAgents.includes("claude"), claudeLink.loaded, claudeLink.installed, claudeLink.busy] as const,
+  ([enabled, loaded, installed, busy]) => {
+    if (!loaded || busy || lastQuotaMonitoringRequest === enabled) return;
+    if (enabled === installed) {
+      lastQuotaMonitoringRequest = enabled;
+      return;
+    }
+    lastQuotaMonitoringRequest = enabled;
+    if (enabled) void enableClaudeLink(false);
+    else void disableClaudeLink(false);
+  },
+);
 // A sidebar collapsed to the sidebar icon bar takes the width of the sidebar icon bar.
 const leftTakenWidth = computed(() => (settings.leftCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.leftWidth));
 const rightTakenWidth = computed(() => (settings.rightCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.rightWidth));
 const sides = computed(() => leftTakenWidth.value + (state.snapshot ? rightTakenWidth.value : 0));
 const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(settings.columnOfPinnedPanesWidth, winW.value - sides.value - 420)));
 const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
+const isZenPanePinned = computed(() => allPinnedPanes.value.some((pane) => pane.pane_id === ZenMode.state.paneId));
+const compositionViewerPaneId = computed(() => {
+  const paneId = Object.keys(compositionBarsByPane).find(
+    (candidatePaneId) => compositionBarsByPane[candidatePaneId]?.viewerIndex !== null,
+  );
+  return paneId ?? null;
+});
+
+watch(
+  () => allPanes.value.map((pane) => pane.pane_id),
+  (paneIds) => {
+    const existingPaneIds = new Set(paneIds);
+    for (const paneId of Object.keys(compositionBarsByPane)) {
+      if (existingPaneIds.has(paneId) === false) {
+        ImageDrop.close(paneId);
+        CompositionBar.removePane(paneId);
+      }
+    }
+  },
+);
 
 // The three columns that the user drags, and the width that the other columns take away from each of them.
 const LEFT_COLUMN = { min: 200, defaultWidth: 280 };
@@ -169,7 +213,9 @@ function onKey(e: KeyboardEvent) {
     } else if (e.metaKey) e.preventDefault();
     return;
   }
-  if (!e.metaKey || e.ctrlKey) return;
+  if (e.metaKey === false || e.ctrlKey === true) {
+    return;
+  }
   // The file explorer (and its editor: ⌘D, ⌘F…) owns the keyboard; only the zoom passes.
   if (files.open && !/^(Equal|Minus|NumpadAdd|NumpadSubtract|Digit0|Numpad0)$/.test(e.code)) return;
   const run = (fn: () => unknown) => {
@@ -231,23 +277,24 @@ function onKey(e: KeyboardEvent) {
     case "KeyK":
       return run(() => (state.paletteOpen = !state.paletteOpen));
     case "KeyT":
-      return run(() => (e.shiftKey ? (newAgent.open = true) : startDefaultNewTab()));
+      return run(() => (e.shiftKey ? newTerminal() : NewPane.startDefaultNewTab()));
     case "KeyD":
-      return run(() => startDefaultSplit(e.shiftKey ? "down" : "right"));
+      return run(() => NewPane.startDefaultSplit(e.shiftKey ? "down" : "right"));
     case "KeyW":
       // The file explorer uses ⌘W for its own tabs.
       if (files.open) return;
-      // Closing ends the process in the pane: ask for a second ⌘W within 2 s.
       return run(() => {
-        const id = activePaneId();
-        if (!id) return;
-        if (armedClose === id && Date.now() - armedAt < 2000) {
+        const tabId = state.selectedTabId;
+        if (tabId === null || e.repeat === true) {
+          return;
+        }
+        if (armedClose === tabId && Date.now() - armedAt < 2000) {
           armedClose = null;
-          closePane(id);
+          void closeTab(tabId);
         } else {
-          armedClose = id;
+          armedClose = tabId;
           armedAt = Date.now();
-          toast(t("app.pressAgainToClose"));
+          toast(t('app.pressAgainToClose'));
         }
       });
     case "KeyB":
@@ -276,6 +323,7 @@ onMounted(async () => {
   window.addEventListener("resize", onResize);
   start();
   startProjects();
+  startMacros();
   startGit();
   startGitBackgroundFetch();
   startAlerts();
@@ -283,17 +331,26 @@ onMounted(async () => {
   loadHistory();
   startMobile();
   loadClaudeLink();
+  loadAntigravityLink();
   startRemoteWatch();
-  unlistenDrop = await getCurrentWebview().onDragDropEvent(async (event) => {
-    if (event.payload.type !== "drop") return;
-    const result = await ImageDrop.handleDrop(
-      event.payload.paths,
-      event.payload.position.x / zoomFactor(),
-      event.payload.position.y / zoomFactor(),
-    );
-    if (result === "no_terminal_under_drop") toast(t("app.dropNoTerminalUnderDrop"), "error");
-    else if (result === "not_an_image") toast(t("app.dropNotAnImage"), "error");
-    else if (result === "failed") toast(t("app.dropFailed"), "error");
+  unlistenDrop = await getCurrentWebview().onDragDropEvent((event) => {
+    if (event.payload.type === "enter") {
+      void DropTarget.measureTopInset(zoomFactor());
+    }
+    if (event.payload.type === "enter" || event.payload.type === "over") {
+      DropTarget.hover(event.payload.position, zoomFactor());
+      return;
+    }
+    DropTarget.clearHover();
+    if (event.payload.type !== "drop") {
+      return;
+    }
+    const paneId = DropTarget.paneIdAt(event.payload.position, zoomFactor());
+    if (paneId === null) {
+      return;
+    }
+    const result = ImageDrop.handleDrop(paneId, event.payload.paths);
+    if (result === "not_an_image") toast(t("app.dropNotAnImage"), "error");
   });
 });
 onBeforeUnmount(() => {
@@ -306,43 +363,53 @@ onBeforeUnmount(() => {
 <template>
   <div class="app">
     <SplashScreen />
+    <MissingProgramsModal />
     <AboutModal />
-    <TopBar />
-    <div class="body">
-      <Sidebar />
-      <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
-      <!-- A collapsed sidebar has no line to drag, but it keeps the gap that the line fills. -->
-      <div v-else class="sidebar-gap"></div>
-      <main class="center">
+    <TopBar v-if="ZenMode.state.isActive === false" />
+    <div class="body" :class="{ 'zen-mode': ZenMode.state.isActive }">
+      <template v-if="ZenMode.state.isActive === false">
+        <Sidebar />
+        <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
+        <!-- A collapsed sidebar has no line to drag, but it keeps the gap that the line fills. -->
+        <div v-else class="sidebar-gap"></div>
+      </template>
+      <main class="center" :class="{ 'zen-mode': ZenMode.state.isActive }">
         <template v-if="state.snapshot">
-          <TabBar />
-          <div class="stage">
-            <PaneGrid :outer-edges="paneOuterEdges" @outer-start="onCornerStart" @outer-move="onCornerMove" @outer-highlight="highlightedEdge = $event" />
-            <template v-if="allPinnedPanes.length">
-              <Resizer
-                :width="columnOfPinnedPanesShownWidth"
-                @update:width="(v: number) => (settings.columnOfPinnedPanesWidth = v)"
-                side="right"
-                inside
-                :min="COLUMN_OF_PINNED_PANES.min"
-                :max="COLUMN_OF_PINNED_PANES.max"
-                :default-width="COLUMN_OF_PINNED_PANES.defaultWidth"
-                :reserve="columnOfPinnedPanesReserve"
-                :highlighted="highlightedEdge === 'right'"
-              />
-              <ColumnOfPinnedPanes :style="{ width: `${columnOfPinnedPanesShownWidth}px` }" />
-            </template>
+          <TabBar v-if="ZenMode.state.isActive === false" />
+          <div class="stage" :class="{ 'zen-mode': ZenMode.state.isActive, 'zen-mode-pinned-pane': isZenPanePinned }">
+            <PaneGrid :outer-edges="paneOuterEdges" :zen-pane-id="ZenMode.state.isActive ? ZenMode.state.paneId : null" @outer-start="onCornerStart" @outer-move="onCornerMove" @outer-highlight="highlightedEdge = $event" />
+            <Resizer
+              v-if="allPinnedPanes.length && ZenMode.state.isActive === false"
+              :width="columnOfPinnedPanesShownWidth"
+              @update:width="(v: number) => (settings.columnOfPinnedPanesWidth = v)"
+              side="right"
+              inside
+              :min="COLUMN_OF_PINNED_PANES.min"
+              :max="COLUMN_OF_PINNED_PANES.max"
+              :default-width="COLUMN_OF_PINNED_PANES.defaultWidth"
+              :reserve="columnOfPinnedPanesReserve"
+              :highlighted="highlightedEdge === 'right'"
+            />
+            <ColumnOfPinnedPanes
+              v-if="allPinnedPanes.length"
+              :class="{
+                'zen-mode': ZenMode.state.isActive && isZenPanePinned,
+                'zen-mode-hidden': ZenMode.state.isActive && isZenPanePinned === false,
+              }"
+              :zen-pane-id="ZenMode.state.isActive && isZenPanePinned ? ZenMode.state.paneId : null"
+              :style="{ width: ZenMode.state.isActive && isZenPanePinned ? '100%' : `${columnOfPinnedPanesShownWidth}px` }"
+            />
           </div>
         </template>
         <Offline v-else />
       </main>
-      <template v-if="state.snapshot">
+      <template v-if="state.snapshot && ZenMode.state.isActive === false">
         <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
         <div v-else class="sidebar-gap"></div>
         <RightPanel />
       </template>
     </div>
-    <StatusBar />
+    <StatusBar v-if="ZenMode.state.isActive === false" />
     <CommandPalette v-if="state.paletteOpen" />
     <MacroEditor v-if="macroEditor.open" />
     <ThreeJsDemoModal v-if="threeJsDemoModal.open" />
@@ -352,16 +419,18 @@ onBeforeUnmount(() => {
     <GitModal v-if="git.modal.open" />
     <MergeModal v-if="merging.open && merging.req" />
     <IssueModal v-if="issueView.open" />
-    <NewAgentModal v-if="newAgent.open" />
+    <WorkspaceFolderRecovery />
     <SearchModal v-if="search.open" />
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />
+    <ImageViewer v-if="compositionViewerPaneId !== null" :pane-id="compositionViewerPaneId" />
     <AgentsInformationModal v-if="agentsInformationModal.open" />
     <NewCustomLauncherModal v-if="newCustomLauncherModal.open" />
     <SavedSearchModal v-if="savedSearchModal.open" />
     <ImportLaunchersModal v-if="importLaunchersModal.open" />
     <HistoryModal v-if="history.open" />
     <SettingsModal v-if="settingsModal.open" />
+    <GuardModal v-if="guardWindow.isOpen" />
     <InstalledSkillModal v-if="installedSkillModal.open" />
     <FindNewSkillsModal v-if="findNewSkillsModal.open" />
     <SkillFileModal v-if="skills.view !== null" />
@@ -387,18 +456,22 @@ onBeforeUnmount(() => {
   flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
 }
+.body.zen-mode { padding: 0; }
+.center.zen-mode { border: 0; border-radius: 0; background: var(--bg); }
 .sidebar-gap { width: var(--pane-gap); flex-shrink: 0; }
 /* The border of the panes goes 1 pixel past the frame on the left, on the right, and at the bottom: the frame clips it, so the
    border of the frame is the only line there. At the top, the border of the panes is the line under the tab bar. */
 .stage { flex: 1; min-height: 0; display: flex; margin: 0 -1px -1px; }
+.stage.zen-mode { position: relative; margin: 0; }
+.stage.zen-mode.zen-mode-pinned-pane > :first-child { display: none; }
 .stage > :first-child { flex: 1; min-width: 0; }
 .toast {
   position: fixed; right: 16px; bottom: 52px;
   padding: 10px 16px; border-radius: 10px; background: var(--toast-bg); border: 1px solid var(--line-strong);
   color: var(--text); font-size: var(--font-size); box-shadow: 0 12px 32px var(--toast-shadow); z-index: 50;
 }
-.toast.error { background: #7f1d1d; border-color: #ef4444; color: #fff; font-weight: 600; }
-.toast-icon { margin-right: 8px; color: #fecaca; }
+.toast.error { background: var(--tint-err); border-color: var(--fail); color: var(--fail); font-weight: 600; }
+.toast-icon { margin-right: 8px; color: var(--text); }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(6px); }
 </style>

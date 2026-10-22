@@ -28,7 +28,7 @@ const emit = defineEmits<{
   <div class="sidebar-icon-bar">
     <button
       v-if="isCollapsed"
-      class="expand-button"
+      class="navigation-action expand-button"
       :title="t('sidebarIconBar.expandSidebar')"
       :aria-label="t('sidebarIconBar.expandSidebar')"
       @click="emit('toggle')"
@@ -37,7 +37,7 @@ const emit = defineEmits<{
     </button>
     <button
       v-else
-      class="collapse-button"
+      class="navigation-action collapse-button"
       :title="t('sidebarIconBar.collapseSidebar')"
       :aria-label="t('sidebarIconBar.collapseSidebar')"
       @click="emit('toggle')"
@@ -45,7 +45,7 @@ const emit = defineEmits<{
       <Icon :name="side === 'left' ? 'chevron-bar-left' : 'chevron-bar-right'" />
     </button>
     <div class="icons" role="tablist" aria-orientation="vertical" :aria-label="label">
-      <button
+      <button class="navigation-action"
         v-for="sidebarSection in sidebarSections"
         :key="sidebarSection.id"
         :title="sidebarSection.label"
@@ -67,10 +67,7 @@ const emit = defineEmits<{
   display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
 .icons { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.sidebar-icon-bar button {
-  position: relative; width: 36px; height: 36px; padding: 0; border: none; border-radius: 6px; background: transparent;
-  color: var(--icon); font-size: calc(var(--font-size) * 1.15); display: inline-flex; align-items: center; justify-content: center;
-}
+.sidebar-icon-bar button { position: relative; width: 36px; border: none; background: transparent; color: var(--icon); display: inline-flex; align-items: center; justify-content: center; }
 .sidebar-icon-bar button:hover:not(.on) { background: var(--line); color: var(--text-2); }
 .icons button.on { background: var(--line-strong); color: var(--text); }
 .badge {
@@ -78,6 +75,6 @@ const emit = defineEmits<{
   background: var(--line-strong); color: var(--text-2); font-size: calc(var(--font-size) * 0.65);
   display: inline-flex; align-items: center; justify-content: center;
 }
-.badge.live { background: var(--tint-working); color: var(--working); }
-.badge.alert { background: var(--tint-err); color: var(--blocked); }
+.badge.live { background: var(--tint-working); color: var(--working-text); }
+.badge.alert { background: var(--tint-err); color: var(--blocked-text); }
 </style>

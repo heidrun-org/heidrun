@@ -1,7 +1,7 @@
 /** A coding agent that Heidrun knows. */
 export interface AgentDefinition {
   /** The identifier saved in the settings. */
-  id: "claude" | "codex";
+  id: "claude" | "codex" | "antigravity";
   /** The name of the product, shown as it is in every language. */
   name: string;
 }
@@ -10,4 +10,5 @@ export interface AgentDefinition {
 export const AGENTS: AgentDefinition[] = [
   { id: "claude", name: "Claude Code" },
   { id: "codex", name: "Codex" },
+  { id: "antigravity", name: "Antigravity" },
 ];

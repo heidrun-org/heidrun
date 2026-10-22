@@ -62,33 +62,60 @@ describe("settings", () => {
     expect(settings.mouseMode).toBe("select");
   });
 
+  it("does not let the phone type in a terminal by default", () => {
+    expect(settings.mobileTerminalTyping).toBe(false);
+  });
+
   it("shows the status item in the macOS menu bar by default", () => {
     expect(settings.showStatusItem).toBe(true);
   });
 });
 
 describe("keep agents running after quit", () => {
-  it("is off by default, so quitting Heidrun stops its Herdr session", () => {
-    expect(settings.keepAgentsRunningAfterQuit).toBe(false);
+  it("is on by default, so quitting Heidrun keeps its Herdr session running", () => {
+    expect(settings.keepAgentsRunningAfterQuit).toBe(true);
   });
 
   it("is given to the Rust side at the start and at each change", async () => {
+    expect(invoke).toHaveBeenCalledWith('set_keep_agents_running', {
+      isKeeping: true,
+    });
     invoke.mockClear();
-    settings.keepAgentsRunningAfterQuit = true;
-    await vi.waitFor(() => expect(invoke).toHaveBeenLastCalledWith("set_keep_agents_running", { isKeeping: true }));
     settings.keepAgentsRunningAfterQuit = false;
     await vi.waitFor(() => expect(invoke).toHaveBeenLastCalledWith("set_keep_agents_running", { isKeeping: false }));
+    settings.keepAgentsRunningAfterQuit = true;
+    await vi.waitFor(() => expect(invoke).toHaveBeenLastCalledWith('set_keep_agents_running', {
+      isKeeping: true,
+    }));
   });
 
-  it("is given to the Rust side when the application starts again with the setting on", async () => {
-    settings.keepAgentsRunningAfterQuit = true;
-    await vi.waitFor(() => expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").keepAgentsRunningAfterQuit).toBe(true));
-    invoke.mockClear();
-    vi.resetModules();
-    await import("./settings");
-    await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith("set_keep_agents_running", { isKeeping: true }));
-    settings.keepAgentsRunningAfterQuit = false;
-  });
+	it.each([true, false])('restores the saved choice %s and gives that choice to Rust at startup', async (isKeeping) => {
+		settings.keepAgentsRunningAfterQuit = isKeeping;
+		await vi.waitFor(() => expect(
+			JSON.parse(localStorage.getItem('heidrun.settings') ?? '{}').keepAgentsRunningAfterQuit,
+		).toBe(isKeeping));
+		invoke.mockClear();
+		vi.resetModules();
+		const reloaded = await import('./settings');
+		expect(reloaded.settings.keepAgentsRunningAfterQuit).toBe(isKeeping);
+		await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith('set_keep_agents_running', {
+			isKeeping,
+		}));
+	});
+
+	it('uses the on default when existing saved settings contain no choice for quitting', async () => {
+		localStorage.setItem('heidrun.settings', JSON.stringify({
+			fontSize: 18,
+		}));
+		invoke.mockClear();
+		vi.resetModules();
+		const reloaded = await import('./settings');
+		expect(reloaded.settings.fontSize).toBe(18);
+		expect(reloaded.settings.keepAgentsRunningAfterQuit).toBe(true);
+		await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith('set_keep_agents_running', {
+			isKeeping: true,
+		}));
+	});
 });
 
 describe("ask before deleting a saved search", () => {
@@ -105,36 +132,152 @@ describe("saved searches of the Code hosting sidebar section", () => {
     return (await import("./settings")).settings;
   }
 
-  it("are none by default", () => {
-    expect(settings.codeHostingSavedSearches).toEqual([]);
+  it("are none by default, in each of the two lists", () => {
+    expect(settings.codeHostingSavedSearches).toEqual({ issues: [], requests: [] });
   });
 
-  it("are read again when the application starts again", async () => {
-    const reloaded = await settingsFrom({ codeHostingSavedSearches: [{ name: "Mine", query: "author:@me" }] });
-    expect(reloaded.codeHostingSavedSearches).toEqual([{ name: "Mine", query: "author:@me" }]);
+  it("are read again when the application starts again, for each list", async () => {
+    const reloaded = await settingsFrom({
+      codeHostingSavedSearches: {
+        issues: [{ name: "Mine", query: "author:@me" }],
+        requests: [{ name: "To review", query: "review-requested:@me" }],
+      },
+    });
+    expect(reloaded.codeHostingSavedSearches).toEqual({
+      issues: [{ name: "Mine", query: "author:@me" }],
+      requests: [{ name: "To review", query: "review-requested:@me" }],
+    });
   });
 
-  it("drop an entry without a name or a search as text, and keep the others", async () => {
+  it("are copied into both lists once, when the saved value is the old single list", async () => {
     const reloaded = await settingsFrom({
       codeHostingSavedSearches: [
         { name: "Mine", query: "author:@me" },
-        { name: "", query: "label:bug" },
-        { name: "No search" },
-        { name: 4, query: "x" },
-        null,
-        "text",
-        { name: "Mentions me", query: "mentions:@me", extra: true },
+        { name: "Bugs", query: "label:bug" },
       ],
     });
-    expect(reloaded.codeHostingSavedSearches).toEqual([
-      { name: "Mine", query: "author:@me" },
-      { name: "Mentions me", query: "mentions:@me" },
-    ]);
+    expect(reloaded.codeHostingSavedSearches).toEqual({
+      issues: [
+        { name: "Mine", query: "author:@me" },
+        { name: "Bugs", query: "label:bug" },
+      ],
+      requests: [
+        { name: "Mine", query: "author:@me" },
+        { name: "Bugs", query: "label:bug" },
+      ],
+    });
+    expect(reloaded.codeHostingSavedSearches.issues).not.toBe(reloaded.codeHostingSavedSearches.requests);
   });
 
-  it("are none when the saved value is not a list", async () => {
+  it("do not change one list when the other list changes after the copy", async () => {
+    const reloaded = await settingsFrom({ codeHostingSavedSearches: [{ name: "Mine", query: "author:@me" }] });
+    reloaded.codeHostingSavedSearches.issues.push({ name: "Bugs", query: "label:bug" });
+    expect(reloaded.codeHostingSavedSearches.requests).toEqual([{ name: "Mine", query: "author:@me" }]);
+  });
+
+  it("drop an entry without a name or a search as text, and keep the others, in each list", async () => {
+    const entries = [
+      { name: "Mine", query: "author:@me" },
+      { name: "", query: "label:bug" },
+      { name: "No search" },
+      { name: 4, query: "x" },
+      null,
+      "text",
+      { name: "Mentions me", query: "mentions:@me", extra: true },
+    ];
+    const reloaded = await settingsFrom({ codeHostingSavedSearches: { issues: entries, requests: entries } });
+    const kept = [
+      { name: "Mine", query: "author:@me" },
+      { name: "Mentions me", query: "mentions:@me" },
+    ];
+    expect(reloaded.codeHostingSavedSearches).toEqual({ issues: kept, requests: kept });
+  });
+
+  it("are none in a list that is missing or is not a list", async () => {
+    const reloaded = await settingsFrom({
+      codeHostingSavedSearches: { issues: [{ name: "Mine", query: "author:@me" }], requests: "To review" },
+    });
+    expect(reloaded.codeHostingSavedSearches).toEqual({ issues: [{ name: "Mine", query: "author:@me" }], requests: [] });
+  });
+
+  it("are none when the saved value is not a list or an object", async () => {
     const reloaded = await settingsFrom({ codeHostingSavedSearches: "Mine" });
-    expect(reloaded.codeHostingSavedSearches).toEqual([]);
+    expect(reloaded.codeHostingSavedSearches).toEqual({ issues: [], requests: [] });
+  });
+});
+
+describe("goat sound", () => {
+  /** The settings, as a new run of Heidrun reads them from what `localStorage` holds. */
+  async function settingsFrom(savedText: string) {
+    localStorage.setItem("heidrun.settings", savedText);
+    vi.resetModules();
+    return (await import("./settings")).settings;
+  }
+
+  it("is off by default", () => {
+    expect(settings.goatSound).toBe(false);
+  });
+
+  it("is off for an existing installation whose saved settings have no goat sound option", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ language: "fr", workingDays: [1, 2, 3] }));
+    expect(reloaded.language).toBe("fr");
+    expect(reloaded.goatSound).toBe(false);
+  });
+
+  it("is on after a restart when it was saved on", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ goatSound: true }));
+    expect(reloaded.goatSound).toBe(true);
+  });
+
+  it("is off when the saved value is not true or false", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ goatSound: "yes" }));
+    expect(reloaded.goatSound).toBe(false);
+  });
+});
+
+describe("terminal text detection", () => {
+  /** The settings, as a new run of Heidrun reads them from what `localStorage` holds. */
+  async function settingsFrom(savedText: string) {
+    localStorage.setItem("heidrun.settings", savedText);
+    vi.resetModules();
+    return (await import("./settings")).settings;
+  }
+
+  it("is on, with every family on, by default", () => {
+    expect(settings.terminalTextDetection).toBe(true);
+    expect(settings.disabledDetectionFamilies).toEqual([]);
+  });
+
+  it("keeps the families that were saved off, and the switch of the whole detection", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ terminalTextDetection: false, disabledDetectionFamilies: ["filePaths", "tickets"] }));
+    expect(reloaded.terminalTextDetection).toBe(false);
+    expect(reloaded.disabledDetectionFamilies).toEqual(["filePaths", "tickets"]);
+  });
+
+  it("is on for an existing installation whose saved settings have no detection option", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ language: "fr" }));
+    expect(reloaded.terminalTextDetection).toBe(true);
+    expect(reloaded.disabledDetectionFamilies).toEqual([]);
+  });
+
+  it("drops a saved family that does not exist any more, and a saved value of the wrong type", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ terminalTextDetection: "no", disabledDetectionFamilies: ["filePaths", "oldFamily", 7] }));
+    expect(reloaded.terminalTextDetection).toBe(true);
+    expect(reloaded.disabledDetectionFamilies).toEqual(["filePaths"]);
+    const notAList = await settingsFrom(JSON.stringify({ disabledDetectionFamilies: "filePaths" }));
+    expect(notAList.disabledDetectionFamilies).toEqual([]);
+  });
+
+  it("saves a change of a switch at once", async () => {
+    settings.terminalTextDetection = false;
+    settings.disabledDetectionFamilies = ["commits"];
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const saved = JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}");
+    expect(saved.terminalTextDetection).toBe(false);
+    expect(saved.disabledDetectionFamilies).toEqual(["commits"]);
+    settings.terminalTextDetection = true;
+    settings.disabledDetectionFamilies = [];
   });
 });
 
@@ -365,6 +508,7 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["gitFetchMinutes", 5, 0],
   ["dynamicTopicExtraction", "keyword", "languageModel"],
   ["clusteredDynamicTopics", false, true],
+  ["goatSound", false, true],
   ["chatsSortKey", "last_updated", "files_written"],
   ["chatsOrder", "descending", "ascending"],
 ];
@@ -480,11 +624,28 @@ describe("the default command of a new tab (issue #328)", () => {
     expect(restarted.settings.newTabCommand).toBe("terminal");
   });
 
-  it.each(["terminal", "claude", "codex"] as const)("keeps the saved command %s after a restart", async (command) => {
-    localStorage.setItem("heidrun.settings", JSON.stringify({ newTabCommand: command }));
+  it.each([
+    { command: "terminal", ownedAgents: [] },
+    { command: "claude", ownedAgents: ["claude"] },
+    { command: "codex", ownedAgents: ["codex"] },
+    { command: "agy", ownedAgents: ["antigravity"] },
+  ] as const)("keeps the enabled saved command $command after a restart", async ({ command, ownedAgents }) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ newTabCommand: command, ownedAgents }));
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.newTabCommand).toBe(command);
+  });
+
+  it.each([
+    ["claude", "claude"],
+    ["codex", "codex"],
+    ["agy", "antigravity"],
+  ] as const)("uses Terminal when the saved command %s has a switched-off coding agent", async (command, agentId) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ newTabCommand: command, ownedAgents: [] }));
+    vi.resetModules();
+    const disabled = await import("./settings");
+    expect(disabled.settings.newTabCommand).toBe("terminal");
+    expect(disabled.settings.ownedAgents).not.toContain(agentId);
   });
 });
 
@@ -540,5 +701,127 @@ describe("code theme", () => {
     vi.resetModules();
     const restarted = await import("./settings");
     expect(Object.keys(restarted.settings)).not.toContain("codeTheme");
+  });
+});
+
+describe("legend filters of the bar charts of the Statistics window", () => {
+  /** The settings, as a new run of Heidrun reads them from what `localStorage` holds. */
+  async function settingsFrom(saved: unknown) {
+    localStorage.setItem("heidrun.settings", JSON.stringify(saved));
+    vi.resetModules();
+    return (await import("./settings")).settings;
+  }
+
+  it("are none by default", () => {
+    expect(settings.statisticsLegendFilters).toEqual({});
+  });
+
+  it("are read again when the application starts again", async () => {
+    const reloaded = await settingsFrom({ statisticsLegendFilters: { ai_cost: "codex", git_history_lines: "lines_added" } });
+    expect(reloaded.statisticsLegendFilters).toEqual({ ai_cost: "codex", git_history_lines: "lines_added" });
+  });
+
+  it("drop an entry that is not a text, and keep the others", async () => {
+    const reloaded = await settingsFrom({ statisticsLegendFilters: { ai_cost: "codex", a: 4, b: null, c: "", d: ["x"] } });
+    expect(reloaded.statisticsLegendFilters).toEqual({ ai_cost: "codex" });
+  });
+
+  it("are none when the saved value is not an object", async () => {
+    expect((await settingsFrom({ statisticsLegendFilters: "codex" })).statisticsLegendFilters).toEqual({});
+    expect((await settingsFrom({ statisticsLegendFilters: ["codex"] })).statisticsLegendFilters).toEqual({});
+    expect((await settingsFrom({ statisticsLegendFilters: null })).statisticsLegendFilters).toEqual({});
+  });
+});
+
+describe("selections of the tabs of the Statistics window (issue 707)", () => {
+  /** The settings, as a new run of Heidrun reads them from what `localStorage` holds. */
+  async function settingsFrom(saved: unknown) {
+    localStorage.setItem("heidrun.settings", JSON.stringify(saved));
+    vi.resetModules();
+    return (await import("./settings")).settings;
+  }
+
+  it("are the existing choices by default", async () => {
+    const reloaded = await settingsFrom({});
+    expect(reloaded.statisticsUserActivityRange).toBe("day");
+    expect(reloaded.statisticsUserActivitySlotLength).toBe("one_hour");
+    expect(reloaded.statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: true, folders: [] });
+    expect(reloaded.statisticsPersonWorkSource).toBe("git_history");
+    expect(reloaded.statisticsPersonWorkMetric).toBe("commits_and_pull_requests");
+    expect(reloaded.statisticsPersonWorkUnit).toBe("dollars");
+    expect(reloaded.statisticsPersonWorkPerson).toBe("");
+    expect(reloaded.statisticsPersonWorkRange).toBe("seven_days");
+    expect(reloaded.statisticsPersonWorkSlotHours).toBe(24);
+    expect(reloaded.statisticsPersonWorkWorkspaces).toEqual({ isSaved: false, workspaceIds: [] });
+  });
+
+  it("are read again when the application starts again", async () => {
+    const saved = {
+      statisticsUserActivityRange: "month",
+      statisticsUserActivitySlotLength: "six_hours",
+      statisticsUserActivityWorkspaces: { isEveryWorkspaceChosen: false, folders: ["/work/heidrun"] },
+      statisticsPersonWorkSource: "ai_cost",
+      statisticsPersonWorkMetric: "lines",
+      statisticsPersonWorkUnit: "tokens",
+      statisticsPersonWorkPerson: "eric",
+      statisticsPersonWorkRange: "thirty_days",
+      statisticsPersonWorkSlotHours: 6,
+      statisticsPersonWorkWorkspaces: { isSaved: true, workspaceIds: ["workspace-1", "workspace-2"] },
+    };
+    expect({ ...(await settingsFrom(saved)) }).toMatchObject(saved);
+  });
+
+  it("go back to the existing choice when a saved value is not in the list of its values", async () => {
+    const reloaded = await settingsFrom({
+      statisticsUserActivityRange: "year",
+      statisticsUserActivitySlotLength: "ten_seconds",
+      statisticsPersonWorkSource: "weather",
+      statisticsPersonWorkMetric: "words",
+      statisticsPersonWorkUnit: "euros",
+      statisticsPersonWorkRange: "century",
+      statisticsPersonWorkSlotHours: 5,
+    });
+    expect(reloaded.statisticsUserActivityRange).toBe("day");
+    expect(reloaded.statisticsUserActivitySlotLength).toBe("one_hour");
+    expect(reloaded.statisticsPersonWorkSource).toBe("git_history");
+    expect(reloaded.statisticsPersonWorkMetric).toBe("commits_and_pull_requests");
+    expect(reloaded.statisticsPersonWorkUnit).toBe("dollars");
+    expect(reloaded.statisticsPersonWorkRange).toBe("seven_days");
+    expect(reloaded.statisticsPersonWorkSlotHours).toBe(24);
+  });
+
+  it("go back to the existing choice when a saved value has the wrong type", async () => {
+    const reloaded = await settingsFrom({
+      statisticsUserActivityRange: 3,
+      statisticsPersonWorkSource: null,
+      statisticsPersonWorkPerson: 12,
+      statisticsPersonWorkSlotHours: "6",
+      statisticsUserActivityWorkspaces: "all",
+      statisticsPersonWorkWorkspaces: ["workspace-1"],
+    });
+    expect(reloaded.statisticsUserActivityRange).toBe("day");
+    expect(reloaded.statisticsPersonWorkSource).toBe("git_history");
+    expect(reloaded.statisticsPersonWorkPerson).toBe("");
+    expect(reloaded.statisticsPersonWorkSlotHours).toBe(24);
+    expect(reloaded.statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: true, folders: [] });
+    expect(reloaded.statisticsPersonWorkWorkspaces).toEqual({ isSaved: false, workspaceIds: [] });
+  });
+
+  it("keep the texts of a saved list of workspaces, and drop the other entries", async () => {
+    const reloaded = await settingsFrom({
+      statisticsUserActivityWorkspaces: { isEveryWorkspaceChosen: false, folders: ["/work/heidrun", 4, null, "", ["x"]] },
+      statisticsPersonWorkWorkspaces: { isSaved: true, workspaceIds: ["workspace-1", 4, null, "", { a: 1 }] },
+    });
+    expect(reloaded.statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: false, folders: ["/work/heidrun"] });
+    expect(reloaded.statisticsPersonWorkWorkspaces).toEqual({ isSaved: true, workspaceIds: ["workspace-1"] });
+  });
+
+  it("repair a choice of workspaces that lacks a field or holds a field of the wrong type", async () => {
+    const reloaded = await settingsFrom({
+      statisticsUserActivityWorkspaces: { isEveryWorkspaceChosen: "yes", folders: "/work/heidrun" },
+      statisticsPersonWorkWorkspaces: { isSaved: "yes" },
+    });
+    expect(reloaded.statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: true, folders: [] });
+    expect(reloaded.statisticsPersonWorkWorkspaces).toEqual({ isSaved: false, workspaceIds: [] });
   });
 });

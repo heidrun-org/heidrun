@@ -38,7 +38,7 @@ export type GenerateChangeLogRunOptions = {
 	fromTag?: string;
 	/** The release where the changes end, or `now` for the current commit. When undefined, `now`. */
 	toTag?: string;
-	/** Runs the coding agent. When undefined, the executable of the package `raw_coding_agent_cli` runs it. */
+	/** Runs the coding agent. When undefined, the executable of the package `coding_agent_cli` runs it. */
 	runAgentFn?: RunAgentFn;
 };
 
@@ -152,7 +152,7 @@ export class GenerateChangeLog {
 	}
 
 	/**
-	 * Runs a coding agent with the executable of the package `raw_coding_agent_cli`. The executable is written in Rust,
+	 * Runs a coding agent with the executable of the package `coding_agent_cli`. The executable is written in Rust,
 	 * so `cargo run` builds it when needed, then runs it. The prompt goes through the standard input of the executable,
 	 * and the answer comes from its standard output. The mode without the option `--ai` does not need the Rust tools.
 	 * @param prompt The prompt to send.
@@ -162,7 +162,7 @@ export class GenerateChangeLog {
 	 * the error is the message that the executable printed.
 	 */
 	private static _runRawCodingAgent(prompt: string, agentName: string): Promise<string> {
-		const packagePath = Path.resolve(__dirname, '..', '..', '..', '..', 'auxiliary', 'raw_coding_agent_cli');
+		const packagePath = Path.resolve(__dirname, '..', '..', '..', '..', 'auxiliary', 'coding_agent_cli');
 		return new Promise((resolve, reject) => {
 			const childProcess = ChildProcess.spawn('cargo', ['run', '--quiet', '--', '--agent', agentName], {
 				cwd: packagePath,

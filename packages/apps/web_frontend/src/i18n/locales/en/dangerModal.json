@@ -7,6 +7,8 @@
   "close": "Close",
   "cancel": "Cancel",
   "cancelTitle": "Cancel and do not run the command",
+  "changeGuard": "Change this guard",
+  "changeGuardTitle": "Cancel the command and open the Guards section of the Settings window on this guard",
   "runAnyway": "Run anyway",
   "runAnywayTitle": "Run the command anyway"
 }

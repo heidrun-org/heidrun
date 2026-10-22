@@ -2,10 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   snapshot: vi.fn(),
+  handlers: {} as Record<string, (event: { payload: unknown }) => Promise<void>>,
 }));
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => null) }));
-vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
+vi.mock('@tauri-apps/api/event', () => ({
+	listen: vi.fn(async (name: string, handler: (event: { payload: unknown }) => Promise<void>) => {
+		mocks.handlers[name] = handler;
+		return () => {};
+	}),
+}));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 vi.mock("../lib/api", () => ({
@@ -83,4 +89,99 @@ describe("selected workspace between two runs", () => {
     expect(session.state.selectedWorkspaceId).toBeNull();
     expect(settingsStore.settings.selectedWorkspaceId).toBe("w2");
   });
+});
+
+describe('workspace focus from Herdr', () => {
+	it('selects the requested workspace even when Herdr already focused that workspace', async () => {
+		const { session } = await startHeidrun(['w1', 'w2']);
+		await session.start();
+		session.selectWorkspace('w2');
+		await mocks.handlers['herdr://event']({
+			payload: {
+				event: 'workspace_focused',
+				data: {
+					workspace_id: 'w1',
+				},
+			},
+		});
+		expect(session.state.selectedWorkspaceId).toBe('w1');
+	});
+
+	it('ignores a focus event for a workspace that has already closed', async () => {
+		const { session } = await startHeidrun(['w1', 'w2']);
+		await session.start();
+		session.selectWorkspace('w2');
+		await mocks.handlers['herdr://event']({
+			payload: {
+				event: 'workspace_focused',
+				data: {
+					workspace_id: 'closed',
+				},
+			},
+		});
+		expect(session.state.selectedWorkspaceId).toBe('w2');
+	});
+});
+
+it('selects a workspace for a new command line focus request without a Herdr focus change', async () => {
+	const { session } = await startHeidrun(['w1', 'w2']);
+	await session.start();
+	session.selectWorkspace('w2');
+	await mocks.handlers['herdr://event']({
+		payload: {
+			event: 'workspace_metadata_updated',
+			data: {
+				workspace: {
+					workspace_id: 'w1',
+					tokens: {
+						heidrun_focus_request: 'new-request',
+					},
+				},
+			},
+		},
+	});
+	expect(session.state.selectedWorkspaceId).toBe('w1');
+});
+
+it('preserves a pending focus while an older snapshot is being refreshed', async () => {
+	const { session } = await startHeidrun(['w1', 'w2']);
+	await session.start();
+	let complete: ((snapshot: ReturnType<typeof buildSnapshot>) => void) | undefined;
+	mocks.snapshot.mockImplementationOnce(() => new Promise((resolve) => {
+		complete = resolve;
+	}));
+	const refresh = session.refresh();
+	await mocks.handlers['herdr://event']({
+		payload: {
+			event: 'workspace_focused',
+			data: {
+				workspace_id: 'w2',
+			},
+		},
+	});
+	complete?.(buildSnapshot(['w1']));
+	await refresh;
+	expect(session.state.selectedWorkspaceId).toBe('w2');
+});
+
+it('does not repeat a command focus when unrelated metadata carries the same request', async () => {
+	const { session } = await startHeidrun(['w1', 'w2']);
+	await session.start();
+	const event = {
+		payload: {
+			event: 'workspace_metadata_updated',
+			data: {
+				workspace: {
+					workspace_id: 'w1',
+					tokens: {
+						heidrun_focus_request: 'request',
+					},
+				},
+			},
+		},
+	};
+	await mocks.handlers['herdr://event'](event);
+	session.selectWorkspace('w2');
+	await mocks.handlers['herdr://event'](event);
+	expect(session.state.selectedWorkspaceId).toBe('w2');
 });

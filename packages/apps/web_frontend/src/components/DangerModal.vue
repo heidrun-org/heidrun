@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from "vue";
-import { answerDanger, danger } from "../stores/guards";
+import { answerDanger, changeDangerGuard, danger } from "../stores/guards";
 import { t } from "../i18n/index";
 
 const cancel = ref<HTMLButtonElement>();
@@ -20,9 +20,11 @@ const hintParts = computed(() =>
       <div class="eyebrow" :class="danger.level">{{ danger.level === "block" ? t("dangerModal.forbidden") : t("dangerModal.risky") }}</div>
       <h2 id="danger-title">{{ danger.level === "block" ? t("dangerModal.notSent") : t("dangerModal.runQuestion") }}</h2>
       <p id="danger-why" class="why">{{ danger.why }}<template v-if="danger.where"> · {{ danger.where }}</template></p>
+      <p v-if="danger.description !== ''" class="description" data-field="description">{{ danger.description }}</p>
       <pre class="cmd mono">{{ danger.command }}</pre>
       <p v-if="danger.level === 'block'" class="hint"><template v-for="(part, i) in hintParts" :key="i"><span v-if="part.mono" class="mono">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></p>
       <div class="row">
+        <button v-if="danger.guard !== null" :title="t('dangerModal.changeGuardTitle')" class="btn lg change-guard" data-field="change-guard" @click="changeDangerGuard()">{{ t("dangerModal.changeGuard") }}</button>
         <button :title="t('dangerModal.cancelTitle')" ref="cancel" class="btn lg" @click="answerDanger(false)">{{ danger.level === "block" ? t("dangerModal.close") : t("dangerModal.cancel") }}</button>
         <button :title="t('dangerModal.runAnywayTitle')" v-if="danger.level !== 'block'" class="btn lg danger" @click="answerDanger(true)">{{ t("dangerModal.runAnyway") }}</button>
       </div>
@@ -32,23 +34,23 @@ const hintParts = computed(() =>
 
 <style scoped>
 .overlay {
-  position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55);
+  position: fixed; inset: 0; z-index: 60; background: var(--overlay);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
 .window-box {
   width: min(620px, 100%); padding: 22px; border-radius: 14px; background: var(--panel);
-  border: 1px solid #5c2826; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--pane-ring-blocked); box-shadow: 0 24px 64px var(--shadow);
   display: flex; flex-direction: column; gap: 12px;
 }
-.eyebrow { color: var(--blocked); }
+.eyebrow { color: var(--blocked-text); }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .why { margin: 0; color: var(--text-2); font-size: var(--font-size); }
+.description { margin: 0; color: var(--muted); font-size: var(--font-size); white-space: pre-wrap; }
 .cmd {
   margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line-strong);
   font-size: var(--font-size); white-space: pre-wrap; word-break: break-all; max-height: 240px; overflow: auto; user-select: text;
 }
 .hint { margin: 0; font-size: var(--font-size); color: var(--muted); }
 .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
-.btn.danger { background: #a83a36; border-color: transparent; color: #fff; font-weight: 600; }
-.btn.danger:hover { background: #c0433e; }
+.change-guard { margin-right: auto; }
 </style>

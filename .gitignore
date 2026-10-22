@@ -24,3 +24,6 @@ packages/auxiliary/website_public/docs/.vitepress/cache
 
 # Environment variables of one developer, see the file .env.example
 .env
+
+# The multi-layer graph of the experiment, which holds the data of the repository
+packages/experiments/multi_layer_graph/public/graph.json

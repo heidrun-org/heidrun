@@ -1,18 +1,15 @@
-//! The records of the activity of the user in front of Heidrun: one JSON line for each active period, in
+//! The file of the records of the activity of the user in front of Heidrun: one JSON line for each active period, in
 //! ~/.config/heidrun/user_activity.jsonl (on this Mac, never in a repository). Every time in a record is an ISO 8601
 //! text with the offset of the time zone. A record never holds a key that the user typed or a text of the screen.
 //!
-//! The Statistics window does not read the file. It reads the records through the package `data_layer_user_activity`, which
-//! copies the new lines of the file into the SQLite file of the data layer, then answers a query on that SQLite file.
+//! This file owns the file of the records: it appends a record, and it reads the file back for the User activity sidebar section.
+//! The Statistics window never reads the file. It reads the records through `statistics::user_activity_records`, which uses the
+//! package `data_layer_user_activity`.
 
 use chrono::{DateTime, Utc};
-use data_layer_user_activity::{
-    default_database_path, synchronize, to_utc_text, SynchronizationMode, UserActivityDatabase, UserActivityFileReader,
-    UserActivityRecord,
-};
 use serde_json::Value;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// Number of days that the file keeps a record. A record that ended earlier is removed at the next read.
 const KEEP_DAYS: i64 = 400;
@@ -20,15 +17,9 @@ const KEEP_DAYS: i64 = 400;
 /// Name of the field of a record that holds the end of the period.
 const ENDED_AT_FIELD: &str = "endedAt";
 
-/// An append and the clean-up of a read never run at the same time, so that no line is lost.
-static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
-
-/// The file of the records: in the folder of the variable `HEIDRUN_DIR`, or else in `~/.config/heidrun`.
-fn path() -> PathBuf {
-    std::env::var("HEIDRUN_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
-        .join("user_activity.jsonl")
+/// The file of the records, in the folder of the data of Heidrun.
+fn path() -> std::path::PathBuf {
+    crate::app_data::user_activity_file_path()
 }
 
 /// The time of a text in ISO 8601, in milliseconds since 1 January 1970, or `None` when the text is not a date.
@@ -42,11 +33,11 @@ fn ended_at(record: &Value) -> Option<i64> {
 }
 
 /// Adds one record at the end of `file`, on its own line. The folder of the file is created when it does not exist.
-fn append_to(file: &Path, record: &Value) -> Result<(), String> {
+pub(crate) fn append_to(file: &Path, record: &Value) -> Result<(), String> {
     if record.is_object() == false {
         return Err("the record of the activity of the user must be a JSON object".into());
     }
-    let _guard = LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let _guard = crate::app_data::USER_ACTIVITY_FILE_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
     if let Some(folder) = file.parent() {
         std::fs::create_dir_all(folder).map_err(|error| error.to_string())?;
     }
@@ -59,7 +50,7 @@ fn append_to(file: &Path, record: &Value) -> Result<(), String> {
 /// records that ended more than `KEEP_DAYS` days ago are removed from the file. A line that is not a JSON object with a
 /// valid `endedAt` is removed too.
 fn read_from(file: &Path, since: i64, now: i64) -> Result<Vec<Value>, String> {
-    let _guard = LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let _guard = crate::app_data::USER_ACTIVITY_FILE_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
     let text = match std::fs::read_to_string(file) {
         Ok(text) => text,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
@@ -97,37 +88,6 @@ fn read_from(file: &Path, since: i64, now: i64) -> Result<Vec<Value>, String> {
     Ok(found)
 }
 
-/// The records of the data layer whose active period overlaps the time range from `since` to `until`, the oldest first. Both
-/// times are texts in ISO 8601 with an offset or in UTC. The new lines of `file` are copied into the SQLite file at
-/// `database_path` first, so a record that ended a moment ago is there. The times of the records are in UTC.
-fn read_from_data_layer(
-    file: &Path,
-    database_path: &Path,
-    since: &str,
-    until: &str,
-) -> Result<Vec<UserActivityRecord>, String> {
-    // The two texts go into the SQL statement, so only a text that is a valid time, written back by the package, is used.
-    let since = to_utc_text(since)?;
-    let until = to_utc_text(until)?;
-    // An append of a line must not run while the package reads the file, or the package could see half a line.
-    let _guard = LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    // The other commands of the Statistics window write the same SQLite file, and the file has no waiting time.
-    let _database_guard = crate::data_layer_lock::lock();
-    let mut writable = UserActivityDatabase::open(database_path)?;
-    synchronize(SynchronizationMode::Update, &UserActivityFileReader::new(file), &mut writable, &|_| {})?;
-    drop(writable);
-    let read_only = UserActivityDatabase::open_read_only(database_path)?;
-    let rows = read_only.query(&format!(
-        "SELECT data FROM user_activity_records WHERE endedAt > '{since}' AND startedAt < '{until}' ORDER BY startedAt"
-    ))?;
-    let mut records = Vec::with_capacity(rows.len());
-    for row in rows {
-        let data = row.get("data").and_then(Value::as_str).ok_or("a row of the data layer has no column `data`")?;
-        records.push(serde_json::from_str::<UserActivityRecord>(data).map_err(|error| error.to_string())?);
-    }
-    Ok(records)
-}
-
 /// Called by the web page each time an active period of the user ends.
 #[tauri::command]
 pub fn user_activity_append(record: Value) -> Result<(), String> {
@@ -142,19 +102,11 @@ pub async fn user_activity_read(since: String) -> Result<Vec<Value>, String> {
     tauri::async_runtime::spawn_blocking(move || read_from(&path(), since, now)).await.map_err(|error| error.to_string())?
 }
 
-/// Called by the Statistics window to read, through the data layer, the records whose active period overlaps the time range
-/// from `since` to `until`, two texts in ISO 8601.
-#[tauri::command]
-pub async fn user_activity_records_in_range(since: String, until: String) -> Result<Vec<UserActivityRecord>, String> {
-    tauri::async_runtime::spawn_blocking(move || read_from_data_layer(&path(), &default_database_path(), &since, &until))
-        .await
-        .map_err(|error| error.to_string())?
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::json;
+    use std::path::PathBuf;
 
     /// A file in a new folder of the system temporary folder. The folder is removed when the value is dropped.
     struct TemporaryFile(PathBuf);
@@ -251,66 +203,5 @@ mod tests {
         assert_eq!(parse_time("2026-10-14"), None);
         assert_eq!(parse_time("yesterday"), None);
         assert!(parse_time("2026-10-14T11:00:00.000+02:00").is_some());
-    }
-
-    /// A record that follows the JSON schema of the data layer, from `started_at` to `ended_at`.
-    fn full_record(started_at: &str, ended_at: &str) -> Value {
-        json!({
-            "workspaceFolder": "/work/heidrun",
-            "startedAt": started_at,
-            "lastActionAt": started_at,
-            "endedAt": ended_at,
-            "keyboardActionCount": 3,
-            "mouseActionCount": 4,
-            "endReason": "cool_down",
-        })
-    }
-
-    /// The SQLite file of the data layer, in the folder of the temporary file.
-    fn database_of(file: &TemporaryFile) -> PathBuf {
-        file.0.with_file_name("data_layer.sqlite")
-    }
-
-    #[test]
-    fn the_data_layer_gives_the_records_that_overlap_the_range_with_their_times_in_utc() {
-        let file = TemporaryFile::new("data-layer-range");
-        append_to(&file.0, &full_record("2026-10-14T12:00:00.000+02:00", "2026-10-14T12:00:30.000+02:00")).unwrap();
-        append_to(&file.0, &full_record("2026-10-14T12:04:50.000+02:00", "2026-10-14T12:05:20.000+02:00")).unwrap();
-        append_to(&file.0, &full_record("2026-10-14T13:00:00.000+02:00", "2026-10-14T13:00:30.000+02:00")).unwrap();
-        let records =
-            read_from_data_layer(&file.0, &database_of(&file), "2026-10-14T10:05:00.000Z", "2026-10-14T10:55:00.000Z")
-                .unwrap();
-        assert_eq!(records.len(), 1);
-        assert_eq!(records[0].started_at, "2026-10-14T10:04:50.000Z");
-        assert_eq!(records[0].ended_at, "2026-10-14T10:05:20.000Z");
-    }
-
-    #[test]
-    fn the_data_layer_gives_a_record_that_the_page_appended_after_the_first_read() {
-        let file = TemporaryFile::new("data-layer-update");
-        let database = database_of(&file);
-        append_to(&file.0, &full_record("2026-10-14T11:00:00.000Z", "2026-10-14T11:00:30.000Z")).unwrap();
-        let range = ("2026-10-14T10:00:00.000Z", "2026-10-14T12:00:00.000Z");
-        assert_eq!(read_from_data_layer(&file.0, &database, range.0, range.1).unwrap().len(), 1);
-        append_to(&file.0, &full_record("2026-10-14T11:10:00.000Z", "2026-10-14T11:10:30.000Z")).unwrap();
-        assert_eq!(read_from_data_layer(&file.0, &database, range.0, range.1).unwrap().len(), 2);
-    }
-
-    #[test]
-    fn the_data_layer_gives_no_record_when_the_file_does_not_exist() {
-        let file = TemporaryFile::new("data-layer-no-file");
-        let records =
-            read_from_data_layer(&file.0, &database_of(&file), "2026-10-14T10:00:00.000Z", "2026-10-14T12:00:00.000Z")
-                .unwrap();
-        assert!(records.is_empty());
-    }
-
-    #[test]
-    fn the_data_layer_refuses_a_range_that_is_not_a_time() {
-        let file = TemporaryFile::new("data-layer-bad-range");
-        let error = read_from_data_layer(&file.0, &database_of(&file), "' OR 1=1 --", "2026-10-14T12:00:00.000Z")
-            .unwrap_err();
-        assert!(error.contains("is not a time"));
-        assert!(database_of(&file).exists() == false);
     }
 }

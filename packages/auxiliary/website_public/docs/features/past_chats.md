@@ -1,3 +1,7 @@
+---
+description: "Find an old chat of Claude Code or Codex with its summary, its dynamic topics, its issues, and its estimated cost, and open it again."
+---
+
 # The Past chats sidebar section
 
 Claude Code and Codex save each chat in a file on your computer. After a few weeks, you have hundreds of chats, and you cannot find the chat where you fixed that bug.

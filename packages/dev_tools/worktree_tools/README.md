@@ -21,10 +21,13 @@ pnpm worktree:create fix-thing-12                    # worktree on a new branch,
 pnpm worktree:create fix-thing-12 --base dev_jerome  # worktree on a new branch, from the branch dev_jerome
 ```
 
-The command creates the worktree `.claude/worktrees/<name>` of the main checkout, on a new branch with the same name. On macOS, it then clones the folder `packages/apps/desktop_tauri/target/debug` of the main checkout into the worktree, with a copy-on-write clone:
+The command creates the worktree `.claude/worktrees/<name>` of the main checkout, on a new branch with the same name. The command first runs `git submodule update --init --recursive` in the new worktree, so every submodule has the commit recorded by that worktree. When initialization fails, the worktree stays, the command exits with an error, and package installation does not start. Fix the cause, then run `git submodule update --init --recursive` and `pnpm install --frozen-lockfile` in the worktree.
+
+On macOS, it then clones the folders `packages/apps/desktop_tauri/target/debug` and `packages/apps/desktop_tauri/target/release/bundled_commands` of the main checkout into the worktree, with copy-on-write clones:
 
 ```sh
 cp -c -R -p <main checkout>/packages/apps/desktop_tauri/target/debug <worktree>/packages/apps/desktop_tauri/target/debug
+cp -c -R -p <main checkout>/packages/apps/desktop_tauri/target/release/bundled_commands <worktree>/packages/apps/desktop_tauri/target/release/bundled_commands
 ```
 
 At the end, the command runs `pnpm install --frozen-lockfile` in the worktree, so the worktree has a folder `node_modules` and `pnpm dev` runs at once. The command reads `pnpm-lock.yaml` and never changes it. When the installation fails, the command prints the error of `pnpm` and exits with the code 1. The worktree stays, so fix the cause and run `pnpm install --frozen-lockfile` in the worktree.
@@ -37,7 +40,7 @@ Measured on 2026-10-11:
 
 Limits:
 
-- The main checkout must be built first. Without a folder `target/debug`, the command creates the worktree without the clone and says so.
+- The main checkout must be built first. Without the folders `target/debug` and `target/release/bundled_commands`, the command creates the worktree without the clone and says so.
 - The clone needs macOS and the Apple File System, with both folders on the same disk. A worktree inside the main checkout is always on the same disk.
 - A clone shares its files only at the start. Each file that Cargo rewrites becomes a real copy.
 - The installation needs the command `pnpm` in the `PATH`.

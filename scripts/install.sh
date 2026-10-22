@@ -67,8 +67,26 @@ echo "Installing Heidrun in ${APPLICATIONS_FOLDER}."
 rm -rf "${APP_PATH}"
 ditto "${MOUNT_FOLDER}/Heidrun.app" "${APP_PATH}"
 
+BIN_FOLDER="${HOME}/.local/bin"
+mkdir -p "${BIN_FOLDER}"
+for COMMAND in heidrun_ctrl heidrun_data; do
+	SOURCE="${APP_PATH}/Contents/Resources/binaries/${COMMAND}"
+	TARGET="${BIN_FOLDER}/${COMMAND}"
+	if [ ! -x "${SOURCE}" ]; then
+		fail "The application does not contain the command line ${COMMAND}."
+	fi
+	if [ -e "${TARGET}" ] || [ -L "${TARGET}" ]; then
+		if [ -L "${TARGET}" ] && [ "$(readlink "${TARGET}")" = "${SOURCE}" ]; then
+			continue
+		fi
+		fail "${TARGET} already exists and is not the Heidrun command line."
+	fi
+	ln -s "${SOURCE}" "${TARGET}"
+done
+
 hdiutil detach "${MOUNT_FOLDER}" -quiet >/dev/null
 MOUNT_FOLDER=""
 
 VERSION="$(sed -n '/CFBundleShortVersionString/{n;s/.*<string>\(.*\)<\/string>.*/\1/p;}' "${APP_PATH}/Contents/Info.plist")"
 echo "Heidrun ${VERSION} is installed in ${APP_PATH}."
+echo "The commands heidrun_ctrl and heidrun_data are available in ${BIN_FOLDER}."

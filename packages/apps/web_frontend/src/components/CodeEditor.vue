@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { Editor } from "../lib/editor";
 import { codeIsDark } from "../stores/theme";
 
-const props = defineProps<{ path: string; text: string; wrap: boolean; line?: number | null }>();
+const props = defineProps<{ path: string; text: string; wrap: boolean; line?: number | null; readOnly?: boolean }>();
 const emit = defineEmits<{ change: [text: string]; save: [] }>();
 const host = ref<HTMLElement>();
 let ed: Editor | null = null;
@@ -18,11 +18,13 @@ onMounted(async () => {
     path: props.path,
     wrap: props.wrap,
     dark: codeIsDark.value,
+    readOnly: props.readOnly === true,
     onChange: (t) => emit("change", t),
     onSave: () => emit("save"),
   });
   if (props.line) ed.goToLine(props.line);
-  ed.focus();
+  // A read-only view does not take the keyboard from the pane that holds it.
+  if (props.readOnly !== true) ed.focus();
 });
 onBeforeUnmount(() => {
   alive = false;
@@ -44,7 +46,7 @@ watch(
   () => props.line,
   (l) => l && ed?.goToLine(l),
 );
-defineExpose({ focus: () => ed?.focus() });
+defineExpose({ focus: () => ed?.focus(), openSearch: () => ed?.openSearch() });
 </script>
 
 <template>

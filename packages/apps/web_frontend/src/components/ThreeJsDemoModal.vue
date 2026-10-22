@@ -66,6 +66,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 59; background: rgba(0, 0, 0, 0.55); }
+.overlay { position: fixed; inset: 0; z-index: 59; background: var(--overlay); }
 .demo-canvas { display: block; width: 100%; height: 360px; }
 </style>

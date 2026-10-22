@@ -6,7 +6,7 @@ All commands run in the root folder of the repository, on macOS.
 
 ## Build the application
 
-You need [Herdr](https://herdr.dev) 0.9 or later, Rust stable, Node.js 20 or later, and [pnpm](https://pnpm.io).
+You need [Herdr](https://herdr.dev) 0.9 or later, Rust stable, Node.js 20 or later, [pnpm](https://pnpm.io), and [CMake](https://cmake.org) (`brew install cmake`). The package `voice_input` needs CMake to build the C++ engine whisper.cpp.
 
 Install the dependencies once, then build:
 
@@ -22,6 +22,22 @@ The command `pnpm build` builds the web frontend, then the Rust backend, then pa
 
 To build only the web frontend, run `pnpm build:web`.
 
+## Install the current development version
+
+Quit Heidrun, then build the application from the current source:
+
+```bash
+pnpm build
+```
+
+Open the folder containing the built application:
+
+```bash
+open packages/apps/desktop_tauri/target/release/bundle/macos
+```
+
+Drag `Heidrun.app` into `/Applications` and choose "Replace" when Finder asks. Then open Heidrun from `/Applications`.
+
 ## Launch the application during development
 
 ```bash
@@ -30,7 +46,11 @@ pnpm dev
 
 The command starts the web frontend with its development server on `http://localhost:1420`, then opens the application window. When you change a file of the web frontend, the window updates without a restart. When you change a Rust file, the command rebuilds the backend and restarts the window.
 
+To use the installed Heidrun for your daily work while you develop Heidrun, read [application_installations.md](docs/architecture/application_installations.md). It explains Heidrun Development, the separate application that `pnpm dev` starts, the resources that the two applications keep apart, and the commands to use both at the same time.
+
 To work on the web frontend alone, in a browser, run `pnpm dev:web`. Without the application window, the functions of the Rust backend are not available.
+
+To work on the mobile website alone, with no application window and no real computer behind it, run `pnpm --filter mobile_website dev`. The command starts a development server on `http://127.0.0.1:5183`, prints an address with a pairing key, and answers the calls of the page with four made-up coding agents. When you change a file of `packages/auxiliary/mobile_website/src`, the page reloads by itself and stays on the same screen, because the address names the screen. To use the real coding agents instead, start Heidrun once with `pnpm dev -- -- --no-splash-screen`, turn the mobile access on, copy the host name of the address that the section shows (for example `words-of-the-tunnel.ngrok-free.dev`), then run `MOBILE_API_TARGET=http://127.0.0.1:47823 MOBILE_API_HOST=<that host name> pnpm --filter mobile_website dev`. The host name changes each time that Heidrun opens the tunnel. The page then reloads when you change a file of the website, and you start Heidrun again only when the calls between the page and the application change. The development server sends no `Content-Security-Policy` header, so check the strict policy with the mobile server before you finish.
 
 To set an environment variable of the application during development, for example `HEIDRUN_DIR`, copy the file `.env.example` to a file named `.env` at the root of the repository, and remove the `#` at the start of the line of the variable. The file `.env.example` explains every variable that the application reads. Git ignores the file `.env`. Only a development build reads it, once at the start, so run `pnpm dev` again after a change. A variable that is already set in your shell keeps the value of the shell.
 
@@ -49,13 +69,16 @@ The command runs the tests of the six packages, and ends with a non-zero exit co
 | Command | Tests |
 | --- | --- |
 | `pnpm --filter web_frontend test` | The Vitest tests of `packages/apps/web_frontend`. The test files sit next to the code, and are named `*.test.ts`. |
-| `pnpm --filter desktop_tauri test` | The `cargo test` tests of `packages/apps/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
+| `pnpm --filter desktop_tauri test` | Builds `mobile_website`, then runs the `cargo test` tests of `packages/apps/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter website_public test` | The Vitest tests of `packages/auxiliary/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
-| `pnpm --filter raw_coding_agent_cli test` | The Rust tests (`cargo test`) of `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The tests of the command line sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
+| `pnpm --filter coding_agent_cli test` | The Rust tests (`cargo test`) of `packages/auxiliary/coding_agent_cli`, with fake `claude` and `codex` commands. The tests of the command line sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
+| `pnpm --filter mobile_website test` | The Vitest tests of `packages/auxiliary/mobile_website`: the three screens, the bottom bar, the confirmation sheet, the pairing key, the address of each screen, the colors of the output, and the rules of a page under a strict content security policy. The tests start the whole page against a fake computer, and one test starts the development server. The test files sit in the folder `tests`. |
+| `pnpm --filter mobile_server test` | Builds `mobile_website`, then runs the Rust tests (`cargo test`) of `packages/auxiliary/mobile_server`: the checks of a request, the closed list of methods, the routes with a fake handler, the files of the mobile website with their types, the file `mobile.json`, the finding of the program `ngrok`, the reading of the address of the tunnel, the host name check, and the life of the server on the loopback address, with a fake `ngrok` program. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file. One more test opens a real tunnel on the Internet, so it runs only by hand: `cd packages/auxiliary/mobile_server && cargo test live_ -- --ignored --nocapture`. |
+| `pnpm --filter voice_input test` | The Rust tests (`cargo test`) of `packages/auxiliary/voice_input`: the conversion of the audio, the 12 Whisper models, the download with a fake server, the text of Whisper, and a spoken sentence changed into text with the real model `tiny`, which the first run downloads once. |
 | `pnpm --filter data_layer_code_hosting test` | The Rust tests (`cargo test`) of `packages/data_layers/data_layer_code_hosting`: the two JSON schemas, the SQLite file, the reading of the pages of GitHub with a fake GitHub, the modes initialize and update, and the read-only query. The tests of the command line use a fake `gh` command and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter data_layer_source_control test` | The Rust tests (`cargo test`) of `packages/data_layers/data_layer_source_control`: the JSON schema, the SQLite file, the reading of the commits of a real Git repository, the modes initialize and update, and the read-only query. The tests of the command line use a real Git repository in a temporary folder and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter data_layer_user_activity test` | The Rust tests (`cargo test`) of `packages/data_layers/data_layer_user_activity`: the JSON schema, the SQLite file, the reading of the file of user activity records, the modes initialize and update, and the read-only query. The tests of the command line use a fake file of user activity records in a temporary folder and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
-| `pnpm --filter data_layer_chat_sessions test` | The Rust tests (`cargo test`) of `packages/data_layers/data_layer_chat_sessions`: the reading of the chat session files of Claude Code and of Codex, the cache of the scans, the JSON schema, the SQLite file with its link tables, the modes initialize and update, and the read-only query. The tests of the command line use fake folders of the two coding agents and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
+| `pnpm --filter data_layer_coding_agents test` | The Rust tests (`cargo test`) of `packages/data_layers/data_layer_coding_agents`: the reading of the chat session files of Claude Code and of Codex, the cache of the scans, the JSON schema, the SQLite file with its link tables, the modes initialize and update, and the read-only query. The tests of the command line use fake folders of the two coding agents and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter change_log_generator test` | The Vitest tests of `packages/dev_tools/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
 | `pnpm --filter install_script_tests test` | The Vitest tests of `packages/dev_tools/install_script_tests`, the tests of the script `scripts/install.sh`. They run the script with a fake `curl`, a fake `hdiutil`, a fake `ditto`, a fake `uname`, and a fake `pgrep`, and install in a temporary folder in place of `/Applications`. The test files sit in the folder `tests`. |
 | `pnpm --filter worktree_tools test` | The Vitest tests of `packages/dev_tools/worktree_tools`, the tools that create a worktree and clean the old target folders. The test files sit in the folder `tests`. |
@@ -172,7 +195,7 @@ Options:
 | --- | --- |
 | `--from <tag>` | The release after which the changes start. `start` means the start of the history. The default is the release before `--to`, or the start if there is none. |
 | `--to <tag>` | The release where the changes end. `now` means the current commit. The default is `now`. |
-| `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the executable of the package [`raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli), which `cargo run` builds when needed. You need `codex`, `claude`, or `agy` installed and signed in, and the Rust tools. |
+| `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the executable of the package [`coding_agent_cli`](packages/auxiliary/coding_agent_cli), which `cargo run` builds when needed. You need `codex`, `claude`, or `agy` installed and signed in, and the Rust tools. |
 | `--agent <name>` | The coding agent for the option `--ai`: `codex` (the default), `claude`, or `agy`. |
 | `--help` | Shows the description of the command and its options. |
 

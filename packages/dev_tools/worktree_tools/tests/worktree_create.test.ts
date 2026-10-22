@@ -1,16 +1,46 @@
 import Fs from 'node:fs';
 import Path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TargetPaths } from '../src/target_paths.ts';
 import { WorktreeCreate } from '../src/worktree_create.ts';
 import { TestRepository } from './test_repository.ts';
 
 describe('WorktreeCreate', () => {
 	afterEach(() => {
+		vi.unstubAllEnvs();
 		TestRepository.removeAll();
 	});
 
 	describe('run', () => {
+		it('initializes recorded submodule commits and nested submodules before installing packages', () => {
+			vi.stubEnv('GIT_ALLOW_PROTOCOL', 'file');
+			const mainCheckoutPath = TestRepository.createWithSubmodules();
+			const result = WorktreeCreate.run({
+				workingDirectory: mainCheckoutPath,
+				name: 'with-submodules',
+			});
+			const sharedSubmodulePath = Path.join(result.worktreePath, 'submodules', 'shared');
+			expect(Fs.readFileSync(Path.join(sharedSubmodulePath, 'rule.txt'), 'utf8')).toBe('Recorded rule');
+			expect(Fs.readFileSync(Path.join(sharedSubmodulePath, 'nested', 'rule.txt'), 'utf8')).toBe('Nested rule');
+			expect(Fs.existsSync(Path.join(result.worktreePath, 'node_modules'))).toBe(true);
+		});
+
+		it('keeps the worktree and stops before package installation when a submodule cannot be initialized', () => {
+			vi.stubEnv('GIT_ALLOW_PROTOCOL', 'file');
+			const mainCheckoutPath = TestRepository.createWithSubmodules();
+			const missingRepositoryPath = Path.join(mainCheckoutPath, 'missing-repository');
+			TestRepository.git(mainCheckoutPath, ['config', 'submodule.submodules/shared.url', missingRepositoryPath]);
+			const worktreePath = Path.join(mainCheckoutPath, '.claude', 'worktrees', 'unavailable-submodule');
+			expect(() => {
+				WorktreeCreate.run({
+					workingDirectory: mainCheckoutPath,
+					name: 'unavailable-submodule',
+				});
+			}).toThrow(/submodules could not be initialized[\s\S]*git submodule update --init --recursive/);
+			expect(Fs.existsSync(worktreePath)).toBe(true);
+			expect(Fs.existsSync(Path.join(worktreePath, 'node_modules'))).toBe(false);
+		});
+
 		it('creates the worktree in .claude/worktrees on a new branch with the same name', () => {
 			const mainCheckoutPath = TestRepository.create();
 			const result = WorktreeCreate.run({
@@ -62,6 +92,17 @@ describe('WorktreeCreate', () => {
 
 			Fs.writeFileSync(cloneFilePath, 'changed in the worktree');
 			expect(Fs.readFileSync(sourceFilePath, 'utf8')).toBe('compiled dependency');
+		});
+
+		it.skipIf(process.platform !== 'darwin')('clones the bundled command line resources required by Tauri', () => {
+			const mainCheckoutPath = TestRepository.createWithBuiltTarget();
+			const result = WorktreeCreate.run({
+				workingDirectory: mainCheckoutPath,
+				name: 'with-bundled-commands',
+			});
+			const bundledCommandsPath = TargetPaths.bundledCommandsPath(result.worktreePath);
+			expect(Fs.readFileSync(Path.join(bundledCommandsPath, 'heidrun_ctrl'), 'utf8')).toBe('heidrun_ctrl');
+			expect(Fs.readFileSync(Path.join(bundledCommandsPath, 'heidrun_data'), 'utf8')).toBe('heidrun_data');
 		});
 
 		it('installs the packages: the new worktree has a folder node_modules', () => {

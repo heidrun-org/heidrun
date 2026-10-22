@@ -7,7 +7,7 @@ use serde_json::Value;
 use std::sync::OnceLock;
 
 /// The text of the file `schemas/user_activity_record.schema.json`.
-const USER_ACTIVITY_RECORD_SCHEMA: &str = include_str!("../../schemas/user_activity_record.schema.json");
+pub const USER_ACTIVITY_RECORD_SCHEMA: &str = include_str!("../../schemas/user_activity_record.schema.json");
 
 /// The compiled check of a user activity record. It is built at the first use.
 static USER_ACTIVITY_RECORD_VALIDATOR: OnceLock<Validator> = OnceLock::new();

@@ -1,0 +1,27 @@
+[package]
+name = "mobile_server"
+version = "0.2.7"
+description = "The mobile server of Heidrun: serves the mobile website on the loopback address behind an ngrok tunnel, checks the host name and the pairing key, and hands each call of the phone to the desktop application"
+license = "MIT"
+edition = "2021"
+publish = false
+
+[lib]
+name = "mobile_server"
+path = "src/lib.rs"
+
+[dependencies]
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }
+tokio = { version = "1", features = ["io-util", "net", "process", "rt", "sync", "time"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+qrcode = { version = "0.14", default-features = false, features = ["svg"] }
+dirs = "6"
+# The push to a phone: the key of the server signs a token (ES256), and a request without body wakes the phone
+p256 = { version = "0.13", default-features = false, features = ["ecdsa", "std"] }
+base64 = "0.22"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["io-util", "macros", "net", "rt", "sync", "time"] }
+tower = { version = "0.5", features = ["util"] }

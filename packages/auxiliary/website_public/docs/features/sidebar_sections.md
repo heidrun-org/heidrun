@@ -1,3 +1,7 @@
+---
+description: "The File explorer, Source control, Code hosting, Launchers, and Clipboard sidebar sections keep the project tools next to your coding agents."
+---
+
 # The sidebar sections
 
 Around your coding agents, you need more: the files of the project, the Git changes, the issues, the commands of the project, and the pieces of text that you want to keep. Without Heidrun, each one is in a different application.
@@ -11,7 +15,7 @@ The left sidebar and the right sidebar each hold several sidebar sections. The s
 The File explorer sidebar section, in the left sidebar, shows the whole folder tree of the Git repository of the selected workspace.
 
 - Click a folder to fold it or to unfold it.
-- Click a file to open it in the Files window, where you can read the file and edit it. The keys ⌘P find a file by its name.
+- Click a file to read it in a pane next to your terminal. The pane only shows the file: you cannot change it there. The keys ⌘P open the Files window, where you can find a file by its name and edit it.
 - The option "Ignored files" of its menu shows or hides the files that Git ignores.
 
 ![The File explorer sidebar section with the folders and the files at the root of the repository.](/screenshots/features/file_explorer.png){width=300}

@@ -12,7 +12,7 @@
   "installedSkillLabel": "Installed skill",
   "installedSkillTitle": "Show the installed skills: inspect or delete a skill",
   "findNewSkillsLabel": "Find new skills",
-  "findNewSkillsTitle": "Search skills.sh: inspect or install a skill",
+  "findNewSkillsTitle": "Find a skill on skills.sh, in a folder, or on GitHub or GitLab: inspect or install it",
   "settingsLabel": "Settings",
   "settingsTitle": "Open the settings"
 }

@@ -2,6 +2,16 @@ import { reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { CUSTOM_LAUNCHER_CODING_AGENT_IDS } from "../lib/coding_agents";
+import { AGENTS } from "../lib/agents";
+import { DetectionFamilies } from "../lib/detection_families";
+import { PERSON_WORK_PERIODS, type PersonWorkPeriodId, type PersonWorkSlotHours } from "../lib/person_work";
+import {
+  USER_ACTIVITY_RANGE_IDS,
+  USER_ACTIVITY_RANGES,
+  USER_ACTIVITY_SLOT_LENGTHS,
+  type UserActivityRangeId,
+  type UserActivitySlotLengthId,
+} from "../lib/user_activity_slots";
 
 export interface FontOption {
   id: string;
@@ -54,6 +64,33 @@ export type SavedSearch = {
   query: string;
 };
 
+/** The saved searches of the two lists of the Code hosting sidebar section (issue #607): each list has its own. */
+export type SavedSearches = {
+  /** The saved searches of the list "Issues", in the order of their buttons. */
+  issues: SavedSearch[];
+  /** The saved searches of the list "Pull requests" or "Merge requests", in the order of their buttons. */
+  requests: SavedSearch[];
+};
+
+/**
+ * The choice of the workspace selector of the tab "User activity" of the Statistics window (issue 707). The choice is saved by the
+ * folder of each workspace, because a folder is the same at every run of Heidrun.
+ */
+export type StatisticsUserActivityWorkspaces = {
+  /** True when every workspace was chosen: a workspace that opens later is then chosen too. `folders` is then not read. */
+  isEveryWorkspaceChosen: boolean;
+  /** The folders of the workspaces that were chosen. Empty with `isEveryWorkspaceChosen` false: no workspace was chosen. */
+  folders: string[];
+};
+
+/** The choice of the workspace selector of the tab "Work of one person" of the Statistics window (issue 707). */
+export type StatisticsPersonWorkWorkspaces = {
+  /** True once the developer has chosen the workspaces. False: the tab starts with the selected workspace alone. */
+  isSaved: boolean;
+  /** The identifiers of the workspaces that were chosen. Empty with `isSaved` true: no workspace was chosen. */
+  workspaceIds: string[];
+};
+
 const defaults = {
   fontId: "geist",
   fontSize: FONT_DEFAULT,
@@ -66,6 +103,16 @@ const defaults = {
    * "app": mouse goes to Herdr / the program in the pane (scroll, clicks); ⌥ + drag still selects.
    */
   mouseMode: "select" as "select" | "app",
+  /**
+   * Settings window, section Terminal: the automatic detection in the text of the terminals is on (issue #638). Off: Heidrun
+   * colors nothing, adds no hover button, and gives no action to the text of any terminal.
+   */
+  terminalTextDetection: true,
+  /**
+   * Settings window, section Terminal: the identifiers of the detection families that the developer turned off (issue #638).
+   * A family that is not in the list is on. The list is read only while `terminalTextDetection` is on.
+   */
+  disabledDetectionFamilies: [] as string[],
   /** Sidebar section that the left sidebar shows. */
   leftSidebarSection: "launchers" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
@@ -98,8 +145,10 @@ const defaults = {
   leftWidth: 280,
   /** Start the Herdr server in the background when it is not running. */
   autoStartHerdr: true,
+  /** True when the notice of the missing programs already named the missing ngrok once: it does not name it again (issue 546). */
+  ngrokMissingNoticeShown: false,
   /** Quitting Heidrun does not stop the Herdr session of Heidrun: the agents continue to run. Off: quitting stops it. */
-  keepAgentsRunningAfterQuit: false,
+  keepAgentsRunningAfterQuit: true,
   /** A click on the cross of a workspace in the information card of the Workspace status bar section opens the confirmation dialog "Close the workspace". Off: the workspace closes at once. */
   confirmWorkspaceClose: true,
   /** A click on the close button of a tab opens the confirmation dialog "Close the tab". Off: the tab closes at once. */
@@ -113,8 +162,10 @@ const defaults = {
    * selected workspace, in minutes. 0 is off (issue #432).
    */
   gitFetchMinutes: 5,
-  /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
-  newTabCommand: "terminal" as "terminal" | "claude" | "codex",
+  /** Settings window, section New tab: the command that the pane of a new tab runs. */
+  newTabCommand: "terminal" as "terminal" | "claude" | "codex" | "agy",
+	/** Show the composition bar initially when a new pane starts directly with a coding agent. */
+	isCompositionBarShownOnAgentStart: false,
   /** Window Create a custom launcher: the last kind, "commandLine" or "codingAgent". */
   customLauncherKind: "commandLine" as "commandLine" | "codingAgent",
   /** Window Create a custom launcher: the identifier of the last coding agent. */
@@ -125,6 +176,22 @@ const defaults = {
   customLauncherEffort: "",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
+  /**
+   * Settings window, section General: the goat sound is on, so the sound buttons and the smiley play a goat bleat (issue #620).
+   * Off: no goat bleat plays, and a bleat that is playing stops.
+   */
+  goatSound: false,
+  /** Settings window, section Mobile access: the phone may type a command in a plain terminal. Off: the phone only reads the terminals. */
+  mobileTerminalTyping: false,
+  /**
+   * Settings window, section Voice input: the voice input is on (issue 662). Off: Heidrun shows no push-to-talk button, downloads
+   * no model, and never opens the microphone.
+   */
+  voiceInput: false,
+  /** Settings window, section Voice input: the language of the speech, "auto" (Whisper finds it) or a two-letter code. */
+  voiceInputLanguage: "auto",
+  /** Settings window, section Voice input: the identifier of the Whisper model. */
+  voiceInputModel: "base",
   /** Settings window, section Needs you: the Needs you sidebar section shows the list of workspaces at its bottom. Off: it shows only the cards. */
   showWorkspacesInNeedsYou: true,
   /** Notifications. */
@@ -177,6 +244,10 @@ const defaults = {
   columnOfPinnedPanesWidth: 560,
   /** The coding agents (ids of `lib/agents.ts`) that the user has a valid subscription or access for. */
   ownedAgents: [] as string[],
+  /** Whether the coding agents were checked once or the developer has chosen them. */
+  ownedAgentsConfigured: false,
+  /** Settings window, section Coding agents: show account quota data and collect Claude Code quota data. */
+  quotaMonitoring: true,
   /** Window Find new skills: where a skill is installed, "workspace" (the folder of the workspace) or "user". */
   skillsLevel: "workspace" as "workspace" | "user",
   /** The window of a SKILL.md file shows the rendered Markdown (true) or the highlighted source (false). */
@@ -211,8 +282,36 @@ const defaults = {
   searchThisWorkspace: false,
   /** Clipboard sidebar section: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
-  /** Sidebar section Code hosting: the saved searches, in the order of their buttons. */
-  codeHostingSavedSearches: [] as SavedSearch[],
+  /** Sidebar section Code hosting: the saved searches of each list, in the order of their buttons. */
+  codeHostingSavedSearches: { issues: [], requests: [] } as SavedSearches,
+  /**
+   * Window Statistics, bar charts of the tab "Work of one person": the color that the legend filter keeps, for each chart. The
+   * name of a chart points to the identifier of the only color that the chart shows. A chart with no name shows every color.
+   */
+  statisticsLegendFilters: {} as Record<string, string>,
+  /** Window Statistics, tab "User activity": the time range of the histogram (issue 707). */
+  statisticsUserActivityRange: "day" as UserActivityRangeId,
+  /** Window Statistics, tab "User activity": the slot length of the histogram. It must be one of the slot lengths of the time range. */
+  statisticsUserActivitySlotLength: USER_ACTIVITY_RANGES.day.defaultSlotLengthId as UserActivitySlotLengthId,
+  /** Window Statistics, tab "User activity": the choice of the workspace selector. Every workspace at first. */
+  statisticsUserActivityWorkspaces: { isEveryWorkspaceChosen: true, folders: [] } as StatisticsUserActivityWorkspaces,
+  /** Window Statistics, tab "Work of one person": the source of the bar chart (issue 707). */
+  statisticsPersonWorkSource: "git_history" as "git_history" | "ai_cost",
+  /** Window Statistics, tab "Work of one person": the metric of the Git history. Kept while the source "AI cost" hides it. */
+  statisticsPersonWorkMetric: "commits_and_pull_requests" as "commits_and_pull_requests" | "lines",
+  /** Window Statistics, tab "Work of one person": the unit of the AI cost. Kept while the source "Git history" hides it. */
+  statisticsPersonWorkUnit: "dollars" as "dollars" | "tokens",
+  /**
+   * Window Statistics, tab "Work of one person": the identifier of the person that the developer chose in the person chooser.
+   * Kept while the source "AI cost" hides the chooser, and while the chosen workspaces do not list this person. Empty: none.
+   */
+  statisticsPersonWorkPerson: "",
+  /** Window Statistics, tab "Work of one person": the time range of the bar chart. */
+  statisticsPersonWorkRange: "seven_days" as PersonWorkPeriodId,
+  /** Window Statistics, tab "Work of one person": the slot length in hours. It must be one of the slot lengths of the time range. */
+  statisticsPersonWorkSlotHours: PERSON_WORK_PERIODS.seven_days.defaultSlotHours as PersonWorkSlotHours,
+  /** Window Statistics, tab "Work of one person": the choice of the workspace selector. The selected workspace alone at first. */
+  statisticsPersonWorkWorkspaces: { isSaved: false, workspaceIds: [] } as StatisticsPersonWorkWorkspaces,
   /** The identifier of the workspace that was selected at the last run: the next start selects it again. Empty: none. */
   selectedWorkspaceId: "",
 };
@@ -231,12 +330,25 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   chatsRefreshSeconds: [5, 10, 30, 60],
   dynamicTopicExtraction: ["keyword", "languageModel"],
   gitFetchMinutes: [0, 1, 5, 10, 30],
-  newTabCommand: ["terminal", "claude", "codex"],
+  newTabCommand: ["terminal", "claude", "codex", "agy"],
   customLauncherKind: ["commandLine", "codingAgent"],
   customLauncherAgent: CUSTOM_LAUNCHER_CODING_AGENT_IDS,
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
+  statisticsUserActivityRange: USER_ACTIVITY_RANGE_IDS,
+  statisticsUserActivitySlotLength: Object.keys(USER_ACTIVITY_SLOT_LENGTHS),
+  statisticsPersonWorkSource: ["git_history", "ai_cost"],
+  statisticsPersonWorkMetric: ["commits_and_pull_requests", "lines"],
+  statisticsPersonWorkUnit: ["dollars", "tokens"],
+  statisticsPersonWorkRange: Object.keys(PERSON_WORK_PERIODS),
+  statisticsPersonWorkSlotHours: [...new Set(Object.values(PERSON_WORK_PERIODS).flatMap((period) => period.slotHoursChoices))],
 };
+
+const NEW_TAB_COMMAND_AGENT_IDS = {
+  claude: 'claude',
+  codex: 'codex',
+  agy: 'antigravity',
+} as const;
 
 /**
  * Keeps each saved value that has the type of its default value, and that is in the list of its allowed values when the
@@ -274,6 +386,72 @@ function keepSavedSearches(value: unknown[]): SavedSearch[] {
     }
   }
   return kept;
+}
+
+/**
+ * Keeps the saved searches of each list that have a name and a search that are texts, and drops the others.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the saved searches of each list that can be used
+ */
+function keepSavedSearchLists(value: unknown): SavedSearches {
+  const candidate = value as Partial<Record<keyof SavedSearches, unknown>> | null;
+  return {
+    issues: keepSavedSearches(Array.isArray(candidate?.issues) ? candidate.issues : []),
+    requests: keepSavedSearches(Array.isArray(candidate?.requests) ? candidate.requests : []),
+  };
+}
+
+/**
+ * Keeps the legend filters that are a text for a chart that has a name, and drops the others.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the legend filters that can be used
+ */
+function keepLegendFilters(value: unknown): Record<string, string> {
+  const kept: Record<string, string> = {};
+  for (const [chartName, colorId] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof colorId === "string" && colorId !== "") {
+      kept[chartName] = colorId;
+    }
+  }
+  return kept;
+}
+
+/**
+ * Keeps the texts of a saved list, and drops the other entries and the empty texts.
+ * @param value - the saved value of the list, whatever it holds
+ * @returns the texts of the list
+ */
+function keepTexts(value: unknown): string[] {
+  if (Array.isArray(value) === false) {
+    return [];
+  }
+  return (value as unknown[]).filter((entry): entry is string => typeof entry === "string" && entry !== "");
+}
+
+/**
+ * Keeps the choice of the workspace selector of the tab "User activity" when it has the right shape.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the choice that can be used
+ */
+function keepUserActivityWorkspaces(value: unknown): StatisticsUserActivityWorkspaces {
+  const candidate = value as Partial<StatisticsUserActivityWorkspaces> | null;
+  return {
+    isEveryWorkspaceChosen: typeof candidate?.isEveryWorkspaceChosen === "boolean" ? candidate.isEveryWorkspaceChosen : true,
+    folders: keepTexts(candidate?.folders),
+  };
+}
+
+/**
+ * Keeps the choice of the workspace selector of the tab "Work of one person" when it has the right shape.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the choice that can be used
+ */
+function keepPersonWorkWorkspaces(value: unknown): StatisticsPersonWorkWorkspaces {
+  const candidate = value as Partial<StatisticsPersonWorkWorkspaces> | null;
+  return {
+    isSaved: candidate?.isSaved === true,
+    workspaceIds: keepTexts(candidate?.workspaceIds),
+  };
 }
 
 /** Settings that got a new name to follow the glossary: the old name in the saved value, then the new name. */
@@ -337,8 +515,22 @@ function load(): typeof defaults {
     }
     delete stored.leftOpen;
     delete stored.rightOpen;
+    // The saved searches were one list for the two lists of the Code hosting sidebar section. Each list has its own
+    // saved searches now (issue #607): the old list is copied into both lists, so that nothing is lost.
+    if (Array.isArray(stored.codeHostingSavedSearches)) {
+      const oldList = stored.codeHostingSavedSearches;
+      stored.codeHostingSavedSearches = { issues: oldList, requests: structuredClone(oldList) };
+    }
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
-    saved.codeHostingSavedSearches = keepSavedSearches(saved.codeHostingSavedSearches);
+    const commandAgentId = saved.newTabCommand === 'terminal' ? null : NEW_TAB_COMMAND_AGENT_IDS[saved.newTabCommand];
+    if (commandAgentId !== null && saved.ownedAgents.includes(commandAgentId) === false) {
+      saved.newTabCommand = 'terminal';
+    }
+    saved.codeHostingSavedSearches = keepSavedSearchLists(saved.codeHostingSavedSearches);
+    saved.statisticsLegendFilters = keepLegendFilters(saved.statisticsLegendFilters);
+    saved.statisticsUserActivityWorkspaces = keepUserActivityWorkspaces(saved.statisticsUserActivityWorkspaces);
+    saved.statisticsPersonWorkWorkspaces = keepPersonWorkWorkspaces(saved.statisticsPersonWorkWorkspaces);
+    saved.disabledDetectionFamilies = DetectionFamilies.keepKnownIds(saved.disabledDetectionFamilies);
     return saved;
   } catch {
     return { ...defaults };
@@ -346,6 +538,28 @@ function load(): typeof defaults {
 }
 
 export const settings = reactive(load());
+
+async function switchOnInstalledCodingAgents(): Promise<void> {
+  try {
+    const availableAgentIds = await invoke<string[]>("coding_agents_available");
+    if (
+      Array.isArray(availableAgentIds) === false ||
+      settings.ownedAgentsConfigured === true ||
+      settings.ownedAgents.length > 0
+    ) {
+      return;
+    }
+    const availableAgents = new Set(availableAgentIds);
+    settings.ownedAgents = AGENTS.filter((agent) => availableAgents.has(agent.id)).map((agent) => agent.id);
+    settings.ownedAgentsConfigured = true;
+  } catch {
+    /* the choice stays empty until the developer makes it */
+  }
+}
+
+if (settings.ownedAgentsConfigured === false && settings.ownedAgents.length === 0) {
+  void switchOnInstalledCodingAgents();
+}
 
 watch(
   () => ({ ...settings }),
@@ -401,17 +615,18 @@ export function resetZoom() {
 
 /** The sections of the Settings window. */
 export type SettingsSection =
-  | "terminal"
-  | "newTab"
-  | "mouse"
-  | "finishedItems"
-  | "needsYou"
-  | "notifications"
   | "general"
-  | "mobileAccess"
+  | "designReview"
+  | "terminal"
+  | "textDetection"
   | "agents"
-  | "pastChats"
-  | "dynamicTopics";
+  | "confirmations"
+  | "guards"
+  | "notifications"
+  | "sidebars"
+  | "dynamicTopics"
+  | "mobileAccess"
+  | "voiceInput";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */
 export const settingsModal = reactive({

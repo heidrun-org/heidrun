@@ -62,7 +62,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <div class="eyebrow">Remote Control</div>
           <h2>{{ pane ? paneName(pane) : t("rcModal.claudeSession") }}</h2>
         </div>
-        <button class="x" :aria-label="t('rcModal.closeLabel')" :title="t('rcModal.closeTitle')" @click="close">
+        <button class="btn icon x" :aria-label="t('rcModal.closeLabel')" :title="t('rcModal.closeTitle')" @click="close">
           <Icon name="x-lg" />
         </button>
       </header>
@@ -85,19 +85,15 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </template>
 
 <style scoped>
-.scrim { position: fixed; inset: 0; z-index: 46; background: rgba(5, 6, 7, 0.55); display: flex; align-items: center; justify-content: center; }
+.scrim { position: fixed; inset: 0; z-index: 46; background: var(--overlay); display: flex; align-items: center; justify-content: center; }
 .win {
   width: min(600px, calc(100vw - 40px)); display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 20px;
-  border-radius: 14px; border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 28px 72px rgba(0, 0, 0, 0.6);
+  border-radius: 14px; border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 28px 72px var(--shadow);
 }
 header { display: flex; align-items: flex-start; justify-content: space-between; }
 h2 { margin: 4px 0 0; font-size: var(--font-size); font-weight: 600; }
-.x {
-  width: 28px; height: 28px; border: none; border-radius: 7px; background: transparent; color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.x:hover { background: var(--hover); color: var(--text); }
-.qr { align-self: center; width: 240px; height: 240px; padding: 12px; border-radius: 12px; background: #fff; }
+.x { display: inline-flex; align-items: center; justify-content: center; }
+.qr { align-self: center; width: 240px; height: 240px; padding: 12px; border-radius: 12px; background: var(--on-solid); }
 .qr :deep(svg) { width: 100%; height: 100%; display: block; }
 .hint { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.5; text-align: center; }
 .url { padding: 10px 12px; border-radius: 9px; background: var(--bg); }

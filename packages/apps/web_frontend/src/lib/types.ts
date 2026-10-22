@@ -12,7 +12,9 @@ export interface WorkspaceInfo {
   active_tab_id: string;
   agent_status: AgentStatus;
   tokens?: Record<string, string>;
-  worktree?: { branch?: string | null; path?: string | null } | null;
+  /** The saved absolute workspace folder; null requires explicit folder recovery. */
+  workspace_folder?: string | null;
+  worktree?: { branch?: string | null; checkout_path?: string | null } | null;
 }
 
 export interface TabInfo {
@@ -56,6 +58,8 @@ export interface PaneInfo {
 export interface AgentInfo extends PaneInfo {
   name?: string | null;
   state_change_seq?: number;
+  /** The Herdr completion sequence, unchanged when that completion is acknowledged. */
+  completion_seq?: number;
   interactive_ready?: boolean;
 }
 
@@ -132,10 +136,10 @@ export interface ContextUsage {
 
 /** Quota block in the status bar. */
 export interface QuotaBlock {
-  provider: "claude" | "codex";
+  provider: "claude" | "codex" | "antigravity";
   label: string;
-  /** `id` names the window in the code, `name` is the text shown (translated). */
-  windows: { id: "session" | "week"; name: string; percent: number; resetsAt?: number }[];
+  /** `id` distinguishes windows from one account, `name` is the text shown, and `period` sets their time behaviour. */
+  windows: { id: string; name: string; percent: number; resetsAt?: number; period?: "session" | "week"; windowMinutes?: number }[];
   cost?: number;
   updatedAt?: number;
 }

@@ -3,31 +3,34 @@ import { onBeforeUnmount, onMounted } from "vue";
 import DialogCloseButton from "./DialogCloseButton.vue";
 import Icon from "./Icon.vue";
 import SettingsAgentsSection from "./settings/SettingsAgentsSection.vue";
+import SettingsConfirmationsSection from "./settings/SettingsConfirmationsSection.vue";
 import SettingsDynamicTopicsSection from "./settings/SettingsDynamicTopicsSection.vue";
-import SettingsFinishedItemsSection from "./settings/SettingsFinishedItemsSection.vue";
+import SettingsDesignSection from './settings/settings_design_section.vue';
 import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
-import SettingsNeedsYouSection from "./settings/SettingsNeedsYouSection.vue";
-import SettingsNewTabSection from "./settings/SettingsNewTabSection.vue";
+import SettingsGuardsSection from "./settings/SettingsGuardsSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
-import SettingsMouseSection from "./settings/SettingsMouseSection.vue";
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
-import SettingsPastChatsSection from "./settings/SettingsPastChatsSection.vue";
+import SettingsSidebarsSection from "./settings/SettingsSidebarsSection.vue";
 import SettingsTerminalSection from "./settings/SettingsTerminalSection.vue";
+import SettingsTextDetectionSection from "./settings/SettingsTextDetectionSection.vue";
+import SettingsVoiceInputSection from "./settings/SettingsVoiceInputSection.vue";
+import { guardWindow } from "../stores/guard_window";
 import { settingsModal, type SettingsSection } from "../stores/settings";
 import { t } from "../i18n/index";
 
 const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "general", icon: "sliders", labelKey: "settingsModal.general" },
+  { id: "designReview", icon: "palette", labelKey: "settingsModal.designReview" },
   { id: "terminal", icon: "terminal", labelKey: "settingsModal.terminal" },
-  { id: "newTab", icon: "plus-lg", labelKey: "settingsModal.newTab" },
-  { id: "mouse", icon: "mouse", labelKey: "settingsModal.mouse" },
-  { id: "finishedItems", icon: "check2-circle", labelKey: "settingsModal.finishedItems" },
-  { id: "needsYou", icon: "layout-sidebar-inset-reverse", labelKey: "settingsModal.needsYou" },
-  { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
-  { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
+  { id: "textDetection", icon: "regex", labelKey: "settingsModal.textDetection" },
   { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
-  { id: "pastChats", icon: "chat-left-text", labelKey: "settingsModal.pastChats" },
+  { id: "confirmations", icon: "shield-check", labelKey: "settingsModal.confirmations" },
+  { id: "guards", icon: "shield-exclamation", labelKey: "settingsModal.guards" },
+  { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
+  { id: "sidebars", icon: "layout-sidebar-inset-reverse", labelKey: "settingsModal.sidebars" },
   { id: "dynamicTopics", icon: "tags", labelKey: "settingsModal.dynamicTopics" },
+  { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
+  { id: "voiceInput", icon: "mic", labelKey: "settingsModal.voiceInput" },
 ];
 
 function close() {
@@ -35,6 +38,10 @@ function close() {
 }
 function onKey(e: KeyboardEvent) {
   if (e.key === "Escape") {
+    // The guard window is open over this window: the key belongs to the guard window.
+    if (guardWindow.isOpen) {
+      return;
+    }
     // An open information card closes first: the key reaches the card, which closes alone.
     if (e.target instanceof Element && e.target.closest(".information-card-part.is-open") !== null) {
       return;
@@ -61,7 +68,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             v-for="s in SECTIONS"
             :key="s.id"
             type="button"
-            class="nav-link justify-content-start"
+            class="navigation-action nav-link justify-content-start"
             :class="{ active: settingsModal.section === s.id }"
             :aria-current="settingsModal.section === s.id ? 'page' : undefined"
             @click="settingsModal.section = s.id"
@@ -73,16 +80,17 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <section class="flex-fill overflow-y-auto d-flex flex-column gap-3">
           <h3 class="m-0 fw-semibold">{{ t(SECTIONS.find((s) => s.id === settingsModal.section)?.labelKey ?? "settingsModal.title") }}</h3>
           <SettingsGeneralSection v-if="settingsModal.section === 'general'" />
+          <SettingsDesignSection v-else-if="settingsModal.section === 'designReview'" />
           <SettingsTerminalSection v-else-if="settingsModal.section === 'terminal'" />
-          <SettingsNewTabSection v-else-if="settingsModal.section === 'newTab'" />
-          <SettingsMouseSection v-else-if="settingsModal.section === 'mouse'" />
-          <SettingsFinishedItemsSection v-else-if="settingsModal.section === 'finishedItems'" />
-          <SettingsNeedsYouSection v-else-if="settingsModal.section === 'needsYou'" />
-          <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
-          <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
+          <SettingsTextDetectionSection v-else-if="settingsModal.section === 'textDetection'" />
           <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />
-          <SettingsPastChatsSection v-else-if="settingsModal.section === 'pastChats'" />
+          <SettingsConfirmationsSection v-else-if="settingsModal.section === 'confirmations'" />
+          <SettingsGuardsSection v-else-if="settingsModal.section === 'guards'" />
+          <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
+          <SettingsSidebarsSection v-else-if="settingsModal.section === 'sidebars'" />
           <SettingsDynamicTopicsSection v-else-if="settingsModal.section === 'dynamicTopics'" />
+          <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
+          <SettingsVoiceInputSection v-else-if="settingsModal.section === 'voiceInput'" />
         </section>
       </div>
     </dialog>
@@ -90,5 +98,5 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); }
+.overlay { position: fixed; inset: 0; z-index: 60; background: var(--overlay); }
 </style>
