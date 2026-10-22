@@ -194,6 +194,12 @@ const defaults = {
   voiceInputModel: "base",
   /** Settings window, section Needs you: the Needs you sidebar section shows the list of workspaces at its bottom. Off: it shows only the cards. */
   showWorkspacesInNeedsYou: true,
+  /**
+   * The height of the list of workspaces of the Needs you sidebar section, in pixels, chosen by dragging the line above the list
+   * (issue 807). 0: the default, the height of the rows, up to 40 percent of the sidebar section. A number, not null, because
+   * `dropCorruptedValues` replaces a saved value whose type is not the type of the default.
+   */
+  needsYouWorkspacesHeight: 0,
   /** Notifications. */
   notifBlockedMin: 5, // remind once when an agent stays blocked this long (0 = off)
   notifContext: true, // an agent's context goes past 80 %
