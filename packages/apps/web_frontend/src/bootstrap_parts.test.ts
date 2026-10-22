@@ -127,6 +127,7 @@ describe('bootstrap_parts.scss', () => {
 			'.p-2',
 			'.ps-3',
 			'.pe-2',
+			'.pe-5',
 			'.pt-2',
 			'.fs-4',
 			'.fw-medium',

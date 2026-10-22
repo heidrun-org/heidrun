@@ -110,27 +110,27 @@ onBeforeUnmount(close);
       ref="menu"
       class="menu show position-fixed overflow-y-auto"
       role="menu"
-      :style="{ top: `${position.top}px`, right: `${position.right}px`, width: 'min(320px, calc(100vw - 16px))', maxHeight: '70vh' }"
+      :style="{ top: `${position.top}px`, right: `${position.right}px`, width: 'min(420px, calc(100vw - 16px))', maxHeight: '70vh' }"
       @mousedown.stop
     >
       <template v-for="(group, index) in groups" :key="group.id">
         <div v-if="index > 0" class="menu-divider" role="separator"></div>
         <div v-if="hasSeveralGroups" class="menu-header">{{ group.title }}</div>
-        <div v-for="macro in group.items" :key="group.id + macro.id" class="d-flex align-items-center">
-          <button type="button" class="menu-item text-wrap text-break min-w-0 flex-grow-1" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
+        <div v-for="macro in group.items" :key="group.id + macro.id" class="position-relative">
+          <button type="button" class="menu-item text-wrap text-break" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
             <span class="d-flex flex-column gap-1 align-self-start">
-              <span class="fw-medium">{{ macro.label }}</span>
+              <span class="fw-medium" :class="{ 'pe-5': group.id !== 'hardCoded' }">{{ macro.label }}</span>
               <small v-if="macro.description !== ''" class="text-body-secondary">{{ macro.description }}</small>
             </span>
           </button>
-          <template v-if="group.id !== 'hardCoded'">
-            <button type="button" class="btn btn-sm flex-shrink-0" role="menuitem" :aria-label="t('macroMenu.editMacro', { label: macro.label })" :title="t('macroMenu.edit')" @click.stop="edit(macro, group.id === 'project')">
+          <span v-if="group.id !== 'hardCoded'" class="position-absolute top-0 end-0 d-flex align-items-center mt-1">
+            <button type="button" class="btn icon small" role="menuitem" :aria-label="t('macroMenu.editMacro', { label: macro.label })" :title="t('macroMenu.edit')" @click.stop="edit(macro, group.id === 'project')">
               <Icon name="pencil" />
             </button>
-            <button type="button" class="btn btn-sm flex-shrink-0 text-danger-emphasis me-1" role="menuitem" :aria-label="t('macroMenu.deleteMacro', { label: macro.label })" :title="t('macroMenu.delete')" @click.stop="remove(macro, group.id === 'project')">
+            <button type="button" class="btn icon small text-danger-emphasis" role="menuitem" :aria-label="t('macroMenu.deleteMacro', { label: macro.label })" :title="t('macroMenu.delete')" @click.stop="remove(macro, group.id === 'project')">
               <Icon name="trash" />
             </button>
-          </template>
+          </span>
         </div>
       </template>
       <div class="menu-divider" role="separator"></div>

@@ -1,11 +1,11 @@
 # Glossary of Heidrun: macros
 
 - Created: 16 October 2026
-- Last updated: 20 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md)
-- Related issue: [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 649](https://github.com/heidrun-org/heidrun/issues/649), [issue 756](https://github.com/heidrun-org/heidrun/issues/756)
+- Related issue: [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 649](https://github.com/heidrun-org/heidrun/issues/649), [issue 756](https://github.com/heidrun-org/heidrun/issues/756), [issue 796](https://github.com/heidrun-org/heidrun/issues/796)
 
 This document gives one short definition for each word of the macros, and of the command line that controls them. The other words of Heidrun are in [index.md](index.md).
 
@@ -44,5 +44,6 @@ The command line that controls the Heidrun application, for a coding agent. Its 
 - The word "macro" means only a text that is written into a pane. A launcher is not a macro.
 
 - The macro menu keeps one row per macro, with Edit and Delete buttons only for personal macros and project macros. These buttons never insert text into a pane. Delete asks for confirmation and cancelling preserves the macro.
+- The macro menu is 420 pixels wide, or the width of the window minus 16 pixels when the window is narrower. The Edit and Delete buttons are small icon buttons with no border. They sit at the right end of the first line of the row, on the same line as the title of the macro, and the description stays on the line under the title. The title keeps free space on its right, so a long title wraps before the buttons and never goes under them.
 - Create at the bottom of the macro menu opens a blank form. Edit opens the selected macro with its title, description, and text filled in. Save writes the macro and closes the window. Selection and deletion belong in the menu, not in the editor.
 - Clicking a macro inserts its text; Shift+click also presses Enter.
