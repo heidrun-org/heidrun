@@ -28,6 +28,18 @@ describe('the named application color themes', () => {
 		}
 	});
 
+	it('keeps the hover of an icon button on a menu visible in every theme and appearance', () => {
+		for (const colorTheme of ThemePalette.COLOR_THEMES.slice(1)) {
+			for (const mode of ['dark', 'light'] as const) {
+				if (colorTheme[mode]['line-strong'] === undefined || colorTheme[mode].raised === undefined) {
+					continue;
+				}
+				expect(DesignRules.contrast(colorTheme[mode]['line-strong'], colorTheme[mode].raised), `${colorTheme.id} ${mode} line-strong on raised`)
+					.toBeGreaterThanOrEqual(1.15);
+			}
+		}
+	});
+
 	it('applies a selected theme immediately and keeps it when the appearance changes', async () => {
 		const { ThemePalette } = await import('./theme_palette');
 		ThemePalette.activate('dark');
