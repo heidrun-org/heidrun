@@ -88,6 +88,11 @@ afterEach(() => {
 });
 
 describe("PaneFocusHistoryButton", () => {
+  it("is an icon button with no border, so the shared style shows its background only under the pointer", () => {
+    wrapper = mount(PaneFocusHistoryButton, { props: { direction: "back" } });
+    expect(buttonOf(wrapper).classes()).toEqual(expect.arrayContaining(["btn", "icon"]));
+  });
+
   it("is disabled while the history has no entry in its direction", async () => {
     const back = mount(PaneFocusHistoryButton, { props: { direction: "back" } });
     const forward = mount(PaneFocusHistoryButton, { props: { direction: "forward" } });

@@ -28,7 +28,7 @@ const GITHUB_SEARCH_DOCUMENTATION = 'https://docs.github.com/en/issues/tracking-
   >
     <button
       type="button"
-      class="btn search-help-button text-body-secondary"
+      class="btn icon small search-help-button text-body-secondary"
       data-search-help
       :aria-label="t('codeHostingPanel.help.label', { name: title })"
       :title="t('codeHostingPanel.help.label', { name: title })"

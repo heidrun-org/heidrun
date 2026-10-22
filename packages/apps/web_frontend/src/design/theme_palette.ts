@@ -2,7 +2,7 @@ import { reactive, ref } from 'vue';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	ThemePalette — applies a named colour team throughout the application
+//	ThemePalette — applies a named color theme throughout the application
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -10,7 +10,7 @@ import { reactive, ref } from 'vue';
 export type PaletteMode = 'light' | 'dark';
 
 /** A saved, named set of application-wide colours. */
-export type ColorTeam = {
+export type ColorTheme = {
 	/** Stable identifier saved on this device. */
 	id: string;
 	/** Shared colour values for the dark application appearance. */
@@ -19,13 +19,13 @@ export type ColorTeam = {
 	light: Record<string, string>;
 };
 
-/** Manages named colour teams selected in Settings. */
+/** Manages named color themes selected in Settings. */
 export class ThemePalette {
-	/** The local storage key for the selected colour team. */
-	static readonly STORAGE_KEY = 'heidrun.color-team';
+	/** The local storage key for the selected color theme. */
+	static readonly STORAGE_KEY = 'heidrun.color-theme';
 
-	/** The colour teams available in Settings. The Amber team keeps the standard application colours. */
-	static readonly COLOR_TEAMS: ColorTeam[] = [
+	/** The color themes available in Settings. The Amber theme keeps the standard application colours. */
+	static readonly COLOR_THEMES: ColorTheme[] = [
 		{
 			id: 'amber',
 			dark: {},
@@ -213,8 +213,8 @@ export class ThemePalette {
 		},
 	];
 
-	/** The chosen team, saved across application restarts. */
-	static readonly selectedTeam = ref(ThemePalette._loadTeam());
+	/** The chosen theme, saved across application restarts. */
+	static readonly selectedTheme = ref(ThemePalette._loadTheme());
 
 	/** The appearance currently applied to the application. */
 	static readonly state = reactive({
@@ -222,42 +222,42 @@ export class ThemePalette {
 	});
 
 	/**
-	 * Applies the saved colour team after the application appearance changes.
+	 * Applies the saved color theme after the application appearance changes.
 	 * @param mode - Light or dark appearance.
 	 * @returns Nothing.
 	 */
 	static activate(mode: PaletteMode): void {
 		ThemePalette.state.mode = mode;
-		const allNames = new Set(ThemePalette.COLOR_TEAMS.flatMap((team) => Object.keys(team.dark)));
+		const allNames = new Set(ThemePalette.COLOR_THEMES.flatMap((colorTheme) => Object.keys(colorTheme.dark)));
 		for (const name of allNames) {
 			document.documentElement.style.removeProperty(`--${name}`);
 		}
-		const team = ThemePalette.COLOR_TEAMS.find(({ id }) => id === ThemePalette.selectedTeam.value);
-		for (const [name, value] of Object.entries(team?.[mode] ?? {})) {
+		const colorTheme = ThemePalette.COLOR_THEMES.find(({ id }) => id === ThemePalette.selectedTheme.value);
+		for (const [name, value] of Object.entries(colorTheme?.[mode] ?? {})) {
 			document.documentElement.style.setProperty(`--${name}`, value);
 		}
 	}
 
 	/**
-	 * Applies and remembers one available colour team.
-	 * @param id - Stable identifier of the selected team.
+	 * Applies and remembers one available color theme.
+	 * @param id - Stable identifier of the selected theme.
 	 * @returns Nothing.
 	 */
-	static selectTeam(id: string): void {
-		if (ThemePalette.COLOR_TEAMS.some((team) => team.id === id) === false) {
+	static selectTheme(id: string): void {
+		if (ThemePalette.COLOR_THEMES.some((colorTheme) => colorTheme.id === id) === false) {
 			return;
 		}
-		ThemePalette.selectedTeam.value = id;
+		ThemePalette.selectedTheme.value = id;
 		ThemePalette.activate(ThemePalette.state.mode);
 		localStorage.setItem(ThemePalette.STORAGE_KEY, id);
 	}
 
 	/**
-	 * Loads a saved team, falling back to the standard application colours.
-	 * @returns A valid colour team identifier.
+	 * Loads a saved theme, falling back to the standard application colours.
+	 * @returns A valid color theme identifier.
 	 */
-	private static _loadTeam(): string {
+	private static _loadTheme(): string {
 		const saved = localStorage.getItem(ThemePalette.STORAGE_KEY);
-		return ThemePalette.COLOR_TEAMS.some((team) => team.id === saved) ? saved as string : 'amber';
+		return ThemePalette.COLOR_THEMES.some((colorTheme) => colorTheme.id === saved) ? saved as string : 'amber';
 	}
 }

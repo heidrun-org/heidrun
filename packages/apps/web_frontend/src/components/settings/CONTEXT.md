@@ -6,7 +6,7 @@ The content of each section of the Settings window. The Settings window itself i
 ## Key Exports & Entry Points
 - `SettingsSwitchRow.vue`: one Bootstrap switch with its label, bound with `v-model`. The slot after the label holds the circled question mark. Every boolean setting uses it.
 - `SettingsOptionHelp.vue`: the circled question mark of an option and its information card (`../InformationCard.vue`, placement "bottom"). The properties are the key of the name of the option and the blocks, each one a key of a title and a key of a text. The texts are in the locale file `settingsHelp.json`.
-- `settings_design_section.vue`: the Color teams section and its immediately applied, saved application-wide colour choices.
+- `settings_design_section.vue`: the Color themes section and its immediately applied, saved application-wide colour choices.
 - `SettingsGeneralSection.vue`: the language, the time format, the working days, and the switch `goatSound` (read by `../../lib/goat_sounds.ts`).
 - `SettingsTerminalSection.vue`: the font, the font size that zooms the whole window, and the mouse behaviour (`mouseMode`).
 - `SettingsAgentsSection.vue`: the section "Coding agents". One switch per coding agent of `../../lib/agents.ts`, saved in `ownedAgents` (the whole row is the label of its switch), quota monitoring (`quotaMonitoring`), Antigravity quota tracking for the status bar, the default command of a new tab (`newTabCommand`), the initial composition bar visibility (`isCompositionBarShownOnAgentStart`), and the switch `keepAgentsRunningAfterQuit`. The default command offers Terminal and the switched-on coding agents; switching off the selected coding agent changes the command to Terminal. Heidrun Development cannot change the shared Antigravity status line.

@@ -1,11 +1,11 @@
 # Directory Context: `/packages/apps/web_frontend/src/design`
 
 ## Purpose
-Checks shared visual rules and applies named colour teams throughout the application from Settings.
+Checks shared visual rules and applies named color themes throughout the application from Settings.
 
 ## Key Exports & Entry Points
 - `design_rules.ts`: `DesignRules`, source checks and contrast calculations used by the normal frontend tests.
-- `theme_palette.ts`: `ThemePalette`, the named application-wide colour teams applied by the theme store and saved locally.
+- `theme_palette.ts`: `ThemePalette`, the named application-wide color themes applied by the theme store and saved locally.
 - `design_review_samples.vue`: the shared control samples used by the standalone development review.
 - `control_styles.test.ts`: checks every application button and text field for a shared treatment.
 - Command: `pnpm --filter web_frontend test`.

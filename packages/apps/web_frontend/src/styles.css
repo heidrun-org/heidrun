@@ -303,6 +303,9 @@ body {
   user-select: none;
 }
 button:where(:not(.btn)) { font: inherit; color: inherit; cursor: pointer; }
+/* A rule without a layer beats every rule of Bootstrap, so the rule above would give a selected row that is a button the text color of its
+   parent. This rule gives the row the text color that Bootstrap chose for it: the text of the main action, readable on the main action color. */
+.list-group-item.active { color: var(--list-group-active-color); }
 input { font: inherit; color: inherit; user-select: text; }
 /* While a line or a corner between panes is dragged, one cursor shows over every element, also over an element that has its own cursor. */
 html[data-pane-drag-cursor="move"], html[data-pane-drag-cursor="move"] * { cursor: move !important; }

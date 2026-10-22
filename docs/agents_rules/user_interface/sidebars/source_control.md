@@ -1,7 +1,7 @@
 # User interface of Heidrun: source control
 
 - Created: 13 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
@@ -14,7 +14,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 The Source control sidebar section copies the source control view of VS Code ([issue #305](https://github.com/heidrun-org/heidrun/issues/305)).
 
 - The Source control sidebar section shows only the local Git repository. It shows nothing of GitHub or GitLab.
-- The header holds the title "Source Control" and three buttons that show only an icon: "Commit" (a check mark), "Refresh", and "More actions" (three dots: Pull, Push, Fetch, and the large Git window).
+- The header holds the title "Source Control" and three buttons that show only an icon: "Commit" (a check mark), "Refresh", and "More actions" (three vertical dots: Pull, Push, Fetch, and the large Git window). Each of the three buttons has no border and no background of its own: its background shows only while the pointer is over it or while it has the keyboard focus.
 - The commit message box fills the full width. Its placeholder text names the current branch: `Message (⌘Enter to commit on "dev_jerome")`. The keys ⌘Enter make the commit. The sparkle button sits beside the text box, at its right and outside of it, so that it never covers the text or the scroll bar of the text box ([issue #613](https://github.com/heidrun-org/heidrun/issues/613)). It asks a coding agent (`codex`, else `claude`) to write the message from the diff of the staged files, or of every change when nothing is staged.
 - The commit button uses the shared primary action appearance, fills the full width, and centers its label "Commit" with the check mark. The arrow at its right opens a dropdown menu: "Commit", "Commit and push", and "Commit (amend the last commit)". When no file is staged, the commit button stages every change and then commits it, with no question ([issue #613](https://github.com/heidrun-org/heidrun/issues/613)); when there is no change at all, it commits nothing and says so. After a commit, the message box is empty.
 - The group "Staged Changes" and the group "Changes" always show, in this order, even when a group holds 0 files ([issue #613](https://github.com/heidrun-org/heidrun/issues/613)). The group "Changes" holds the files that are not staged, the new files, and the files in conflict. A file staged then changed again is in the two groups. Each group header has an arrow, the title, and a badge with the number of files. A click anywhere on the header line folds or unfolds the group, but a click on a button of the header line does not.

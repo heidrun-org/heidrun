@@ -1,7 +1,7 @@
 # User interface of Heidrun: pane focus history
 
 - Created: 13 October 2026
-- Last updated: 19 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Glossary of Heidrun: pane focus history](../../glossary/pane_focus_history.md), [Panes](panes.md), [Layout of the window](../window/layout.md)
@@ -21,7 +21,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 
 ## The Back button and the Forward button
 
-- The two buttons sit at the very top of the window, in the top bar, just on the left of the search button. The Back button is first, with an arrow that points left. The Forward button is second, with an arrow that points right.
+- The two buttons sit at the very top of the window, in the top bar, just on the left of the search button. The Back button is first, with an arrow that points left. The Forward button is second, with an arrow that points right. Each button has no border and no background of its own: its background shows only while the pointer is over it or while it has the keyboard focus.
 - A click on the Back button gives the focus to the pane of the entry before the current entry. A click on the Forward button gives the focus to the pane of the entry after the current entry. Heidrun selects the workspace and the tab of that pane, as a click on the pane does.
 - The Back button is disabled when no entry exists before the current entry. The Forward button is disabled when no entry exists after the current entry.
 - A press that lasts 500 milliseconds opens a list of entries under the button. The list of the Back button holds the entries before the current entry, the nearest first. The list of the Forward button holds the entries after the current entry, the nearest first. A press on a disabled button opens nothing.

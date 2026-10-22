@@ -1041,6 +1041,7 @@ describe('CodeHostingPanel search help', () => {
 			const title = group === 'issues' ? 'Issues' : forge === 'github' ? 'Pull requests' : 'Merge requests';
 			expect(button.attributes('aria-label')).toBe(`Search help for ${title}`);
 			expect(button.attributes('type')).toBe('button');
+			expect(button.classes()).toEqual(expect.arrayContaining(['btn', 'icon']));
 			expect((button.element as HTMLButtonElement).tabIndex).toBe(0);
 			await button.trigger('click');
 			await flushPromises();
