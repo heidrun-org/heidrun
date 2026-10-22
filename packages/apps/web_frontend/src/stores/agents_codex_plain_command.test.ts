@@ -22,12 +22,6 @@ vi.mock("./guards", async (importOriginal) => ({
   allowCommand: vi.fn(async () => true),
 }));
 
-/** The text typed before Codex, which sets the colours of the terminal view in the light theme (issue #636). */
-const LIGHT_COLORS = "printf '\\033]10;rgb:2b2b/2f2f/3333\\033\\\\\\033]11;rgb:ffff/ffff/ffff\\033\\\\'; ";
-
-/** The text typed before Codex, which sets the colours of the terminal view in the dark theme (issue #636). */
-const DARK_COLORS = "printf '\\033]10;rgb:c9c9/cdcd/d1d1\\033\\\\\\033]11;rgb:1f1f/1f1f/1f1f\\033\\\\'; ";
-
 const ID = "01a03a5e-a361-7ab2-af03-62ea1a76ce4b";
 
 /** Launches a free agent in a new tab, and waits for the pause before the command is typed. */
@@ -72,39 +66,43 @@ afterEach(() => {
   delete document.documentElement.dataset.theme;
 });
 
-describe("Codex in the light theme (issue #636)", () => {
-  it("types the text colour and the background colour of the light theme before codex", async () => {
+describe("Codex starts with the plain command (issue 791)", () => {
+  for (const theme of ["light", "dark"]) {
+    it(`types the plain command codex in the ${theme} theme`, async () => {
+      document.documentElement.dataset.theme = theme;
+      expect(await launch("codex")).toBe("ok");
+      expect(api.run).toHaveBeenCalledWith("p1", "codex");
+    });
+
+    it(`types the plain command codex resume in the ${theme} theme`, async () => {
+      document.documentElement.dataset.theme = theme;
+      expect(await launch("codex", ID)).toBe("ok");
+      expect(api.run).toHaveBeenCalledWith("p1", `codex resume '${ID}'`);
+    });
+
+    it(`types the command of a launcher that starts Codex as it is in the ${theme} theme`, async () => {
+      document.documentElement.dataset.theme = theme;
+      await runCommandLauncher("codex -m 'gpt-5' 'fix the tab bar'");
+      expect(api.run).toHaveBeenCalledWith("p1", "codex -m 'gpt-5' 'fix the tab bar'");
+    });
+  }
+
+  it("types no printf before any command", async () => {
     document.documentElement.dataset.theme = "light";
-    expect(await launch("codex")).toBe("ok");
-    expect(api.run).toHaveBeenCalledWith("p1", `${LIGHT_COLORS}codex`);
+    await launch("codex");
+    await launch("codex", ID);
+    await runCommandLauncher("codex");
+    for (const call of vi.mocked(api.run).mock.calls) {
+      expect(call[1]).not.toContain("printf");
+    }
   });
 
-  it("types the colours of the light theme before codex resume", async () => {
-    document.documentElement.dataset.theme = "light";
-    expect(await launch("codex", ID)).toBe("ok");
-    expect(api.run).toHaveBeenCalledWith("p1", `${LIGHT_COLORS}codex resume '${ID}'`);
-  });
-
-  it("types the colours of the dark theme before codex in the dark theme", async () => {
-    document.documentElement.dataset.theme = "dark";
-    expect(await launch("codex")).toBe("ok");
-    expect(api.run).toHaveBeenCalledWith("p1", `${DARK_COLORS}codex`);
-  });
-
-  it("types no colours before claude", async () => {
-    document.documentElement.dataset.theme = "light";
+  it("types the plain command claude", async () => {
     expect(await launch("claude")).toBe("ok");
     expect(api.run).toHaveBeenCalledWith("p1", "claude");
   });
 
-  it("types the colours of the light theme before the command of a launcher that starts Codex", async () => {
-    document.documentElement.dataset.theme = "light";
-    await runCommandLauncher("codex -m 'gpt-5' 'fix the tab bar'");
-    expect(api.run).toHaveBeenCalledWith("p1", `${LIGHT_COLORS}codex -m 'gpt-5' 'fix the tab bar'`);
-  });
-
   it("types the command of a launcher that does not start Codex as it is", async () => {
-    document.documentElement.dataset.theme = "light";
     await runCommandLauncher("pnpm dev");
     expect(api.run).toHaveBeenCalledWith("p1", "pnpm dev");
   });

@@ -1,11 +1,11 @@
 # User interface of Heidrun: panes
 
 - Created: 13 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 698](https://github.com/heidrun-org/heidrun/issues/698), [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767)
+- Related issue: [issue 698](https://github.com/heidrun-org/heidrun/issues/698), [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767), [issue 791](https://github.com/heidrun-org/heidrun/issues/791)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -37,14 +37,12 @@ The rules of the pane header are in [pane_headers.md](pane_headers.md).
   copying shows a message asking the developer to select the text again and retry. The selection stays available.
 - The tests are in `terminal_selection.test.ts`.
 
-## Colors of Codex
+## Command that starts Codex
 
-- Codex chooses its light colors or its dark colors from the text color and the background color of the pane. It asks for both colors once, when it starts. When one of the two answers is missing, Codex keeps its dark colors, which cannot be read on a light background ([issue 636](https://github.com/heidrun-org/heidrun/issues/636)).
-- Heidrun attaches to a pane with `herdr terminal attach`, which leaves these two questions to the pane, so Herdr answers only with the colors that the shell of the pane set before. Every command of Heidrun that starts Codex therefore sets both colors first, with one `printf` in the shell. The commands are the new tab, the resume of a chat, and a launcher whose command starts with `codex`. The `printf` sends the two terminal commands `OSC 10` (the text color) and `OSC 11` (the background color). OSC means Operating System Command. A command that does not start Codex gets no `printf`.
-- The two colors are the text color and the background color of the terminal view in the theme that Heidrun uses at that moment. They come from `terminal_themes.ts`, the file that the terminal view draws with, so Codex chooses its colors for the very background that the developer sees. The code of this rule is in `terminal_colors.ts`.
-- A Codex that already runs keeps its colors when the developer changes the theme, because Codex asks for the colors only once. The developer restarts Codex, or resumes the chat, to get the colors of the new theme. A Codex that the developer starts by hand in a pane gets no colors from Heidrun, so it keeps its dark colors.
-- The command `/theme` of Codex changes only the colors of the code. It is not needed: Codex picks its light code theme on a light background by itself.
-- The tests are in `terminal_colors.test.ts` and in `agents_codex_colors.test.ts`.
+- Heidrun starts Codex with the plain command, for example `codex` or `codex resume '<session identifier>'`. Heidrun types nothing else before the command, so no long line shows in the pane. The commands are the new tab, the resume of a chat, and a launcher whose command starts with `codex` ([issue 791](https://github.com/heidrun-org/heidrun/issues/791)).
+- Heidrun does not set the text color or the background color of the pane before Codex starts. The former `printf` line that sent the terminal commands `OSC 10` and `OSC 11` is removed. OSC means Operating System Command ([issue 636](https://github.com/heidrun-org/heidrun/issues/636)).
+- Known effect: Codex chooses its light colors or its dark colors from the text color and the background color of the pane. When Codex gets no answer to both questions, it keeps its dark colors, which can be hard to read on a light background. The developer checks Codex in the light theme of Heidrun after a change of this rule.
+- The test is in `agents_codex_plain_command.test.ts`.
 
 ## Needs you
 

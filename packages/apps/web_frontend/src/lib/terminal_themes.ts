@@ -1,5 +1,4 @@
-// The colours of the terminal view in the dark theme and in the light theme. The terminal view draws with them, and
-// Heidrun reports the text colour and the background colour of them to Codex: see terminal_colors.ts.
+// The colours of the terminal view in the dark theme and in the light theme. The terminal view draws with them.
 
 export const TERMINAL_THEMES = {
   dark: {

@@ -8,7 +8,6 @@ import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, sendPrompt, toast } from "./session";
 import { resolveMacroVariables } from "./macros";
 import { t } from "../i18n/index";
-import { withCodexColors } from "../lib/terminal_colors";
 import { chatResumeCommand } from "../lib/chat_links";
 import { shellQuote } from "../lib/launcher_agent_command";
 import type { PaneInfo } from "../lib/types";
@@ -83,8 +82,6 @@ export async function launchAgent(o: {
     } else {
       command = agentCommand(o.tool, o.agent, o.model, o.prompt);
     }
-    // Codex chooses its light or dark colours from the text colour and the background colour that Herdr reports: see terminal_colors.ts.
-    command = withCodexColors(command);
   } catch (e) {
     toast(String((e as Error).message ?? e));
     return "failed";

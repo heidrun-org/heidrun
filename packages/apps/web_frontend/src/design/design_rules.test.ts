@@ -61,7 +61,6 @@ describe('shared design rules (issue 749)', () => {
 		const contentPalettes = new Set([
 			'design/theme_palette.ts',
 			'lib/terminal_themes.ts',
-			'lib/terminal_colors.ts',
 			'lib/refs.ts',
 		]);
 		const exceptions: Record<string, string[]> = {
