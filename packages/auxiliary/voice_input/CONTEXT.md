@@ -7,7 +7,7 @@ A Rust library for the voice input of Heidrun: it records the microphone, downlo
 - `src/lib.rs`: the only public interface. It exports `Recorder` and `Recording` (the microphone, with `Recorder::start_with_levels` for the level of the voice every 50 milliseconds), `download_model` and `DownloadProgress` (the model files), `Transcriber` (Whisper), `whisper_log::write_to_file` (the file of the Whisper logs), `list_models`, `find_model`, `model_path`, `MODELS`, `LANGUAGES`, `DEFAULT_MODEL_ID`, and `MODELS_BASE_URL` (the 12 models and the 20 languages), and `VoiceError` with its `category()`.
 - `src/audio.rs`: the pure functions that change the audio of the microphone to 16 kilohertz in one channel, and measure its loudness and the level to show.
 - `src/whisper_log.rs`: sends the logs of whisper.cpp and ggml to a file. `Transcriber::new` installs the hook, so the logs never reach the terminal, even before a file is set.
-- Command to test this folder: `pnpm --filter voice_input test`
+- Command to test this folder: `pnpm --filter voice_input test` runs both groups. `test:fast` runs `cargo test --lib`, and `test:slow` runs the tests with the real model `tiny`.
 
 ## Rules
 - A recording is never longer than 300 seconds. The level callback runs in the thread of the recorder, never in the audio thread.
@@ -18,7 +18,7 @@ A Rust library for the voice input of Heidrun: it records the microphone, downlo
 - An error crosses the border of the package as a category, a short word in snake case, never as a text. The details are for the terminal of the developer.
 - The package imports no other package of the repository. `desktop_tauri` imports it, and `desktop_tauri` is the only package that talks with the web page.
 - Building the package needs `cmake`, because `whisper-rs` builds the C++ engine whisper.cpp.
-- The tests of the integration use the real model `tiny`, which the first run downloads once into the Cargo target folder.
+- The tests of the integration use the real model `tiny`, which the first run downloads once into the Cargo target folder. They are slow tests: the root command `pnpm test` does not run them, and `pnpm test:slow` does. A new test file in the folder `tests` runs only with the slow tests, so a fast test goes in a `#[cfg(test)]` module of the library ([issue 826](https://github.com/heidrun-org/heidrun/issues/826)).
 
 - The logs of whisper.cpp go to a file and never to the terminal. The file is renamed to `<name>.old` when it is larger than 4 MiB at the start, and one run writes at most 16 MiB. The package needs the feature `raw-api` of `whisper-rs` for this.
 

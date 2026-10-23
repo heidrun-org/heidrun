@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { DETECTION_FAMILY_IDS, type DetectionFamilyId } from './detection_families';
 import type { RefContext } from './refs';

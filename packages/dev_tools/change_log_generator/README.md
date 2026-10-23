@@ -65,5 +65,5 @@ Run these commands from the root of the repository.
 
 ```sh
 pnpm release:change_log --help                  # show the help
-pnpm --filter change_log_generator test         # run the Vitest tests
+pnpm --filter change_log_generator test         # run the Vitest tests (slow tests: `pnpm test:slow` runs them too)
 ```

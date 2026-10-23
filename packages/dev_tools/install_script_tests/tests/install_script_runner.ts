@@ -80,6 +80,9 @@ cp -R "$1" "$2"
  * `ditto`. Each fake command writes its arguments in a log file, so a test can read what the script did.
  */
 export class InstallScriptRunner {
+	/** The folder of the fake commands, shared by every runner of this process, or undefined before the first need. */
+	private static _fakeCommandsFolder: string | undefined = undefined;
+
 	/** The temporary folder that holds everything of this runner. */
 	readonly rootFolder: string;
 
@@ -109,14 +112,6 @@ export class InstallScriptRunner {
 		Fs.mkdirSync(this.homeFolder);
 		Fs.mkdirSync(this.temporaryFolder);
 		Fs.writeFileSync(this.logPath, '');
-
-		const binFolder = Path.join(this.rootFolder, 'bin');
-		Fs.mkdirSync(binFolder);
-		for (const [commandName, commandText] of Object.entries(FAKE_COMMANDS)) {
-			Fs.writeFileSync(Path.join(binFolder, commandName), commandText, {
-				mode: 0o755,
-			});
-		}
 
 		const contentsFolder = Path.join(this.rootFolder, 'fixture', 'Heidrun.app', 'Contents');
 		Fs.mkdirSync(contentsFolder, {
@@ -150,7 +145,7 @@ export class InstallScriptRunner {
 		const result = ChildProcess.spawnSync('/bin/sh', [SCRIPT_PATH], {
 			encoding: 'utf8',
 			env: {
-				PATH: `${Path.join(this.rootFolder, 'bin')}:/usr/bin:/bin`,
+				PATH: `${InstallScriptRunner._getFakeCommandsFolder()}:/usr/bin:/bin`,
 				TMPDIR: this.temporaryFolder,
 				HEIDRUN_APPLICATIONS_FOLDER: this.applicationsFolder,
 				HOME: this.homeFolder,
@@ -192,5 +187,30 @@ export class InstallScriptRunner {
 			recursive: true,
 			force: true,
 		});
+	}
+
+	/**
+	 * Gives the folder of the fake commands. The folder is created once for the whole process, because macOS checks each new
+	 * executable file the first time that it runs, and this costs more than 100 milliseconds for each fake command.
+	 * @returns The path of the folder.
+	 */
+	private static _getFakeCommandsFolder(): string {
+		if (InstallScriptRunner._fakeCommandsFolder !== undefined) {
+			return InstallScriptRunner._fakeCommandsFolder;
+		}
+		const folder = Fs.mkdtempSync(Path.join(Os.tmpdir(), 'install_script_tests_commands_'));
+		for (const [commandName, commandText] of Object.entries(FAKE_COMMANDS)) {
+			Fs.writeFileSync(Path.join(folder, commandName), commandText, {
+				mode: 0o755,
+			});
+		}
+		process.once('exit', () => {
+			Fs.rmSync(folder, {
+				recursive: true,
+				force: true,
+			});
+		});
+		InstallScriptRunner._fakeCommandsFolder = folder;
+		return folder;
 	}
 }

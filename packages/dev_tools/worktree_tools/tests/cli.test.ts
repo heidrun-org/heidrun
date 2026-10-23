@@ -34,14 +34,19 @@ class CliRunner {
 	 * @param fileName The name of the file in the folder `src`, for example `worktree_create_cli.ts`.
 	 * @param workingDirectory The folder to run the command line in.
 	 * @param args The arguments of the command line.
+	 * @param isRealPnpm True to run the real `pnpm`. False, the default, puts a fake `pnpm` first in PATH.
 	 * @returns The standard output, the standard error output, and the exit code.
 	 */
-	static run(fileName: string, workingDirectory: string, args: string[]): CliResult {
+	static run(fileName: string, workingDirectory: string, args: string[], isRealPnpm = false): CliResult {
 		const tsxPath = Path.join(__dirname, '..', 'node_modules', '.bin', 'tsx');
 		const cliPath = Path.join(__dirname, '..', 'src', fileName);
 		const result = ChildProcess.spawnSync(tsxPath, [cliPath, ...args], {
 			cwd: workingDirectory,
 			encoding: 'utf8',
+			env: {
+				...process.env,
+				PATH: isRealPnpm === true ? TestRepository.pathWithRealPnpm() : TestRepository.pathWithFakePnpm(),
+			},
 		});
 		return {
 			stdout: result.stdout,
@@ -77,7 +82,7 @@ describe('worktree_create_cli', () => {
 
 	it('installs the packages and says so', () => {
 		const mainCheckoutPath = TestRepository.create();
-		const result = CliRunner.run('worktree_create_cli.ts', mainCheckoutPath, ['with-packages']);
+		const result = CliRunner.run('worktree_create_cli.ts', mainCheckoutPath, ['with-packages'], true);
 		expect(result.exitCode).toBe(0);
 		expect(result.stdout).toContain('Installed the packages in the worktree');
 		const worktreePath = Path.join(mainCheckoutPath, '.claude', 'worktrees', 'with-packages');
@@ -86,7 +91,7 @@ describe('worktree_create_cli', () => {
 
 	it('prints the error of pnpm and exits with code 1 when the installation fails', () => {
 		const mainCheckoutPath = TestRepository.createWithOutdatedLockfile();
-		const result = CliRunner.run('worktree_create_cli.ts', mainCheckoutPath, ['bad-lockfile']);
+		const result = CliRunner.run('worktree_create_cli.ts', mainCheckoutPath, ['bad-lockfile'], true);
 		expect(result.exitCode).toBe(1);
 		expect(result.stderr).toContain('"pnpm install --frozen-lockfile" failed');
 		expect(result.stderr).toContain('lockfile');

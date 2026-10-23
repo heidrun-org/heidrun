@@ -24,7 +24,7 @@ Part 1 changes files. The changes reach `main` through `dev`, in Step 5.
 
 ### Step 1: Run the tests
 
-Run `pnpm test`. The repository has no workflow files in the folder `.github`, so nothing on GitHub runs the tests.
+Run `pnpm test:full`. The command runs the fast tests, then the slow tests. The command `pnpm test` runs only the fast tests, so it is not enough before a release. The repository has no workflow files in the folder `.github`, so nothing on GitHub runs the tests.
 
 ### Step 2: Set the version in the four main files
 

@@ -12,7 +12,7 @@ A full npm package that writes a section of `CHANGELOG.md`, in the Keep a Change
 - `src/types/`: the data shapes that the other folders share — see its own CONTEXT.md.
 - `tests/`: the Vitest tests. `tests/test_repository.ts` creates temporary Git repositories, and only the tests import it.
 - Command to run this folder: `pnpm release:change_log --help`
-- Command to test this folder: `pnpm --filter change_log_generator test`
+- Command to test this folder: `pnpm --filter change_log_generator test`. These tests are slow tests: `pnpm test:slow` runs them, and `pnpm test` does not ([issue 826](https://github.com/heidrun-org/heidrun/issues/826)).
 
 ## Rules
 - Every file of the generator is in this folder. No file of the generator is in `scripts` outside of it.
