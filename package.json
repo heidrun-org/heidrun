@@ -2,7 +2,7 @@
   "name": "heidrun",
   "private": true,
   "license": "MIT",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "sh scripts/build_command_line_tools.sh && pnpm --filter mobile_website build && pnpm --filter desktop_tauri tauri dev --config tauri.development.conf.json",

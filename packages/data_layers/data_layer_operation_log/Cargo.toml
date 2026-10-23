@@ -1,6 +1,6 @@
 [package]
 name = "data_layer_operation_log"
-version = "0.2.7"
+version = "0.3.0"
 description = "Records the operations that the data layer packages receive: a start event and a completion event for each one"
 license = "MIT"
 edition = "2021"

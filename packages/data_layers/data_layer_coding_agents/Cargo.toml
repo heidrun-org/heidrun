@@ -1,6 +1,6 @@
 [package]
 name = "data_layer_coding_agents"
-version = "0.2.7"
+version = "0.3.0"
 description = "Reads the chat sessions of Claude Code and Codex for a repository into a SQLite file, and runs read-only queries on them"
 license = "MIT"
 edition = "2021"
