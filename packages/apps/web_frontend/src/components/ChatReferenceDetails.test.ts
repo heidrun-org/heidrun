@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { enableAutoUnmount, mount } from "@vue/test-utils";
+import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ChatReferenceDetails from "./ChatReferenceDetails.vue";
 import type { ChatReferenceDetails as Details } from "../stores/chat_references";
 import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+vi.mock("@tauri-apps/plugin-clipboard-manager", () => ({ writeText: vi.fn(async () => {}) }));
 vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }));
 
 enableAutoUnmount(afterEach);
@@ -48,6 +50,7 @@ function mountDetails(props: Partial<InstanceType<typeof ChatReferenceDetails>["
 beforeEach(() => {
   settings.language = "en";
   vi.mocked(openUrl).mockClear();
+  vi.mocked(writeText).mockReset();
 });
 
 describe("ChatReferenceDetails, the repository line", () => {
@@ -67,26 +70,146 @@ describe("ChatReferenceDetails, the repository line", () => {
     expect(openUrl).toHaveBeenCalledWith(BASE);
   });
 
-  it("puts the two buttons that open the item at the right of the same line", () => {
+  it("puts the two buttons that open the item and the button that copies its web address at the right of the same line", () => {
     const wrapper = mountDetails();
     const line = wrapper.get("[data-reference-repository-line]").element.parentElement as HTMLElement;
     expect(line.querySelector(".btn-group")).not.toBeNull();
     expect(Array.from(line.querySelectorAll(".btn-group button")).map((button) => button.getAttribute("title"))).toEqual([
       "Open in Heidrun",
       "Open in GitHub",
+      "Copy the GitHub web address",
     ]);
     expect((wrapper.element as HTMLElement).firstElementChild).toBe(line);
   });
 
-  it("shows no link, and keeps the two buttons, when the address of the repository is not known", () => {
+  it("shows no link, and keeps the three buttons, when the address of the repository is not known", () => {
     const wrapper = mountDetails({ webBase: null });
     expect(wrapper.find("[data-reference-repository-line] a").exists()).toBe(false);
-    expect(wrapper.findAll(".btn-group button")).toHaveLength(2);
+    expect(wrapper.findAll(".btn-group button")).toHaveLength(3);
   });
 
   it("shows the name of the repository alone while the forge has not given the date", () => {
     const wrapper = mountDetails({ details: undefined });
     expect(wrapper.get("[data-reference-repository-line]").text()).toBe("heidrun-org/heidrun");
+  });
+});
+
+describe("ChatReferenceDetails, the button that copies the web address", () => {
+  const PULL_REQUEST = { kind: "pull_request" as const, number: 5, url: `${BASE}/pull/5` };
+  const MERGE_REQUEST = { kind: "pull_request" as const, number: 7, url: "https://gitlab.com/team/app/-/merge_requests/7" };
+
+  /** Stands for the clipboard of the browser, which takes the text when the clipboard of Tauri refuses it. */
+  function stubBrowserClipboard(write: () => Promise<void>) {
+    const writeTextOfBrowser = vi.fn(write);
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText: writeTextOfBrowser } });
+    return writeTextOfBrowser;
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it("shows the button after the button Open in GitHub, in the same group, with an icon only, a title, and a label", () => {
+    const wrapper = mountDetails();
+    const buttons = wrapper.findAll(".btn-group > button");
+    const button = wrapper.get("[data-reference-copy]");
+    expect(buttons[2].element).toBe(button.element);
+    expect(button.classes()).toEqual(["btn"]);
+    expect(button.text()).toBe("");
+    expect(button.find(".bi-clipboard").exists()).toBe(true);
+    expect(button.attributes("title")).toBe("Copy the GitHub web address");
+    expect(button.attributes("aria-label")).toBe("Copy the GitHub web address");
+  });
+
+  it("shows the button for a pull request of GitHub", () => {
+    const wrapper = mountDetails({ reference: PULL_REQUEST, details: detailsOf({ headBranch: "fix-5", baseBranch: "dev" }) });
+    expect(wrapper.get("[data-reference-copy]").attributes("title")).toBe("Copy the GitHub web address");
+  });
+
+  it("names GitLab on the button for a merge request of GitLab", () => {
+    const wrapper = mountDetails({ reference: MERGE_REQUEST, forge: "gitlab", webBase: "https://gitlab.com/team/app" });
+    const button = wrapper.get("[data-reference-copy]");
+    expect(button.attributes("title")).toBe("Copy the GitLab web address");
+    expect(button.attributes("aria-label")).toBe("Copy the GitLab web address");
+  });
+
+  it("names the forge in French when the language is French", () => {
+    settings.language = "fr";
+    expect(mountDetails().get("[data-reference-copy]").attributes("title")).toBe("Copier l’adresse web GitHub");
+  });
+
+  it.each([
+    ["an issue", { reference: { kind: "issue" as const, number: 608, url: `${BASE}/issues/608` } }],
+    ["a pull request", { reference: PULL_REQUEST }],
+    ["a merge request of GitLab", { reference: MERGE_REQUEST, forge: "gitlab" as const }],
+  ])("writes into the clipboard the address that the button Open in GitHub opens, for %s", async (_name, props) => {
+    const wrapper = mountDetails(props);
+    await wrapper.get(".btn-group > button:nth-child(2)").trigger("click");
+    await wrapper.get("[data-reference-copy]").trigger("click");
+    await flushPromises();
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(openUrl).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(writeText).mock.calls[0][0]).toBe(vi.mocked(openUrl).mock.calls[0][0]);
+    expect(writeText).toHaveBeenCalledWith(props.reference.url);
+  });
+
+  it("shows a check mark for two seconds after the copy, then the clipboard icon again", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const wrapper = mountDetails();
+    const button = wrapper.get("[data-reference-copy]");
+    await button.trigger("click");
+    await flushPromises();
+    expect(button.find(".bi-clipboard-check").exists()).toBe(true);
+    expect(button.attributes("title")).toBe("Web address copied");
+    expect(button.attributes("aria-label")).toBe("Web address copied");
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(button.find(".bi-clipboard-check").exists()).toBe(true);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(button.find(".bi-clipboard").exists()).toBe(true);
+    expect(button.attributes("title")).toBe("Copy the GitHub web address");
+  });
+
+  it("copies with the clipboard of the browser when the clipboard of Tauri refuses the text", async () => {
+    vi.mocked(writeText).mockRejectedValue(new Error("refused"));
+    const writeTextOfBrowser = stubBrowserClipboard(async () => {});
+    const wrapper = mountDetails();
+    await wrapper.get("[data-reference-copy]").trigger("click");
+    await flushPromises();
+    expect(writeTextOfBrowser).toHaveBeenCalledWith(`${BASE}/issues/608`);
+    expect(wrapper.get("[data-reference-copy]").find(".bi-clipboard-check").exists()).toBe(true);
+  });
+
+  it("shows a cross, and says that the copy failed, when both clipboards refuse the text", async () => {
+    vi.mocked(writeText).mockRejectedValue(new Error("refused"));
+    stubBrowserClipboard(async () => {
+      throw new Error("refused");
+    });
+    const wrapper = mountDetails();
+    const button = wrapper.get("[data-reference-copy]");
+    await button.trigger("click");
+    await flushPromises();
+    expect(button.find(".bi-clipboard-x").exists()).toBe(true);
+    expect(button.find(".bi-clipboard-check").exists()).toBe(false);
+    expect(button.attributes("title")).toBe("Cannot copy the web address: the clipboard refused it.");
+    expect(button.attributes("aria-label")).toBe("Cannot copy the web address: the clipboard refused it.");
+  });
+
+  it("starts with the clipboard icon again when the card shows another item", async () => {
+    const wrapper = mountDetails();
+    await wrapper.get("[data-reference-copy]").trigger("click");
+    await flushPromises();
+    await wrapper.setProps({ reference: PULL_REQUEST });
+    expect(wrapper.get("[data-reference-copy]").find(".bi-clipboard").exists()).toBe(true);
+  });
+
+  it("is disabled, and writes nothing, when the item has no web address", async () => {
+    const wrapper = mountDetails({ reference: { kind: "issue", number: 608, url: null } });
+    const button = wrapper.get("[data-reference-copy]");
+    expect(button.attributes("disabled")).toBeDefined();
+    await button.trigger("click");
+    await flushPromises();
+    expect(writeText).not.toHaveBeenCalled();
   });
 });
 
