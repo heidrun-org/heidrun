@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress';
 import identity from '../../../../../data/identity.json';
 import { LinkPreviewCards } from './link_preview_cards';
 
-const base = '/heidrun/';
+const base = '/heidrun_code/';
 const siteAddress = `https://heidrun-org.github.io${base}`;
 
 export default defineConfig({

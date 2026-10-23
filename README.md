@@ -21,9 +21,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](packages/apps/web_frontend)
 [![Issues](https://img.shields.io/github/issues/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/issues)
 [![Last commit](https://img.shields.io/github/last-commit/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/commits)
-[![Mead: unlimited](https://img.shields.io/badge/mead-unlimited-f5b700)](https://heidrun-org.github.io/heidrun/about)
+[![Mead: unlimited](https://img.shields.io/badge/mead-unlimited-f5b700)](https://heidrun-org.github.io/heidrun_code/about)
 
-[**Enter Valhalla (read the documentation)**](https://heidrun-org.github.io/heidrun/documentation/) · [Who is Heiðrún?](https://heidrun-org.github.io/heidrun/about) · [Report a Ragnarök](https://github.com/heidrun-org/heidrun/issues)
+[**Enter Valhalla (read the documentation)**](https://heidrun-org.github.io/heidrun_code/documentation/) · [Who is Heiðrún?](https://heidrun-org.github.io/heidrun_code/about) · [Report a Ragnarök](https://github.com/heidrun-org/heidrun/issues)
 
 </div>
 
@@ -46,7 +46,7 @@ Think of Valhalla: the coding agents are the einherjar (the warriors who feast a
 - **Phone access.** Answer a blocked agent from your phone, through an ngrok tunnel. Valhalla fits in a pocket.
 - **Safe by default.** Dangerous commands ask for confirmation before they run. Even a berserker needs a second thought.
 
-The full list of features, shortcuts, and settings is in the [documentation](https://heidrun-org.github.io/heidrun/documentation/).
+The full list of features, shortcuts, and settings is in the [documentation](https://heidrun-org.github.io/heidrun_code/documentation/).
 
 ## Blog posts
 

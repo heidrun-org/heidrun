@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { LinkPreviewCards } from '../docs/.vitepress/link_preview_cards';
 import { SiteFiles } from './site_files';
 
-const siteAddress = 'https://heidrun-org.github.io/heidrun/';
+const siteAddress = 'https://heidrun-org.github.io/heidrun_code/';
 const cardImagePath = Path.join(SiteFiles.docsDir, 'public', LinkPreviewCards.imageFileName);
 
 ///////////////////////////////////////////////////////////////////////////////
