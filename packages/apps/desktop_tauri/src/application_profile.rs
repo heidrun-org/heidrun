@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-const DEVELOPMENT_IDENTIFIER: &str = "dev.heidrun-org.heidrun_code.development";
+const DEVELOPMENT_IDENTIFIER: &str = "dev.heidrun-org.heidrun-code.development";
 static IS_DEVELOPMENT: OnceLock<bool> = OnceLock::new();
 
 pub fn is_development() -> bool {
@@ -202,8 +202,25 @@ mod tests {
     #[test]
     fn the_installed_application_identifier_names_heidrun_and_not_a_person_or_an_old_project() {
         let installed: serde_json::Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
-        assert_eq!(installed["identifier"], "dev.heidrun-org.heidrun_code");
+        assert_eq!(installed["identifier"], "dev.heidrun-org.heidrun-code");
         assert_ne!(installed["identifier"], DEVELOPMENT_IDENTIFIER);
+    }
+
+    #[test]
+    fn the_application_identifiers_hold_only_the_characters_that_a_bundle_identifier_allows() {
+        for configuration in [
+            include_str!("../tauri.conf.json"),
+            include_str!("../tauri.development.conf.json"),
+        ] {
+            let parsed: serde_json::Value = serde_json::from_str(configuration).unwrap();
+            let identifier = parsed["identifier"].as_str().unwrap();
+            assert!(
+                identifier
+                    .chars()
+                    .all(|character| character.is_ascii_alphanumeric() || character == '-' || character == '.'),
+                "{identifier}"
+            );
+        }
     }
 
     #[test]

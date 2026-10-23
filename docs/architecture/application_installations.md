@@ -11,7 +11,7 @@ Use installed Heidrun Code for daily work, and Heidrun Code Development to test 
 
 | Resource | Heidrun Code | Heidrun Code Development |
 | --- | --- | --- |
-| Application identifier | `dev.heidrun-org.heidrun_code` | `dev.heidrun-org.heidrun_code.development` |
+| Application identifier | `dev.heidrun-org.heidrun-code` | `dev.heidrun-org.heidrun-code.development` |
 | Application name | Heidrun Code | Heidrun Code Development |
 | Default application data | `~/.config/heidrun_code` | `~/.config/heidrun_code_development` |
 | Default Herdr session in the main checkout | `heidrun` | `heidrun_development` |

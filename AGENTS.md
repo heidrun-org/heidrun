@@ -22,16 +22,16 @@ Heidrun Code and Heidrun Code Development are separate applications with separat
 
 | Application | Purpose | macOS application identifier | Permission for Codex |
 | --- | --- | --- | --- |
-| Heidrun Code | The installed application used by the developer | `dev.heidrun-org.heidrun_code` | Revoked. Codex must not control this application. |
+| Heidrun Code | The installed application used by the developer | `dev.heidrun-org.heidrun-code` | Revoked. Codex must not control this application. |
 | Heidrun (former name of Heidrun Code) | An older installation of the installed application | `dev.heidrun-org.heidrun` | Revoked. Codex must not control this application. |
-| Heidrun Code Development | The application built from the checkout or temporary worktree being tested | `dev.heidrun-org.heidrun_code.development` | Only development testing authorized by the developer. |
+| Heidrun Code Development | The application built from the checkout or temporary worktree being tested | `dev.heidrun-org.heidrun-code.development` | Only development testing authorized by the developer. |
 
 The identifiers are defined in [tauri.conf.json](packages/apps/desktop_tauri/tauri.conf.json) and [tauri.development.conf.json](packages/apps/desktop_tauri/tauri.development.conf.json). Development identity is independent of Rust optimization settings: an optimized development build is still Heidrun Code Development.
 
 ### Before application interaction
 
 - Select Heidrun Code Development by its exact application identifier or by the full path of the development application built from the intended checkout or temporary worktree. Verify both the application identifier and the checkout or temporary worktree before the first interaction. Verify that the returned window belongs to Heidrun Code Development before sending input.
-- Never select the installed application by the name "Heidrun Code" or "Heidrun", or by the identifier `dev.heidrun-org.heidrun_code` or `dev.heidrun-org.heidrun`. Never launch, focus, click, type in, close, capture the window of, or change the settings, workspaces, tabs, or panes of the installed application for development testing. Do not access the installed application to test whether permission has been revoked.
+- Never select the installed application by the name "Heidrun Code" or "Heidrun", or by the identifier `dev.heidrun-org.heidrun-code` or `dev.heidrun-org.heidrun`. Never launch, focus, click, type in, close, capture the window of, or change the settings, workspaces, tabs, or panes of the installed application for development testing. Do not access the installed application to test whether permission has been revoked.
 - A terminal running Codex inside installed Heidrun Code does not give Codex permission to control installed Heidrun Code. A similar appearance, the current working folder, a previous approval, and permission for Heidrun Code Development do not change this restriction.
 - If the correct Heidrun Code Development application or its window cannot be identified, stop application interaction. Never fall back to installed Heidrun Code.
 
@@ -50,7 +50,7 @@ Repository instructions and saved Codex permissions are separate. Editing this f
 
 ```toml
 [computer_use.macos.bundle_ids]
-"dev.heidrun-org.heidrun_code" = "deny"
+"dev.heidrun-org.heidrun-code" = "deny"
 "dev.heidrun-org.heidrun" = "deny"
 ```
 
