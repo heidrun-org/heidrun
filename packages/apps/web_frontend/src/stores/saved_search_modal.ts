@@ -2,8 +2,10 @@
 // section: one window that shows one of the two, for one of the two lists.
 // - issue #378
 // - issue #607
+// - issue #822
 import { reactive } from "vue";
 import type { CodeHostingGroup } from "./code_hosting";
+import type { SavedSearchLevel } from "./settings";
 
 /** The window "Save this search" or "Edit the saved search": not saved, the window starts closed. */
 export const savedSearchModal = reactive({
@@ -17,6 +19,8 @@ export const savedSearchModal = reactive({
   query: "",
   /** In the mode "edit": the name of the saved search that the window edits. */
   name: "",
+  /** In the mode "edit": the level of the saved search that the window edits, as it was when the window opened. */
+  level: "user" as SavedSearchLevel,
 });
 
 /**
@@ -25,16 +29,17 @@ export const savedSearchModal = reactive({
  * @param query - the search to keep under a name
  */
 export function openSaveSearchModal(group: CodeHostingGroup, query: string): void {
-  Object.assign(savedSearchModal, { open: true, mode: "save", group, query, name: "" });
+  Object.assign(savedSearchModal, { open: true, mode: "save", group, query, name: "", level: "user" });
 }
 
 /**
  * Opens the window "Edit the saved search".
  * @param group - the list of the saved search
  * @param name - the name of the saved search to edit
+ * @param level - the level of the saved search to edit
  */
-export function openEditSavedSearchModal(group: CodeHostingGroup, name: string): void {
-  Object.assign(savedSearchModal, { open: true, mode: "edit", group, query: "", name });
+export function openEditSavedSearchModal(group: CodeHostingGroup, name: string, level: SavedSearchLevel): void {
+  Object.assign(savedSearchModal, { open: true, mode: "edit", group, query: "", name, level });
 }
 
 /** Closes the window "Save this search" or "Edit the saved search". */

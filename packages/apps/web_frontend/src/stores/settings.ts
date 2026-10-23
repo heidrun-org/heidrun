@@ -73,6 +73,12 @@ export type SavedSearches = {
 };
 
 /**
+ * The level of a saved search (issue #822): "user" shows in every workspace, and "workspace" shows only in the workspace
+ * where the developer saved it.
+ */
+export type SavedSearchLevel = "user" | "workspace";
+
+/**
  * The choice of the workspace selector of the tab "User activity" of the Statistics window (issue 707). The choice is saved by the
  * folder of each workspace, because a folder is the same at every run of Heidrun.
  */
@@ -288,8 +294,14 @@ const defaults = {
   searchThisWorkspace: false,
   /** Clipboard sidebar section: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
-  /** Sidebar section Code hosting: the saved searches of each list, in the order of their buttons. */
+  /** Sidebar section Code hosting: the saved searches of the user level, shown in every workspace, in the order of their buttons. */
   codeHostingSavedSearches: { issues: [], requests: [] } as SavedSearches,
+  /**
+   * Sidebar section Code hosting: the saved searches of the workspace level (issue #822). The key is the workspace folder,
+   * because a folder is the same at every run of Heidrun. Each value has the saved searches of each list, in the order of
+   * their buttons.
+   */
+  codeHostingWorkspaceSavedSearches: {} as Record<string, SavedSearches>,
   /**
    * Window Statistics, bar charts of the tab "Work of one person": the color that the legend filter keeps, for each chart. The
    * name of a chart points to the identifier of the only color that the chart shows. A chart with no name shows every color.
@@ -405,6 +417,25 @@ function keepSavedSearchLists(value: unknown): SavedSearches {
     issues: keepSavedSearches(Array.isArray(candidate?.issues) ? candidate.issues : []),
     requests: keepSavedSearches(Array.isArray(candidate?.requests) ? candidate.requests : []),
   };
+}
+
+/**
+ * Keeps the saved searches of the workspace level of each workspace folder, and drops the folders that have no saved search.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the saved searches of each workspace folder that can be used
+ */
+function keepWorkspaceSavedSearchLists(value: unknown): Record<string, SavedSearches> {
+  const kept: Record<string, SavedSearches> = {};
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return kept;
+  }
+  for (const [folder, lists] of Object.entries(value)) {
+    const keptLists = keepSavedSearchLists(lists);
+    if (folder !== "" && (keptLists.issues.length > 0 || keptLists.requests.length > 0)) {
+      kept[folder] = keptLists;
+    }
+  }
+  return kept;
 }
 
 /**
@@ -533,6 +564,7 @@ function load(): typeof defaults {
       saved.newTabCommand = 'terminal';
     }
     saved.codeHostingSavedSearches = keepSavedSearchLists(saved.codeHostingSavedSearches);
+    saved.codeHostingWorkspaceSavedSearches = keepWorkspaceSavedSearchLists(saved.codeHostingWorkspaceSavedSearches);
     saved.statisticsLegendFilters = keepLegendFilters(saved.statisticsLegendFilters);
     saved.statisticsUserActivityWorkspaces = keepUserActivityWorkspaces(saved.statisticsUserActivityWorkspaces);
     saved.statisticsPersonWorkWorkspaces = keepPersonWorkWorkspaces(saved.statisticsPersonWorkWorkspaces);
