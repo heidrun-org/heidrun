@@ -31,6 +31,7 @@ mod topic_clusters;
 mod usage;
 mod user_activity;
 mod voice_commands;
+mod voice_words;
 mod worktree_actions;
 mod workspace_folders;
 
@@ -348,6 +349,10 @@ pub fn run() {
             voice_commands::voice_start_recording,
             voice_commands::voice_cancel_recording,
             voice_commands::voice_stop_recording,
+            voice_words::voice_words_read,
+            voice_words::voice_words_add,
+            voice_words::voice_words_update,
+            voice_words::voice_words_delete,
             usage::codex_usage,
             project::project_load,
             project::project_package_scripts,

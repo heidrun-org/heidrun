@@ -1,11 +1,11 @@
 # Glossary of Heidrun: macros
 
 - Created: 16 October 2026
-- Last updated: 22 October 2026
+- Last updated: 23 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md)
-- Related issue: [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 649](https://github.com/heidrun-org/heidrun/issues/649), [issue 756](https://github.com/heidrun-org/heidrun/issues/756), [issue 796](https://github.com/heidrun-org/heidrun/issues/796)
+- Related issue: [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 649](https://github.com/heidrun-org/heidrun/issues/649), [issue 836](https://github.com/heidrun-org/heidrun_code/issues/836), [issue 756](https://github.com/heidrun-org/heidrun/issues/756), [issue 796](https://github.com/heidrun-org/heidrun/issues/796)
 
 This document gives one short definition for each word of the macros, and of the command line that controls them. The other words of Heidrun are in [index.md](index.md).
 
@@ -35,7 +35,7 @@ A macro that the developer made, and that is kept in the key `prompts` of the fi
 
 ### heidrun_ctrl
 
-The command line that controls the Heidrun application, for a coding agent. Its `SKILL.md` teaches a coding agent the commands. The groups `macros` and `launchers` each have list, add, update, and delete and change watched files. The group `workspaces` has list, open, rename, focus, and close and talks to the running Herdr through its executable. A running Heidrun shows these changes in its window.
+The command line that controls the Heidrun application, for a coding agent. Its `SKILL.md` teaches a coding agent the commands. The groups `macros`, `launchers`, and `voice_words` each have list, add, update, and delete and change watched files. The group `voice_words` changes the word replacement list of the voice input, which is not a macro. The group `workspaces` has list, open, rename, focus, and close and talks to the running Herdr through its executable. A running Heidrun shows these changes in its window.
 
 ## Rules
 

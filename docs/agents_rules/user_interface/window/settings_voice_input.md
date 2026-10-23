@@ -1,20 +1,20 @@
 # User interface of Heidrun: voice input
 
 - Created: 18 October 2026
-- Last updated: 22 October 2026
+- Last updated: 23 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary/index.md), [Information card of every option of the Settings window](settings_information_cards.md), [Composition bar](../workspaces_tabs_and_panes/composition_bar.md)
-- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 736](https://github.com/heidrun-org/heidrun/issues/736), [issue 753](https://github.com/heidrun-org/heidrun/issues/753)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md), [Information card of every option of the Settings window](settings_information_cards.md), [Composition bar](../workspaces_tabs_and_panes/composition_bar.md), [Word replacement list](settings_voice_words.md)
+- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 736](https://github.com/heidrun-org/heidrun/issues/736), [issue 753](https://github.com/heidrun-org/heidrun/issues/753), [issue 836](https://github.com/heidrun-org/heidrun_code/issues/836)
 
 This file is a part of the rules of the user interface of Heidrun. It gives the rules of the voice input and of the Voice input section of the Settings window. The words are defined in [voice_input.md](../../glossary/voice_input.md).
 
 ## The section
 
-- The Settings window has a tenth section, "Voice input", last in the list, with the icon of a microphone. It has three options, and each option has a circled question mark with an information card in English and in French: the switch "Enable voice input", the choice "Language of the speech", and the choice "Whisper model". The language and the model are dimmed while the switch is off.
+- The Settings window has a tenth section, "Voice input", last in the list, with the icon of a microphone. It has four options, and each option has a circled question mark with an information card in English and in French: the switch "Enable voice input", the choice "Language of the speech", the choice "Whisper model", and the "Word replacement list", which has its own rules in [settings_voice_words.md](settings_voice_words.md). The language and the model are dimmed while the switch is off.
 - The switch is off at first. When it is off, Heidrun shows no push-to-talk button, downloads no model, never opens the microphone, and throws away a recording that runs.
 - The language is "Detect the language" or one of 20 languages. Each name is written in the language of the window. A model whose name ends with `.en` understands only English and ignores the choice.
-- The model list has 12 models, with the size of each beside its name, in MB or GB as Finder writes it (Mo and Go in French). The first model is `base`. On the computer of the developer, a sentence of 4.9 seconds took 0.22 second with `tiny`, 0.39 second with `base`, and 1.2 seconds with `small`. `tiny` heard one short sentence wrong, so the first model is `base`.
+- The model list has 12 models, with the size of each beside its name, in MB or GB as Finder writes it (Mo and Go in French). The first model is `base`. `tiny` heard one short sentence wrong, so the first model is `base`.
 
 ## The download
 
@@ -51,7 +51,7 @@ This file is a part of the rules of the user interface of Heidrun. It gives the 
 
 - The Rust package `packages/auxiliary/voice_input` records, downloads, and transcribes. It knows nothing about Tauri. `packages/apps/desktop_tauri/src/voice_commands.rs` holds the five commands: `voice_options`, `voice_download_model`, `voice_start_recording`, `voice_cancel_recording`, and `voice_stop_recording`.
 - The web page files are `lib/voice_input.ts`, `stores/voice_input.ts`, `components/PushToTalkButton.vue`, `components/VoiceLevel.vue`, and `components/settings/SettingsVoiceInputSection.vue`.
-- The tests of the package check the conversion of the audio, the download with a fake server (complete, stopped early, missing file, no server), the text of Whisper, and a spoken sentence with the real model `tiny`, which the first run downloads once into the folder of the build. One test records the real microphone and runs only by hand: `cargo test live_ -- --ignored`.
+- The tests of the package check the conversion of the audio, the download with a fake server (complete, stopped early, missing file, no server), the text of Whisper, and a spoken sentence with the real model `tiny`, which the first run downloads once into the folder of the build.
 - The button and composition bar tests start with no recording owner, mount the controls before the first press, and check that the first click shows a red stop icon and level bars in the owning pane; two panes share one recorder.
 - The Vitest tests check the library (the long press, the click, and the levels), the button, the level bars, the Settings section, the composition bar, and the toggle button of the header of the pane.
 

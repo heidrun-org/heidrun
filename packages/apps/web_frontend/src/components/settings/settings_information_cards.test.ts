@@ -116,7 +116,7 @@ class SettingsInformationCardsTestHelper {
 		{
 			name: 'Voice input',
 			component: SettingsVoiceInputSection,
-			optionList: ['voiceInput', 'voiceInputLanguage', 'voiceInputModel'],
+			optionList: ['voiceInput', 'voiceInputLanguage', 'voiceInputModel', 'voiceWords'],
 		},
 	];
 

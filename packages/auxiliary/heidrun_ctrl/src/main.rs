@@ -1,13 +1,15 @@
-//! The command line for Heidrun macros, launchers, and workspaces.
+//! The command line for Heidrun macros, launchers, voice words, and workspaces.
 
 mod command_line;
 mod workspaces;
 
 use command_line::{find_format, parse, CommonOptions, Parsed, TextInput, HELP};
 use heidrun_ctrl::{
-    add_launcher, add_macro, changed_text, delete_launcher, delete_macro, deleted_text, error_text, find_project_root,
-    launcher_changed_text, launcher_deleted_text, launcher_list_text, list_launchers, list_macros, list_text, personal_macros_path,
-    update_launcher, update_macro, Format, LauncherChanges, MacroChanges, MacroPlaces, NewLauncher, NewMacro,
+    add_launcher, add_macro, add_voice_word, changed_text, delete_launcher, delete_macro, delete_voice_word, deleted_text,
+    error_text, find_project_root, launcher_changed_text, launcher_deleted_text, launcher_list_text, list_launchers, list_macros,
+    list_text, list_voice_words, personal_macros_path, update_launcher, update_macro, update_voice_word, voice_word_changed_text,
+    voice_word_deleted_text, voice_word_list_text, voice_words_path, Format, LauncherChanges, MacroChanges, MacroPlaces, NewLauncher,
+    NewMacro, NewVoiceWord, VoiceWordChanges,
 };
 use std::io::Read;
 use std::process::ExitCode;
@@ -89,6 +91,24 @@ fn run(arguments: &[String]) -> Result<String, String> {
         Parsed::LauncherDelete { common, id } => {
             let root = project_root_of(&common)?;
             Ok(launcher_deleted_text(&delete_launcher(&root, &id)?, common.format))
+        }
+        Parsed::VoiceWordList { common } => {
+            let file = voice_words_path();
+            Ok(voice_word_list_text(&list_voice_words(&file)?, &file, common.format))
+        }
+        Parsed::VoiceWordAdd { common, id, whisper_writes, heidrun_writes } => {
+            let file = voice_words_path();
+            let added = add_voice_word(&file, NewVoiceWord { id, whisper_writes, heidrun_writes })?;
+            Ok(voice_word_changed_text("Added", &added, &file, common.format))
+        }
+        Parsed::VoiceWordUpdate { common, id, whisper_writes, heidrun_writes } => {
+            let file = voice_words_path();
+            let updated = update_voice_word(&file, &id, VoiceWordChanges { whisper_writes, heidrun_writes })?;
+            Ok(voice_word_changed_text("Updated", &updated, &file, common.format))
+        }
+        Parsed::VoiceWordDelete { common, id } => {
+            let file = voice_words_path();
+            Ok(voice_word_deleted_text(&delete_voice_word(&file, &id)?, common.format))
         }
     }
 }

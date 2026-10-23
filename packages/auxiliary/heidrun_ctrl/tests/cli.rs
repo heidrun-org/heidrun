@@ -47,6 +47,10 @@ impl Fixture {
         self.project.join(".heidrun").join("config.json")
     }
 
+    fn voice_words_file(&self) -> PathBuf {
+        self.data_folder.join("voice_words.json")
+    }
+
     /// Runs the executable in the project folder, with the text as its standard input.
     fn run_with_input(&self, arguments: &[&str], input: &str) -> Run {
         let mut child = Command::new(env!("CARGO_BIN_EXE_heidrun_ctrl"))
@@ -438,6 +442,153 @@ fn the_markdown_of_a_launcher_has_its_name_its_id_and_its_command_line_in_a_code
     assert_eq!(deleted.stdout, "Deleted the launcher `t` (Tests).\n");
 }
 
+// ---- The voice words ------------------------------------------------------------------------------------------------
+
+#[test]
+fn the_voice_word_list_is_empty_when_the_file_does_not_exist_and_the_markdown_says_none() {
+    let fixture = Fixture::new("voice_words_empty");
+    let listed = fixture.run(&["voice_words", "list", "--json"]);
+    assert_eq!(listed.exit_code, 0, "{}", listed.stderr);
+    assert_eq!(listed.json().as_array().unwrap().len(), 0);
+    let markdown = fixture.run(&["voice_words", "list"]);
+    assert!(markdown.stdout.starts_with("# Voice words\n\nFile: `"), "{}", markdown.stdout);
+    assert!(markdown.stdout.ends_with("None.\n"));
+    assert!(!fixture.voice_words_file().exists());
+}
+
+#[test]
+fn a_voice_word_is_added_listed_updated_and_deleted_and_the_file_follows_each_step() {
+    let fixture = Fixture::new("voice_words_life");
+    let added = fixture.run(&["voice_words", "add", "--whisper-writes", "jerome etienne", "--heidrun-writes", "Jérôme Étienne", "--json"]);
+    assert_eq!(added.exit_code, 0, "{}", added.stderr);
+    let word = added.json();
+    let id = word["id"].as_str().unwrap().to_string();
+    assert!(id.starts_with("jerome-etienne-"), "{id}");
+    assert_eq!(word["whisper_writes"], "jerome etienne");
+    assert_eq!(word["heidrun_writes"], "Jérôme Étienne");
+    let file: Value = serde_json::from_str(&std::fs::read_to_string(fixture.voice_words_file()).unwrap()).unwrap();
+    assert_eq!(file, serde_json::json!([word]));
+
+    let updated = fixture.run(&["voice_words", "update", &id, "--heidrun-writes", "Jérôme", "--json"]);
+    assert_eq!(updated.exit_code, 0, "{}", updated.stderr);
+    assert_eq!(updated.json()["whisper_writes"], "jerome etienne");
+    assert_eq!(updated.json()["heidrun_writes"], "Jérôme");
+
+    let listed = fixture.run(&["voice_words", "list", "--json"]).json();
+    assert_eq!(listed.as_array().unwrap().len(), 1);
+    assert_eq!(listed[0]["heidrun_writes"], "Jérôme");
+
+    let deleted = fixture.run(&["voice_words", "delete", &id, "--json"]);
+    assert_eq!(deleted.exit_code, 0, "{}", deleted.stderr);
+    assert_eq!(deleted.json()["deleted"]["id"], id.as_str());
+    assert_eq!(fixture.run(&["voice_words", "list", "--json"]).json().as_array().unwrap().len(), 0);
+}
+
+#[test]
+fn the_spaces_at_the_ends_of_a_text_and_an_empty_replacement_reach_the_file() {
+    let fixture = Fixture::new("voice_words_spaces");
+    let added = fixture.run(&["voice_words", "add", "--id", "at", "--whisper-writes", " at sign ", "--heidrun-writes", "@", "--json"]);
+    assert_eq!(added.exit_code, 0, "{}", added.stderr);
+    assert_eq!(added.json()["whisper_writes"], " at sign ");
+    let removed = fixture.run(&["voice_words", "add", "--id", "um", "--whisper-writes", " um", "--heidrun-writes", "", "--json"]);
+    assert_eq!(removed.exit_code, 0, "{}", removed.stderr);
+    let file: Value = serde_json::from_str(&std::fs::read_to_string(fixture.voice_words_file()).unwrap()).unwrap();
+    assert_eq!(file[0]["whisper_writes"], " at sign ");
+    assert_eq!(file[1]["heidrun_writes"], "");
+}
+
+#[test]
+fn the_markdown_of_a_voice_word_shows_both_texts_between_double_quotes() {
+    let fixture = Fixture::new("voice_words_markdown");
+    let added = fixture.run(&["voice_words", "add", "--id", "at", "--whisper-writes", " at sign ", "--heidrun-writes", "@"]);
+    assert!(added.stdout.starts_with("Added the entry `at` in the file `"), "{}", added.stdout);
+    assert!(added.stdout.contains("## at\n\n- Whisper writes: \" at sign \"\n- Heidrun writes instead: \"@\"\n"));
+    assert!(!added.stdout.contains('\u{1b}'));
+    let deleted = fixture.run(&["voice_words", "delete", "at"]);
+    assert_eq!(deleted.stdout, "Deleted the entry `at` (\" at sign \").\n");
+}
+
+#[test]
+fn the_voice_word_errors_are_one_json_object_on_one_line_and_change_no_file() {
+    let fixture = Fixture::new("voice_words_errors");
+    for arguments in [
+        vec!["voice_words", "add", "--whisper-writes", "  ", "--heidrun-writes", "x", "--json"],
+        vec!["voice_words", "add", "--whisper-writes", "x", "--json"],
+        vec!["voice_words", "update", "nothing", "--heidrun-writes", "x", "--json"],
+        vec!["voice_words", "delete", "nothing", "--json"],
+        vec!["voice_words", "update", "nothing", "--json"],
+    ] {
+        let run = fixture.run(&arguments);
+        assert_eq!(run.exit_code, 1, "{arguments:?}");
+        assert_eq!(run.stdout, "");
+        assert_eq!(run.stderr.trim_end().lines().count(), 1);
+        assert!(serde_json::from_str::<Value>(run.stderr.trim_end()).unwrap()["error"].is_string());
+    }
+    assert!(!fixture.voice_words_file().exists());
+}
+
+#[test]
+fn a_second_voice_word_with_the_same_text_that_whisper_writes_is_refused() {
+    let fixture = Fixture::new("voice_words_copy");
+    fixture.run(&["voice_words", "add", "--id", "a", "--whisper-writes", "Jerome", "--heidrun-writes", "Jérôme"]);
+    let run = fixture.run(&["voice_words", "add", "--id", "b", "--whisper-writes", "JEROME", "--heidrun-writes", "Other", "--json"]);
+    assert_eq!(run.exit_code, 1);
+    assert!(run.stderr.contains("The entry a already has the text that Whisper writes"), "{}", run.stderr);
+    assert_eq!(fixture.run(&["voice_words", "list", "--json"]).json().as_array().unwrap().len(), 1);
+}
+
+#[test]
+fn a_voice_word_file_that_is_not_valid_is_an_error_and_is_never_overwritten() {
+    let fixture = Fixture::new("voice_words_not_valid");
+    std::fs::write(fixture.voice_words_file(), "[ not json").unwrap();
+    for arguments in [
+        vec!["voice_words", "list"],
+        vec!["voice_words", "add", "--whisper-writes", "a", "--heidrun-writes", "b"],
+        vec!["voice_words", "delete", "a"],
+    ] {
+        let run = fixture.run(&arguments);
+        assert_eq!(run.exit_code, 1, "{arguments:?}");
+        assert!(run.stderr.contains("is not a list of entries"), "{}", run.stderr);
+    }
+    assert_eq!(std::fs::read_to_string(fixture.voice_words_file()).unwrap(), "[ not json");
+}
+
+#[test]
+fn the_voice_word_commands_refuse_the_options_of_the_other_groups_and_change_no_other_file() {
+    let fixture = Fixture::new("voice_words_options");
+    for arguments in [
+        vec!["voice_words", "add", "--text", "x", "--whisper-writes", "a", "--heidrun-writes", "b"],
+        vec!["voice_words", "list", "--kind", "personal"],
+        vec!["voice_words", "list", "--folder", "x"],
+        vec!["macros", "list", "--whisper-writes", "a"],
+        vec!["launchers", "list", "--heidrun-writes", "a"],
+    ] {
+        let run = fixture.run(&arguments);
+        assert_eq!(run.exit_code, 1, "{arguments:?}");
+        assert!(run.stderr.contains("does not accept the option"), "{}", run.stderr);
+    }
+    fixture.run(&["voice_words", "add", "--whisper-writes", "a", "--heidrun-writes", "b"]);
+    assert!(!fixture.personal_file().exists());
+    assert!(!fixture.project_file().exists());
+}
+
+#[test]
+fn the_voice_words_are_found_from_any_folder_because_the_file_belongs_to_the_developer() {
+    let fixture = Fixture::new("voice_words_folder");
+    fixture.run(&["voice_words", "add", "--id", "a", "--whisper-writes", "one", "--heidrun-writes", "1"]);
+    let outside = fixture.data_folder.parent().unwrap().join("outside");
+    std::fs::create_dir_all(&outside).unwrap();
+    let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_heidrun_ctrl"));
+    let output = command
+        .args(["voice_words", "list", "--json"])
+        .current_dir(&outside)
+        .env("HEIDRUN_DIR", &fixture.data_folder)
+        .output()
+        .unwrap();
+    let listed: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(listed[0]["id"], "a");
+}
+
 // ---- The SKILL.md ---------------------------------------------------------------------------------------------------
 
 /// The text of the `SKILL.md` of the package, in the folder `skills/heidrun-ctrl`.
@@ -458,7 +609,7 @@ fn the_skill_names_no_command_no_kind_and_no_option_that_the_help_does_not_have(
     let help_words = words(&help);
     let skill = skill_text();
     for line in skill.lines().filter(|line| !line.starts_with("description:")) {
-        for group in ["macros", "launchers"] {
+        for group in ["macros", "launchers", "voice_words"] {
             let prefix = format!("heidrun_ctrl {group} ");
             let mut rest = line;
             while let Some(at) = rest.find(&prefix) {
@@ -471,7 +622,7 @@ fn the_skill_names_no_command_no_kind_and_no_option_that_the_help_does_not_have(
             assert!(help_words.contains(&word), "The help has no option {word}");
         }
     }
-    for group in ["macros", "launchers"] {
+    for group in ["macros", "launchers", "voice_words"] {
         for command in ["list", "add", "update", "delete"] {
             assert!(skill.contains(&format!("heidrun_ctrl {group} {command}")), "{group} {command}");
             assert!(help.contains(&format!("{group} {command}")), "{group} {command}");
@@ -500,6 +651,11 @@ fn the_skill_names_the_fields_of_a_listed_macro_and_of_a_listed_launcher_and_eve
     fixture.run(&["launchers", "add", "--command", "ls"]);
     let launchers = fixture.run(&["launchers", "list", "--json"]).json();
     for field in launchers[0].as_object().unwrap().keys() {
+        assert!(skill.contains(&format!("`{field}`")), "{field}");
+    }
+    fixture.run(&["voice_words", "add", "--whisper-writes", "a", "--heidrun-writes", "b"]);
+    let voice_words = fixture.run(&["voice_words", "list", "--json"]).json();
+    for field in voice_words[0].as_object().unwrap().keys() {
         assert!(skill.contains(&format!("`{field}`")), "{field}");
     }
 }
@@ -534,7 +690,7 @@ fn the_commands_of_the_skill_run_on_a_project_and_give_a_macro_or_a_launcher_bac
         assert!(run.json().is_array() || run.json().is_object());
         ran += 1;
     }
-    assert_eq!(ran, 11);
+    assert_eq!(ran, 14);
 }
 
 /// Splits a command line into its arguments: the words, with a quoted part kept whole and its quotes removed.

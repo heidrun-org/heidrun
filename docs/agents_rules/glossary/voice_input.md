@@ -4,8 +4,8 @@
 - Last updated: 23 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: voice input](../user_interface/window/settings_voice_input.md), [User interface of Heidrun: composition bar](../user_interface/workspaces_tabs_and_panes/composition_bar.md)
-- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 820](https://github.com/heidrun-org/heidrun/issues/820)
+- Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: voice input](../user_interface/window/settings_voice_input.md), [User interface of Heidrun: word replacement list of the voice input](../user_interface/window/settings_voice_words.md), [User interface of Heidrun: composition bar](../user_interface/workspaces_tabs_and_panes/composition_bar.md)
+- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 820](https://github.com/heidrun-org/heidrun/issues/820), [issue 836](https://github.com/heidrun-org/heidrun_code/issues/836)
 
 This document gives one short definition for each word of the voice input. The other words of Heidrun are in [index.md](index.md).
 
@@ -29,9 +29,22 @@ A file of whisper.cpp that changes speech into text. Heidrun offers 12 models, f
 
 ### Voice input section
 
-The section "Voice input" of the Settings window. It holds the switch "Enable voice input", the language of the speech, and the Whisper model with the state of its download.
+The section "Voice input" of the Settings window. It holds the switch "Enable voice input", the language of the speech, the Whisper model with the state of its download, and the word replacement list.
+
+### Word replacement list
+
+The list that fixes the words that Whisper writes wrongly. It is the last part of the Voice input section. Each entry has two texts, "Whisper writes" and "Heidrun writes instead". After Whisper changes the speech into text, Heidrun replaces each listed text by its replacement, before it writes the text in the composition bar. The list is the file `voice_words.json` in the folder of the data of Heidrun. The window and the command line `heidrun_ctrl voice_words` both read and write it.
+
+### Whisper writes
+
+The first text of an entry of the word replacement list: the text that Whisper writes, which Heidrun replaces. A space at its start or at its end is part of the text. It is never empty.
+
+### Heidrun writes instead
+
+The second text of an entry of the word replacement list: the text that Heidrun writes in place of the first text. A space at its start or at its end is part of the text. It may be empty, and the entry then removes the first text.
 
 ## Rules
 
 - Use the words "voice input", "push-to-talk button", and "level bars". Never write "dictation", "speech button", "voice button", "record button", "waveform", or "equalizer" for them.
 - The word "microphone button" means only the button of Heidrun Mobile, in [heidrun_mobile.md](heidrun_mobile.md).
+- Use the words "word replacement list", "Whisper writes", and "Heidrun writes instead". Never write "dictionary", "vocabulary", "custom words", or "find and replace" for them.

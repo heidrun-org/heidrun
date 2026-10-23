@@ -1,17 +1,18 @@
 ---
 name: heidrun-ctrl
-description: Control the Heidrun application from the command line heidrun_ctrl. Use it to list, add, update, or delete the macros of the developer, the reusable texts that Heidrun writes into a pane, the hard-coded macros of Heidrun included, and to list, add, update, or delete the launchers of a project, the command lines that Heidrun runs in their own tab. Use the workspaces group to list, open, rename, focus, or close workspaces through Herdr. A running Heidrun shows each change in its window within about one second.
+description: Control the Heidrun application from the command line heidrun_ctrl. Use it to list, add, update, or delete the macros of the developer, the reusable texts that Heidrun writes into a pane, the hard-coded macros of Heidrun included, and to list, add, update, or delete the launchers of a project, the command lines that Heidrun runs in their own tab. Use the voice_words group to list, add, update, or delete the entries of the word replacement list of the voice input, the texts that Heidrun writes instead of the texts that Whisper writes wrongly. Use the workspaces group to list, open, rename, focus, or close workspaces through Herdr. A running Heidrun shows each change in its window within about one second.
 compatibility: macOS with Heidrun installed and heidrun_ctrl available on the shell path.
 ---
 
 # heidrun_ctrl
 
-`heidrun_ctrl` is the command line that controls the Heidrun application. The groups `macros` and `launchers` have the commands `list`, `add`, `update`, and `delete`. The group `workspaces` has `list`, `open`, `rename`, `focus`, and `close`.
+`heidrun_ctrl` is the command line that controls the Heidrun application. The groups `macros`, `launchers`, and `voice_words` have the commands `list`, `add`, `update`, and `delete`. The group `workspaces` has `list`, `open`, `rename`, `focus`, and `close`.
 
 - A macro is a reusable text that the developer writes into a pane with one click. The commands create, read, change, and remove macros. They do not write a macro into a pane.
 - A launcher is one item of the Launchers sidebar section: a command line that Heidrun runs in its own tab when the developer clicks its button "Run". The commands create, read, change, and remove launchers. They do not run a launcher. A launcher is not a macro.
+- A voice word is one entry of the word replacement list of the voice input: the text that Whisper writes wrongly, and the text that Heidrun writes instead. The commands create, read, change, and remove entries. They do not change the speech or the Whisper model. A voice word is not a macro.
 
-The groups `macros` and `launchers` change files and work while Heidrun is closed. The group `workspaces` talks only to Herdr through the `herdr` executable. Start Heidrun first to see workspace changes in its window. No workspace command starts a server.
+The groups `macros`, `launchers`, and `voice_words` change files and work while Heidrun is closed. The group `workspaces` talks only to Herdr through the `herdr` executable. Start Heidrun first to see workspace changes in its window. No workspace command starts a server.
 
 Before using a command, check that `heidrun_ctrl --help` works. The installed Heidrun application places `heidrun_ctrl` in `~/.local/bin` when the application starts. If the command is not found, ask the developer to install Heidrun and make `~/.local/bin` available on the shell path.
 
@@ -82,6 +83,39 @@ The launchers of a project are the key `launchers` of the file `.heidrun/config.
 
 The command `launchers add` makes only a launcher with a command line, never a launcher of the kind Coding agent. The command `launchers update` keeps the field `agent` of a launcher of the kind Coding agent as it is, and refuses `--command` for it, because its command line is made from its `agent`: change its name, description, or folder, or ask the developer to change it in the window. A file written before the rename of "action" to "launcher" can hold the old key `actions`: the commands read it, and write the key `launchers` in its place.
 
+## The voice words
+
+The voice input changes the speech of the developer into text with Whisper. Whisper often writes a name of a person, a name of a product, or a technical word in the wrong way. The word replacement list fixes this: after Whisper gives the text, Heidrun replaces each listed text by its replacement, and then writes the text in the composition bar. An entry has the fields `id`, `whisper_writes` (the text that Whisper writes), and `heidrun_writes` (the text that Heidrun writes instead). The entries are the file `voice_words.json` in the folder of the variable `HEIDRUN_DIR`, or else in `~/.config/heidrun`. The file belongs to the developer, for every project, so the commands have no `--kind` and no `--folder`.
+
+The rules of the matching:
+
+- An entry matches a whole word or a whole group of words only. It never matches a part of a longer word.
+- Upper case and lower case do not count.
+- A space at the start or at the end of a text is part of the text, and the replacement can remove it. The entry `" at sign "` with the replacement `"@"` changes "name at sign example" into "name@example". The entry `"at sign"` with no spaces gives "name @ example".
+- When two entries match at the same place, the longer entry wins.
+- After a pass, Heidrun applies the list again to the new text, until no entry matches any more. So the entry "hadron" with the replacement "Heidrun", and the entry "heidrun card" with the replacement "Heidrun Code", change "hadron card" into "Heidrun Code". A list that loops (for example "a" to "b" and "b" to "a") stops after 10 passes, or when the text grows too long, and gives the text of the first pass.
+
+1. **See the entries, and their ids.** Do this first: `update` and `delete` need an id.
+   ```bash
+   heidrun_ctrl voice_words list --format json
+   ```
+2. **Add an entry.** Both `--whisper-writes` and `--heidrun-writes` are required. The text that Whisper writes cannot be empty, and no other entry can have the same text (the case of the letters does not count). The text that Heidrun writes may be empty: the entry then removes the text that Whisper writes. Without `--id`, the id is made from the text that Whisper writes, then a dash and three characters. The command prints the new entry with its id.
+   ```bash
+   heidrun_ctrl voice_words add --whisper-writes "jerome etienne" --heidrun-writes "Jérôme Étienne" --format json
+   ```
+   Put the spaces inside the quotes to make them part of the text.
+   ```bash
+   heidrun_ctrl voice_words add --whisper-writes " at sign " --heidrun-writes "@" --format json
+   ```
+3. **Update an entry.** Give the id, and only the text to change. The other text stays as it is.
+   ```bash
+   heidrun_ctrl voice_words update <id> --heidrun-writes "Jérôme Étienne" --format json
+   ```
+4. **Delete an entry.**
+   ```bash
+   heidrun_ctrl voice_words delete <id> --format json
+   ```
+
 ## The workspaces
 
 Choose the right session before changing a workspace. `--session` overrides the inherited connection. Without `--session`, the commands use `HERDR_SOCKET_PATH` or `HERDR_SESSION` when set, otherwise the installed session `heidrun`. Main-checkout development uses `heidrun_development`; a temporary worktree uses `heidrun_` followed by the cleaned worktree name (at most its last 32 characters). Session names and workspace ids belong together. An id from another session does not identify the same workspace.
@@ -124,8 +158,10 @@ A command that fails exits with the code 1, prints one JSON object on one line o
 - No launcher has the id: run `launchers list` again and copy the id.
 - The text is empty: a macro always has a text. The command line is empty: a launcher always has a command line.
 - The launcher is of the kind Coding agent and `--command` is given: leave `--command` out.
+- No entry has the id: run `voice_words list` again and copy the id.
+- The text that Whisper writes is empty, or another entry already has it: give another text, or update the other entry.
 - A file is not valid: the message gives its path and the mistake. `heidrun_ctrl` never overwrites such a file, so the developer can repair it.
 
 ## For a person
 
-The default Markdown output is for a person, or for a renderer. `heidrun_ctrl macros list | glow` and `heidrun_ctrl launchers list | glow` show it with colors. There is no format with colors in `heidrun_ctrl`.
+The default Markdown output is for a person, or for a renderer. `heidrun_ctrl macros list | glow`, `heidrun_ctrl launchers list | glow`, and `heidrun_ctrl voice_words list | glow` show it with colors. There is no format with colors in `heidrun_ctrl`.

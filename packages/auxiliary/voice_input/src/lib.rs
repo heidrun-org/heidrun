@@ -9,6 +9,7 @@ pub mod models;
 pub mod recording;
 pub mod transcription;
 pub mod whisper_log;
+pub mod word_replacement;
 
 pub use download::{download_model, DownloadProgress};
 pub use error::VoiceError;
@@ -18,3 +19,4 @@ pub use models::{
 };
 pub use recording::{Recorder, Recording};
 pub use transcription::Transcriber;
+pub use word_replacement::replace_words;
