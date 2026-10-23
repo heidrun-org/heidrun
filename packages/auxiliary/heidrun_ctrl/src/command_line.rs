@@ -5,7 +5,8 @@ use heidrun_ctrl::{Format, MacroKind};
 /// The text of `heidrun_ctrl --help`.
 pub const HELP: &str = r#"Usage: heidrun_ctrl <group> <command> [options]
 
-Controls the Heidrun application. There are three groups of commands: macros, launchers, and workspaces.
+Controls the Heidrun application. There are four groups of commands: macros, launchers,
+voice_words, and workspaces.
 
 The macros: a macro is a reusable text that the developer writes into a pane. There are
 three kinds of macro:
@@ -21,7 +22,20 @@ that Heidrun runs in its own tab when the developer clicks its button "Run". The
 launchers are kept in the key "launchers" of the file ".heidrun/config.json" of the
 project. A launcher is not a macro, and the command line never runs a launcher.
 
-Macros and launchers change files watched by Heidrun and work while Heidrun is closed.
+The voice words: the word replacement list of the voice input. Each entry has two texts, the
+text that Whisper writes and the text that Heidrun writes instead. After Whisper changes the
+speech into text, Heidrun replaces each listed text by its replacement, before it writes the
+text in the composition bar. An entry matches a whole word or a whole group of words only,
+and ignores upper case and lower case. A space at the start or at the end of a text is part
+of the text: the entry " at sign " with the replacement "@" changes "name at sign example"
+into "name@example", and the entry "at sign" with no spaces gives "name @ example". When two
+entries match at the same place, the longer entry wins. Heidrun applies the list again to
+the new text, until no entry matches any more, so a replacement can match another entry. A
+list that loops stops after 10 passes, or when the text grows too long. The entries are kept in the file
+"voice_words.json" of the folder of the variable HEIDRUN_DIR, or else of "~/.config/heidrun".
+
+Macros, launchers, and voice words change files watched by Heidrun and work while Heidrun is
+closed.
 Workspaces talk to a running Herdr through its executable. Start Heidrun first to see
 workspace changes in the window. No workspace command starts a Herdr server.
 
@@ -35,6 +49,11 @@ Commands:
   launchers update <id>       Change the name, the command line, the description, or the
                               folder of a launcher.
   launchers delete <id>       Delete a launcher.
+  voice_words list            List the entries of the word replacement list.
+  voice_words add             Add an entry.
+  voice_words update <id>     Change the text that Whisper writes, or the text that Heidrun
+                              writes instead, of an entry.
+  voice_words delete <id>     Delete an entry.
   workspaces list             List the workspaces and their Herdr fields.
   workspaces open             Open and select a workspace from --cwd.
   workspaces rename <id>      Rename a workspace using --label.
@@ -53,9 +72,10 @@ Options:
                               personal or project. (default: personal) For update and
                               delete, the kind to search, when the id exists in two
                               kinds.
-  --id <id>                   For add, the id of the macro or of the launcher. (default:
-                              made from the title or the name, then a dash and three
-                              characters for a macro, four for a launcher)
+  --id <id>                   For add, the id of the macro, of the launcher, or of the
+                              entry. (default: made from the title, the name, or the text
+                              that Whisper writes, then a dash and three characters for a
+                              macro or an entry, four for a launcher)
   --label <text>              For workspaces open, an optional name; for rename, required.
                               For add and update, the title of the macro or the name of
                               the launcher. An empty title becomes the first 40
@@ -78,6 +98,13 @@ Options:
                               For launchers add and update, the folder where the
                               command line runs, relative to the root of the project.
                               An empty folder removes it.
+  --whisper-writes <text>     Voice words only. For add, required: the text that Whisper
+                              writes. For update, the new text. It cannot be empty or only
+                              spaces. A space at its start or at its end is part of it.
+  --heidrun-writes <text>     Voice words only. For add, required: the text that Heidrun
+                              writes instead. For update, the new text. It may be empty:
+                              the entry then removes the text that Whisper writes. A space
+                              at its start or at its end is part of it.
   --folder <path>             A folder of the project, for the project macros and for the
                               launchers. (default: the current folder)
   --format <name>             markdown or json. (default: markdown)
@@ -90,7 +117,9 @@ Output:
              has the fields "id", "label", "description", "text", "kind", and "file"
              (null for a hard-coded macro). A launcher has the fields "id", "label",
              "command", "description", "cwd", and "agent" (null for a field that the
-             launcher does not have). A delete gives the object {"deleted": <item>}. A
+             launcher does not have). A voice word has the fields "id",
+             "whisper_writes", and "heidrun_writes". A delete gives the object
+             {"deleted": <item>}. A
              workspace list is an array of Herdr workspace objects. Open, rename,
              and focus give one workspace object; close gives {"closed": <workspace>}.
              Workspace fields include workspace_id, label, and tokens. A workspace
@@ -115,6 +144,11 @@ Examples:
   $ printf 'cd web\npnpm test' | heidrun_ctrl launchers add --label "Web tests" --command -
   $ heidrun_ctrl launchers update run-the-tests-x7q2 --command "pnpm run test:unit" --cwd web
   $ heidrun_ctrl launchers delete run-the-tests-x7q2
+  $ heidrun_ctrl voice_words list --format json
+  $ heidrun_ctrl voice_words add --whisper-writes "jerome etienne" --heidrun-writes "Jérôme Étienne"
+  $ heidrun_ctrl voice_words add --whisper-writes " at sign " --heidrun-writes "@"
+  $ heidrun_ctrl voice_words update jerome-etienne-x7q --heidrun-writes "Jérôme Étienne"
+  $ heidrun_ctrl voice_words delete jerome-etienne-x7q
   $ heidrun_ctrl workspaces list --session heidrun --json
   $ heidrun_ctrl workspaces open --cwd /absolute/project --label Project --json
   $ heidrun_ctrl workspaces rename w1 --label Renamed --json
@@ -235,6 +269,40 @@ pub enum Parsed {
         /// The id of the launcher.
         id: String,
     },
+    /// List the entries of the word replacement list.
+    VoiceWordList {
+        /// The options of every order.
+        common: CommonOptions,
+    },
+    /// Add an entry to the word replacement list.
+    VoiceWordAdd {
+        /// The options of every order.
+        common: CommonOptions,
+        /// The id, or `None` to make one.
+        id: Option<String>,
+        /// The text that Whisper writes.
+        whisper_writes: String,
+        /// The text that Heidrun writes instead.
+        heidrun_writes: String,
+    },
+    /// Change an entry of the word replacement list.
+    VoiceWordUpdate {
+        /// The options of every order.
+        common: CommonOptions,
+        /// The id of the entry.
+        id: String,
+        /// The new text that Whisper writes.
+        whisper_writes: Option<String>,
+        /// The new text that Heidrun writes instead.
+        heidrun_writes: Option<String>,
+    },
+    /// Delete an entry of the word replacement list.
+    VoiceWordDelete {
+        /// The options of every order.
+        common: CommonOptions,
+        /// The id of the entry.
+        id: String,
+    },
 }
 
 /// The workspace actions exposed by the executable.
@@ -261,6 +329,8 @@ struct RawOptions {
     text: Option<TextInput>,
     command: Option<TextInput>,
     cwd: Option<String>,
+    whisper_writes: Option<String>,
+    heidrun_writes: Option<String>,
     /// The names of the options that were given, to refuse the ones an order does not accept.
     given: Vec<&'static str>,
 }
@@ -275,7 +345,18 @@ pub fn is_workspace_command(arguments: &[String]) -> bool {
         if !argument.contains('=')
             && matches!(
                 argument.as_str(),
-                "--session" | "--format" | "--folder" | "--kind" | "--id" | "--label" | "--description" | "--text" | "--command" | "--cwd"
+                "--session"
+                    | "--format"
+                    | "--folder"
+                    | "--kind"
+                    | "--id"
+                    | "--label"
+                    | "--description"
+                    | "--text"
+                    | "--command"
+                    | "--cwd"
+                    | "--whisper-writes"
+                    | "--heidrun-writes"
             )
         {
             rest.next();
@@ -397,6 +478,14 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
                 options.cwd = Some(value_of(&name, inline, &mut rest)?);
                 options.given.push("--cwd");
             }
+            "--whisper-writes" => {
+                options.whisper_writes = Some(value_of(&name, inline, &mut rest)?);
+                options.given.push("--whisper-writes");
+            }
+            "--heidrun-writes" => {
+                options.heidrun_writes = Some(value_of(&name, inline, &mut rest)?);
+                options.given.push("--heidrun-writes");
+            }
             _ => return Err(format!("The option {name} is not known. Run `heidrun_ctrl --help`.")),
         }
     }
@@ -404,24 +493,29 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         return Ok(Parsed::Help);
     }
     let Some(group) = positionals.first() else {
-        return Err("A command is needed: macros, launchers, or workspaces. Run `heidrun_ctrl --help`.".to_string());
+        return Err("A command is needed: macros, launchers, voice_words, or workspaces. Run `heidrun_ctrl --help`.".to_string());
     };
     let Some(command) = positionals.get(1) else {
         return match group.as_str() {
             "workspaces" => {
                 Err("The command workspaces needs one of list, open, rename, focus, or close. Run `heidrun_ctrl --help`.".into())
             }
-            "macros" | "launchers" => {
+            "macros" | "launchers" | "voice_words" => {
                 Err(format!("The command {group} needs one of list, add, update, or delete. Run `heidrun_ctrl --help`."))
             }
-            _ => Err(format!("The command {group} is not known: use macros, launchers, or workspaces. Run `heidrun_ctrl --help`.")),
+            _ => Err(format!(
+                "The command {group} is not known: use macros, launchers, voice_words, or workspaces. Run `heidrun_ctrl --help`."
+            )),
         };
     };
     match group.as_str() {
         "macros" => parse_macros(command, options, &positionals),
         "launchers" => parse_launchers(command, options, &positionals),
+        "voice_words" => parse_voice_words(command, options, &positionals),
         "workspaces" => parse_workspaces(command, options, &positionals),
-        _ => Err(format!("The command {group} is not known: use macros, launchers, or workspaces. Run `heidrun_ctrl --help`.")),
+        _ => Err(format!(
+            "The command {group} is not known: use macros, launchers, voice_words, or workspaces. Run `heidrun_ctrl --help`."
+        )),
     }
 }
 
@@ -435,7 +529,8 @@ fn check_arguments(group: &str, command: &str, accepted: &[&str], options: &RawO
     if positionals.len() != wanted_positionals {
         return Err(match wanted_positionals {
             3 if positionals.len() < 3 => {
-                format!("The command {group} {command} needs the id of a {}.", group.trim_end_matches('s'))
+                let what = if group == "voice_words" { "an entry".to_string() } else { format!("a {}", group.trim_end_matches('s')) };
+                format!("The command {group} {command} needs the id of {what}.")
             }
             _ => format!("The command {group} {command} has too many arguments: {}.", positionals[wanted_positionals..].join(" ")),
         });
@@ -506,6 +601,38 @@ fn parse_launchers(command: &str, options: RawOptions, positionals: &[String]) -
             cwd: options.cwd,
         }),
         _ => Ok(Parsed::LauncherDelete { common, id: positionals[2].clone() }),
+    }
+}
+
+/// Reads the command of the group `voice_words`.
+fn parse_voice_words(command: &str, options: RawOptions, positionals: &[String]) -> Result<Parsed, String> {
+    let accepted: &[&str] = match command {
+        "list" | "delete" => &["--json", "--format"],
+        "add" => &["--json", "--format", "--id", "--whisper-writes", "--heidrun-writes"],
+        "update" => &["--json", "--format", "--whisper-writes", "--heidrun-writes"],
+        other => return Err(format!("The command voice_words {other} is not known: use list, add, update, or delete.")),
+    };
+    check_arguments("voice_words", command, accepted, &options, positionals)?;
+    let common = CommonOptions { format: options.format.unwrap_or_default(), folder: None };
+    match command {
+        "list" => Ok(Parsed::VoiceWordList { common }),
+        "add" => Ok(Parsed::VoiceWordAdd {
+            common,
+            id: options.id,
+            whisper_writes: options
+                .whisper_writes
+                .ok_or_else(|| "The command voice_words add needs the option --whisper-writes.".to_string())?,
+            heidrun_writes: options
+                .heidrun_writes
+                .ok_or_else(|| "The command voice_words add needs the option --heidrun-writes.".to_string())?,
+        }),
+        "update" => Ok(Parsed::VoiceWordUpdate {
+            common,
+            id: positionals[2].clone(),
+            whisper_writes: options.whisper_writes,
+            heidrun_writes: options.heidrun_writes,
+        }),
+        _ => Ok(Parsed::VoiceWordDelete { common, id: positionals[2].clone() }),
     }
 }
 
@@ -627,7 +754,7 @@ mod tests {
 
     #[test]
     fn an_unknown_command_kind_format_or_option_is_an_error_that_says_the_choices() {
-        assert!(parse(&arguments(&["panes"])).unwrap_err().contains("use macros, launchers, or workspaces"));
+        assert!(parse(&arguments(&["panes"])).unwrap_err().contains("use macros, launchers, voice_words, or workspaces"));
         assert!(parse(&arguments(&["macros", "run"])).unwrap_err().contains("list, add, update, or delete"));
         assert!(parse(&arguments(&["macros", "list", "--kind", "x"])).unwrap_err().contains("hard_coded, personal, or project"));
         assert!(parse(&arguments(&["macros", "list", "--format", "table"])).unwrap_err().contains("markdown or json"));
@@ -709,8 +836,88 @@ mod tests {
     fn an_unknown_launcher_command_is_an_error_that_says_the_choices() {
         assert!(parse(&arguments(&["launchers", "run"])).unwrap_err().contains("list, add, update, or delete"));
         assert!(parse(&arguments(&["launchers"])).unwrap_err().contains("needs one of list, add, update, or delete"));
-        assert!(parse(&arguments(&["panes", "list"])).unwrap_err().contains("use macros, launchers, or workspaces"));
+        assert!(parse(&arguments(&["panes", "list"])).unwrap_err().contains("use macros, launchers, voice_words, or workspaces"));
         assert!(parse(&arguments(&["launchers", "list", "--format", "table"])).unwrap_err().contains("markdown or json"));
+    }
+
+    #[test]
+    fn a_voice_word_list_has_the_format_markdown_by_default_and_accepts_no_other_option() {
+        assert_eq!(
+            parse(&arguments(&["voice_words", "list"])),
+            Ok(Parsed::VoiceWordList { common: CommonOptions { format: Format::Markdown, folder: None } })
+        );
+        assert!(parse(&arguments(&["voice_words", "list", "--folder", "x"])).unwrap_err().contains("does not accept the option --folder"));
+        assert!(parse(&arguments(&["voice_words", "list", "--kind", "personal"])).unwrap_err().contains("--kind"));
+    }
+
+    #[test]
+    fn a_voice_word_add_needs_both_texts_and_keeps_the_spaces_and_an_empty_replacement() {
+        let parsed = parse(&arguments(&[
+            "voice_words",
+            "add",
+            "--id",
+            "a",
+            "--whisper-writes",
+            " at sign ",
+            "--heidrun-writes=",
+            "--json",
+        ]))
+        .unwrap();
+        assert_eq!(
+            parsed,
+            Parsed::VoiceWordAdd {
+                common: CommonOptions { format: Format::Json, folder: None },
+                id: Some("a".into()),
+                whisper_writes: " at sign ".into(),
+                heidrun_writes: String::new(),
+            }
+        );
+        assert_eq!(
+            parse(&arguments(&["voice_words", "add", "--heidrun-writes", "x"])),
+            Err("The command voice_words add needs the option --whisper-writes.".to_string())
+        );
+        assert_eq!(
+            parse(&arguments(&["voice_words", "add", "--whisper-writes", "x"])),
+            Err("The command voice_words add needs the option --heidrun-writes.".to_string())
+        );
+    }
+
+    #[test]
+    fn a_voice_word_update_and_delete_need_one_id() {
+        let update = parse(&arguments(&["voice_words", "update", "a", "--heidrun-writes", "-"])).unwrap();
+        assert!(matches!(
+            update,
+            Parsed::VoiceWordUpdate { ref id, whisper_writes: None, heidrun_writes: Some(ref text), .. } if id == "a" && text == "-"
+        ));
+        assert!(matches!(parse(&arguments(&["voice_words", "delete", "a"])), Ok(Parsed::VoiceWordDelete { ref id, .. }) if id == "a"));
+        assert_eq!(
+            parse(&arguments(&["voice_words", "delete"])),
+            Err("The command voice_words delete needs the id of an entry.".to_string())
+        );
+        assert!(parse(&arguments(&["voice_words", "update", "a", "b"])).unwrap_err().contains("too many arguments: b"));
+        assert!(parse(&arguments(&["voice_words", "update", "a", "--id", "b"])).unwrap_err().contains("--id"));
+    }
+
+    #[test]
+    fn the_options_of_the_voice_words_are_refused_by_the_other_groups_and_the_other_way_round() {
+        assert!(parse(&arguments(&["macros", "add", "--text", "x", "--whisper-writes", "y"]))
+            .unwrap_err()
+            .contains("does not accept the option --whisper-writes"));
+        assert!(parse(&arguments(&["launchers", "list", "--heidrun-writes", "y"])).unwrap_err().contains("--heidrun-writes"));
+        assert!(parse(&arguments(&["voice_words", "add", "--text", "x"])).unwrap_err().contains("does not accept the option --text"));
+        assert!(parse(&arguments(&["workspaces", "list", "--whisper-writes", "x"])).unwrap_err().contains("--whisper-writes"));
+    }
+
+    #[test]
+    fn an_unknown_voice_word_command_is_an_error_that_says_the_choices() {
+        assert!(parse(&arguments(&["voice_words", "run"])).unwrap_err().contains("list, add, update, or delete"));
+        assert!(parse(&arguments(&["voice_words"])).unwrap_err().contains("needs one of list, add, update, or delete"));
+    }
+
+    #[test]
+    fn the_value_of_a_voice_word_option_is_not_taken_for_the_group_of_a_workspace_command() {
+        let words = arguments(&["--whisper-writes", "workspaces", "voice_words", "list"]);
+        assert!(!is_workspace_command(&words));
     }
 
     #[test]

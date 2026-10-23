@@ -8,7 +8,7 @@ The packages that are useful for the application Heidrun, but are not the applic
 - `website_public/`: the public website and documentation, built with VitePress. See its own CONTEXT.md.
 - `mobile_server/`: a Rust library that serves the mobile website on the loopback address behind an ngrok tunnel, checks the host name of the tunnel and the pairing key, and hands each call of the phone to the desktop application. See its own CONTEXT.md.
 - `mobile_website/`: the mobile website of Heidrun Mobile, which the mobile server serves. See its own CONTEXT.md.
-- `heidrun_ctrl/`: a Rust library and the command line that controls the Heidrun application for a coding agent, with its `SKILL.md`. It controls macros and launchers through files and workspaces through Herdr. See its own CONTEXT.md.
+- `heidrun_ctrl/`: a Rust library and the command line that controls the Heidrun application for a coding agent, with its `SKILL.md`. It controls macros, launchers, and the voice word replacement list through files and workspaces through Herdr. See its own CONTEXT.md.
 - `voice_input/`: a Rust library that records the microphone, downloads a Whisper model, and changes the speech into text on the computer. `desktop_tauri` imports it. See its own CONTEXT.md.
 
 ## Rules

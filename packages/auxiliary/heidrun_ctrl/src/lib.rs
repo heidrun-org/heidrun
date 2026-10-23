@@ -1,11 +1,12 @@
 //! `heidrun_ctrl`: the command line that controls the Heidrun application, for a coding agent.
 //!
-//! This library shares the macro and launcher file operations with the desktop application.
+//! This library shares the macro, launcher, and voice word file operations with the desktop application.
 //! The binary also controls workspaces through Herdr; those operations stay outside this library.
-//! The macros and launchers each have four orders. The orders are list, add, update, and
-//! delete. The library holds what the command line and the desktop application share, so that the format of each file has
-//! one place: the hard-coded macros, the file of the personal macros, the keys `prompts` and `launchers` of the file
-//! `.heidrun/config.json`, the orders, and the output. The package knows nothing about Tauri.
+//! The macros, the launchers, and the word replacement list of the voice input each have four orders. The orders are list,
+//! add, update, and delete. The library holds what the command line and the desktop application share, so that the format
+//! of each file has one place: the hard-coded macros, the file of the personal macros, the keys `prompts` and `launchers`
+//! of the file `.heidrun/config.json`, the file of the word replacement list, the orders, and the output. The package knows
+//! nothing about Tauri.
 
 mod hard_coded_macros;
 mod ids;
@@ -19,6 +20,9 @@ mod personal_macros;
 mod project_config_file;
 mod project_launchers;
 mod project_macros;
+mod voice_word_file;
+mod voice_word_orders;
+mod voice_word_output;
 
 pub use hard_coded_macros::hard_coded_macros;
 pub use launcher_orders::{
@@ -33,3 +37,6 @@ pub use personal_macros::{data_folder, personal_macros_path, read_personal_macro
 pub use project_config_file::{find_project_root, project_config_path};
 pub use project_launchers::read_project_launchers;
 pub use project_macros::read_project_macros;
+pub use voice_word_file::{read_voice_words, voice_words_path, write_voice_words, VoiceWord};
+pub use voice_word_orders::{add_voice_word, delete_voice_word, list_voice_words, update_voice_word, NewVoiceWord, VoiceWordChanges};
+pub use voice_word_output::{voice_word_changed_text, voice_word_deleted_text, voice_word_list_text};

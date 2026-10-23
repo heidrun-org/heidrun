@@ -230,7 +230,7 @@ fn merged_entry(entry: Value, updated: &Macro) -> Value {
 
 /// The title in lower case, with the accents removed, and each run of signs that are not letters or digits turned into one
 /// dash. An empty result is `macro`.
-fn slug(label: &str) -> String {
+pub(crate) fn slug(label: &str) -> String {
     let mut slug = String::new();
     for character in label.to_lowercase().chars() {
         let plain = match character {

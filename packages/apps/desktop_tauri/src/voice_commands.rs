@@ -2,6 +2,7 @@
 //! into text. The package `voice_input` does the work. This file holds the state of the application and talks with the web page.
 
 use crate::app_data;
+use crate::voice_words::replace_spoken_words;
 use serde::Serialize;
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -143,8 +144,9 @@ pub fn voice_cancel_recording(state: State<'_, VoiceState>) {
     }
 }
 
-/// Stops the recording and changes the speech into text with the model and the language. A recording with no speech gives an empty
-/// text. The change runs on a background thread, so the window stays fast.
+/// Stops the recording and changes the speech into text with the model and the language, then replaces the listed texts of the
+/// word replacement list. A recording with no speech gives an empty text. The change runs on a background thread, so the window
+/// stays fast.
 #[tauri::command]
 pub async fn voice_stop_recording(state: State<'_, VoiceState>, model_id: String, language: String) -> Result<String, String> {
     let recorder = state
@@ -157,7 +159,8 @@ pub async fn voice_stop_recording(state: State<'_, VoiceState>, model_id: String
     let work = move || -> Result<String, VoiceError> {
         let recording = recorder.stop()?;
         let model = find_model(&model_id).ok_or_else(|| VoiceError::UnknownModel(model_id.clone()))?;
-        transcriber.transcribe(&model_path(&models_folder(), model), model, &language, &recording.samples)
+        let text = transcriber.transcribe(&model_path(&models_folder(), model), model, &language, &recording.samples)?;
+        Ok(replace_spoken_words(&text))
     };
     match tauri::async_runtime::spawn_blocking(work).await {
         Ok(result) => result.map_err(report),
