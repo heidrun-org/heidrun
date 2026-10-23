@@ -50,8 +50,8 @@ const title = (r: { label: string; agents: { who: string; cost: number }[] }) =>
     <div class="head">
       <span class="eyebrow">{{ fixed ? t("spendTable.currentWindow") : t("spendTable.byWorkspace") }}</span>
       <span v-if="!fixed" class="seg">
-        <button :title="t('spendTable.windowTitle')" type="button" :class="{ on: scope === 'window' }" @click="scope = 'window'">{{ t("spendTable.window") }}</button>
-        <button :title="t('spendTable.todayTitle')" type="button" :class="{ on: scope === 'today' }" @click="scope = 'today'">{{ t("spendTable.today") }}</button>
+        <button class="btn small" :title="t('spendTable.windowTitle')" type="button" :class="{ on: scope === 'window' }" @click="scope = 'window'">{{ t("spendTable.window") }}</button>
+        <button class="btn small" :title="t('spendTable.todayTitle')" type="button" :class="{ on: scope === 'today' }" @click="scope = 'today'">{{ t("spendTable.today") }}</button>
       </span>
     </div>
 
@@ -87,11 +87,10 @@ const title = (r: { label: string; agents: { who: string; cost: number }[] }) =>
 
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
-:where(button) { background: transparent; border: 0; }
+:where(button:not(.btn)) { background: transparent; border: 0; }
 .block { display: flex; flex-direction: column; gap: 6px; }
 .head { display: flex; align-items: center; justify-content: space-between; }
 .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; }
-.seg button { height: 20px; padding: 0 8px; font-size: var(--font-size); color: var(--muted); }
 .seg button.on { background: var(--field); color: var(--text); }
 .chart { width: 100%; height: 40px; display: block; margin: 2px 0 4px; }
 .row { display: grid; grid-template-columns: 8px minmax(0, 1fr) 60px 34px 46px; gap: 6px; align-items: center; font-size: var(--font-size); cursor: default; }

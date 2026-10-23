@@ -1,4 +1,5 @@
 import { computed, ref, watch } from "vue";
+import { ThemePalette } from '../design/theme_palette';
 import { settings } from "./settings";
 
 export const THEME_OPTIONS = [
@@ -33,6 +34,7 @@ watch(
     document.documentElement.dataset.theme = theme;
     // Bootstrap reads the theme from this attribute, for the close button, the arrow of a select, and the check box.
     document.documentElement.dataset.bsTheme = theme;
+    ThemePalette.activate(theme);
   },
   { immediate: true },
 );

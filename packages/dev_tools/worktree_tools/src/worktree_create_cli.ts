@@ -26,8 +26,9 @@ export class WorktreeCreateCli {
 			.name('pnpm worktree:create')
 			.description(
 				'Creates a Git worktree in the folder .claude/worktrees of the main checkout, on a new branch with the '
-					+ 'same name. On macOS, it then clones the folder packages/apps/desktop_tauri/target/debug of the '
-					+ 'main checkout into the worktree, with a copy-on-write clone. The first build in the worktree '
+					+ 'same name. It initializes the submodules at their recorded commits. On macOS, it then clones '
+					+ 'the compiled files of the main checkout into the worktree, with '
+					+ 'copy-on-write clones. The first build in the worktree '
 					+ 'is then much faster and uses much less disk space. Build the main checkout before you create '
 					+ 'a worktree. At the end, it runs pnpm install --frozen-lockfile in the worktree, so the '
 					+ 'worktree has a folder node_modules. When the installation fails, it prints the error and '
@@ -59,10 +60,13 @@ Examples:
 			process.stdout.write(
 				`Created the worktree ${result.worktreePath} on the new branch ${result.branchName}.\n`,
 			);
+			process.stdout.write('Initialized the submodules at their recorded commits.\n');
 			if (result.isTargetCloned === true) {
-				process.stdout.write('Cloned the folder target/debug of the main checkout into the worktree.\n');
+				process.stdout.write(
+					'Cloned target/debug and target/release/bundled_commands from the main checkout into the worktree.\n',
+				);
 			} else {
-				process.stdout.write(`The folder target/debug was not cloned. ${result.skipReason}\n`);
+				process.stdout.write(`The compiled files were not cloned. ${result.skipReason}\n`);
 			}
 			process.stdout.write('Installed the packages in the worktree with pnpm install --frozen-lockfile.\n');
 		} catch (error) {

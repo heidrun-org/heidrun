@@ -6,6 +6,8 @@
 use crate::github::github_reader::GithubReader;
 use crate::model::types::{CodeHostingTable, SynchronizationMode, SynchronizationReport};
 use crate::storage::database::CodeHostingDatabase;
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// Reads the issues and the pull requests of a repository, and writes them in the database. `log` receives one line of
 /// progress for the date where each read starts and for each write.
@@ -14,6 +16,25 @@ use crate::storage::database::CodeHostingDatabase;
 /// An error when the database cannot be read or written, when GitHub cannot be read, or when an item does not follow its
 /// JSON schema.
 pub fn run(
+    mode: SynchronizationMode,
+    repository: &str,
+    database: &mut CodeHostingDatabase,
+    reader: &GithubReader,
+    log: &dyn Fn(&str),
+) -> Result<SynchronizationReport, String> {
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "synchronize", OperationKind::Synchronization)
+        .choice("mode", mode.name())
+        .parameter("repository", repository)
+        .database(database.database_path());
+    record(spec, || run_inside(mode, repository, database, reader, log), |report| {
+        Summary::count(report.issue_count + report.pull_request_count)
+            .detail("issueCount", report.issue_count)
+            .detail("pullRequestCount", report.pull_request_count)
+    })
+}
+
+/// The work of `run`, between the start event and the completion event of its operation.
+fn run_inside(
     mode: SynchronizationMode,
     repository: &str,
     database: &mut CodeHostingDatabase,
@@ -213,5 +234,75 @@ mod tests {
         assert!(lines.contains(&format!("mode update: issues are read since {}", date(3))));
         assert!(lines.contains(&format!("mode update: pull requests are read since {}", date(5))));
         assert!(lines.contains(&format!("pull requests: written row count 1, file {path}")));
+    }
+
+    #[test]
+    fn a_synchronization_records_one_operation_with_the_collection_and_the_writes_inside_it() {
+        let fake_github = fake_github();
+        let mut database = new_database("data_layer_operation_log");
+        let reader = GithubReader::new(&fake_github, &ignore_log);
+        let (report, events) = data_layer_operation_log::testing::capture(|| {
+            run(SynchronizationMode::Initialize, REPOSITORY, &mut database, &reader, &ignore_log).unwrap()
+        });
+        assert_eq!((report.issue_count, report.pull_request_count), (3, 2));
+        assert_eq!(
+            data_layer_operation_log::testing::tree(&events),
+            vec![
+                "code_hosting.synchronize",
+                "  code_hosting.read_issues",
+                "  code_hosting.upsert_issues",
+                "  code_hosting.read_pull_requests",
+                "  code_hosting.upsert_pull_requests",
+            ]
+        );
+        let starts = data_layer_operation_log::testing::starts(&events);
+        assert_eq!(starts[0].parameters["mode"], "initialize");
+        assert_eq!(starts[0].parameters["repository"], REPOSITORY);
+        assert_eq!(starts[1].kind, data_layer_operation_log::OperationKind::Collection);
+        assert_eq!(starts[2].kind, data_layer_operation_log::OperationKind::Write);
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
+        assert_eq!(complete.result_count, Some(5));
+        assert_eq!(complete.details["issueCount"], 3);
+        assert_eq!(complete.details["pullRequestCount"], 2);
+    }
+
+    #[test]
+    fn the_mode_update_records_the_read_of_the_last_update_dates_as_queries_inside_the_operation() {
+        let fake_github = fake_github();
+        let mut database = new_database("operation_log_update");
+        let reader = GithubReader::new(&fake_github, &ignore_log);
+        run(SynchronizationMode::Initialize, REPOSITORY, &mut database, &reader, &ignore_log).unwrap();
+        let (_, events) = data_layer_operation_log::testing::capture(|| {
+            run(SynchronizationMode::Update, REPOSITORY, &mut database, &reader, &ignore_log).unwrap()
+        });
+        let tree = data_layer_operation_log::testing::tree(&events);
+        assert_eq!(tree[0], "code_hosting.synchronize");
+        assert_eq!(tree.iter().filter(|line| line.as_str() == "  code_hosting.find_last_updated_at").count(), 2);
+        let starts = data_layer_operation_log::testing::starts(&events);
+        assert_eq!(starts[1].parameters["table"], "issues");
+        assert_eq!(starts[0].pattern, "mode=update");
+    }
+
+    #[test]
+    fn a_query_and_a_failed_query_are_recorded_and_the_error_is_given_back_unchanged() {
+        let fake_github = fake_github();
+        let path = temp_folder("operation_log_query").join("data_layer.sqlite");
+        let mut database = CodeHostingDatabase::open(&path).unwrap();
+        run(SynchronizationMode::Initialize, REPOSITORY, &mut database, &GithubReader::new(&fake_github, &ignore_log), &ignore_log)
+            .unwrap();
+        drop(database);
+        let database = CodeHostingDatabase::open_read_only(&path).unwrap();
+        let (rows, events) = data_layer_operation_log::testing::capture(|| database.query("SELECT number FROM issues ORDER BY number").unwrap());
+        assert_eq!(rows.len(), 3);
+        let starts = data_layer_operation_log::testing::starts(&events);
+        assert_eq!(starts[0].pattern, "SELECT number FROM issues ORDER BY number");
+        assert_eq!(data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap().result_count, Some(3));
+
+        let expected = database.query("SELEC nothing").unwrap_err();
+        let (error, events) = data_layer_operation_log::testing::capture(|| database.query("SELEC nothing").unwrap_err());
+        assert_eq!(error, expected);
+        let starts = data_layer_operation_log::testing::starts(&events);
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
+        assert_eq!(complete.outcome, data_layer_operation_log::Outcome::Failure);
     }
 }

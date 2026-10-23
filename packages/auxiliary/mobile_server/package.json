@@ -1,0 +1,9 @@
+{
+  "name": "mobile_server",
+  "private": true,
+  "license": "MIT",
+  "version": "0.3.0",
+  "scripts": {
+    "test": "pnpm --filter mobile_website build && cargo test"
+  }
+}

@@ -53,7 +53,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 <template>
   <div ref="root" class="wrap">
     <button
-      class="icon-btn"
+      class="btn icon icon-btn"
       :class="{ on: open }"
       :aria-expanded="open"
       aria-haspopup="menu"
@@ -63,34 +63,34 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
     >
       <Icon name="three-dots-vertical" />
     </button>
-    <div v-if="open" class="popup-menu" role="menu" :aria-label="t('moreMenu.menuLabel')">
-      <button class="item" role="menuitem" :title="t('moreMenu.shortcutsHelpTitle')" @click="chooseShortcutsHelp()">
+    <div v-if="open" class="menu show popup-menu" role="menu" :aria-label="t('moreMenu.menuLabel')">
+      <button class="menu-item item" role="menuitem" :title="t('moreMenu.shortcutsHelpTitle')" @click="chooseShortcutsHelp()">
         <Icon name="question-lg" />
         <span class="label">{{ t("moreMenu.shortcutsHelpLabel") }}</span>
         <kbd>⌘/</kbd>
       </button>
-      <button class="item" role="menuitem" :title="t('moreMenu.agentsInformationTitle')" @click="chooseAgentsInformation()">
+      <button class="menu-item item" role="menuitem" :title="t('moreMenu.agentsInformationTitle')" @click="chooseAgentsInformation()">
         <Icon name="people" />
         <span class="label">{{ t("moreMenu.agentsInformationLabel") }}</span>
       </button>
-      <button class="item" role="menuitem" :title="t('moreMenu.statisticsTitle')" @click="chooseStatistics()">
+      <button class="menu-item item" role="menuitem" :title="t('moreMenu.statisticsTitle')" @click="chooseStatistics()">
         <Icon name="bar-chart" />
         <span class="label">{{ t("moreMenu.statisticsLabel") }}</span>
       </button>
       <div class="divider" role="separator"></div>
       <div class="group" role="group" aria-labelledby="more-menu-skills">
         <div id="more-menu-skills" class="heading">{{ t("moreMenu.skillsHeading") }}</div>
-        <button class="item" role="menuitem" :title="t('moreMenu.installedSkillTitle')" @click="chooseInstalledSkill()">
+        <button class="menu-item item" role="menuitem" :title="t('moreMenu.installedSkillTitle')" @click="chooseInstalledSkill()">
           <Icon name="list-check" />
           <span class="label">{{ t("moreMenu.installedSkillLabel") }}</span>
         </button>
-        <button class="item" role="menuitem" :title="t('moreMenu.findNewSkillsTitle')" @click="chooseFindNewSkills()">
+        <button class="menu-item item" role="menuitem" :title="t('moreMenu.findNewSkillsTitle')" @click="chooseFindNewSkills()">
           <Icon name="search" />
           <span class="label">{{ t("moreMenu.findNewSkillsLabel") }}</span>
         </button>
       </div>
       <div class="divider" role="separator"></div>
-      <button class="item" role="menuitem" :title="t('moreMenu.settingsTitle')" @click="chooseSettings()">
+      <button class="menu-item item" role="menuitem" :title="t('moreMenu.settingsTitle')" @click="chooseSettings()">
         <Icon name="gear" />
         <span class="label">{{ t("moreMenu.settingsLabel") }}</span>
       </button>
@@ -100,25 +100,16 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 
 <style scoped>
 .wrap { position: relative; }
-.icon-btn {
-  width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent;
-  color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.icon-btn:hover { background: var(--hover); color: var(--text); }
-.icon-btn.on { color: var(--text-2); background: var(--field); }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; }
 .popup-menu {
   position: absolute; right: 0; top: 38px; min-width: 240px; z-index: 30; padding: 6px; border-radius: 12px;
-  border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 18px 48px var(--shadow-soft);
   display: flex; flex-direction: column; gap: 2px;
 }
-.item {
-  display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border: none; border-radius: 8px;
-  background: transparent; color: var(--text); font-size: var(--font-size); text-align: left;
-}
-.item:hover { background: var(--hover); }
+.item { display: flex; align-items: center; gap: 10px; height: 34px; text-align: left; }
 .label { flex: 1; white-space: nowrap; }
 .group { display: flex; flex-direction: column; gap: 2px; }
 .heading { padding: 6px 10px 2px; color: var(--muted); font-size: calc(var(--font-size) * 0.9); font-weight: 600; }
 .divider { height: 1px; margin: 4px 6px; background: var(--line); }
-.item kbd { font-family: var(--mono); color: var(--faint); }
+.item kbd { font-family: var(--mono); color: var(--muted); }
 </style>

@@ -1,30 +1,38 @@
-mod ai_cost;
-mod chats;
-mod chats_files;
+mod app_data;
+mod application_profile;
+mod antigravity;
 mod claude;
 mod clipboard;
 mod coding_agent_models;
-mod data_layer_lock;
+mod durable_storage;
 mod environment_file;
 mod files;
 mod forge_cache;
+mod former_web_view_storage;
 mod git;
 mod git_source_control;
 mod history;
+mod image_preview;
 mod legacy;
+mod login_shell_path;
 mod herdr;
+mod macros;
 mod mobile;
-mod model_prices;
-mod person_work;
+mod past_chats;
 mod project;
 mod pty;
+mod required_programs;
 mod skills;
+mod statistics;
 mod status_item;
 mod status_item_icon;
 mod status_item_picture;
 mod topic_clusters;
 mod usage;
 mod user_activity;
+mod voice_commands;
+mod worktree_actions;
+mod workspace_folders;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
 #[cfg(test)]
@@ -70,8 +78,13 @@ async fn herdr_server_start() -> Result<String, String> {
     }
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
     let mut cmd = std::process::Command::new(shell);
+    let mut server_command = herdr::server_shell_command(&herdr::herdr_bin());
+    if let Some(user_bin_folder) = skills::bundled::user_bin_folder() {
+        cmd.env("HEIDRUN_USER_BIN", user_bin_folder);
+        server_command = format!("export PATH=\"$HEIDRUN_USER_BIN:$PATH\"; {server_command}");
+    }
     cmd.arg("-lc")
-        .arg(herdr::server_shell_command(&herdr::herdr_bin()))
+        .arg(server_command)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
@@ -246,7 +259,10 @@ fn quit_now(app: AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    environment_file::load();
+    let context = tauri::generate_context!();
+    application_profile::initialize(&context.config().identifier);
+    login_shell_path::apply();
+    data_layer_operation_log::set_default_caller("heidrun");
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -256,10 +272,17 @@ pub fn run() {
         .manage(pty::PtyState::default())
         .manage(herdr::StatusWatcher::default())
         .manage(mobile::MobileState::default())
+        .manage(voice_commands::VoiceState::default())
         .manage(status_item::StatusItemState::default())
         .setup(|app| {
-            legacy::migrate_config_dir();
-            claude::migrate_legacy();
+            if application_profile::is_development() == false {
+                legacy::migrate_config_dir();
+                claude::migrate_legacy();
+            }
+            voice_commands::open_whisper_log();
+            if application_profile::is_development() == false {
+                skills::bundled::install(app.handle());
+            }
             app.set_menu(build_menu(app.handle())?)?;
             herdr::spawn_event_loop(app.handle().clone());
             mobile::start_if_enabled(app.handle());
@@ -304,21 +327,38 @@ pub fn run() {
             status_item::status_item_set_visible,
             status_item::status_item_set_user_active,
             herdr_request,
+            workspace_folders::workspace_folder_recover,
             herdr_cli,
             herdr_watch_panes,
             herdr_paths,
             herdr_server_start,
+            required_programs::required_programs_status,
+            required_programs::coding_agents_available,
             pty::pty_spawn,
             pty::pty_write,
             pty::pty_resize,
             pty::pty_kill,
             clipboard::clipboard_set_image,
+            durable_storage::durable_storage_read,
+            durable_storage::durable_storage_write,
+            former_web_view_storage::former_web_view_storage_read,
+            image_preview::image_preview,
+            voice_commands::voice_options,
+            voice_commands::voice_download_model,
+            voice_commands::voice_start_recording,
+            voice_commands::voice_cancel_recording,
+            voice_commands::voice_stop_recording,
             usage::codex_usage,
             project::project_load,
             project::project_package_scripts,
             project::project_save,
             project::project_refs,
+            project::project_config_text,
+            macros::macros_hard_coded,
+            macros::macros_personal_read,
+            macros::macros_personal_write,
             git::git_status,
+            git::git_worktrees,
             git::forge_cli,
             forge_cache::forge_cli_cached,
             topic_clusters::topic_clusters_read,
@@ -343,24 +383,32 @@ pub fn run() {
             claude::claude_statusline_install,
             claude::claude_statusline_uninstall,
             claude::claude_statusline_set_hidden,
+            antigravity::antigravity_statusline_state,
+            antigravity::antigravity_statusline_install,
+            antigravity::antigravity_statusline_uninstall,
             claude::claude_rc_startup,
             claude::claude_set_rc_startup,
             claude::claude_commands,
-            claude::claude_agents,
             claude::claude_session_agents,
-            chats::chats_list,
-            chats_files::chats_files_exist,
-            chats_files::chats_worktrees_exist,
-            chats_files::chats_worktrees_branches,
-            chats_files::chats_worktree_open_in_vscode,
+            past_chats::chats::chats_synchronize,
+            past_chats::chats::chats_list,
+            past_chats::chats_files::chats_files_exist,
+            past_chats::chats_files::chats_worktrees_exist,
+            past_chats::chats_files::chats_worktrees_branches,
+            past_chats::chat_references::chat_references_synchronize,
+            past_chats::chat_references::chat_references_find,
+            worktree_actions::chats_worktree_open_in_vscode,
             history::history_append,
             history::history_read,
             history::history_export,
             user_activity::user_activity_append,
             user_activity::user_activity_read,
-            user_activity::user_activity_records_in_range,
-            person_work::person_work_in_range,
-            ai_cost::ai_cost_in_range,
+            statistics::user_activity_records::user_activity_synchronize,
+            statistics::user_activity_records::user_activity_records_in_range,
+            statistics::person_work::person_work_synchronize,
+            statistics::person_work::person_work_in_range,
+            statistics::ai_cost::ai_cost_synchronize,
+            statistics::ai_cost::ai_cost_in_range,
             files::files_list,
             files::folder_children,
             files::files_resolve,
@@ -377,9 +425,11 @@ pub fn run() {
             files::file_trash,
             mobile::mobile_reply,
             mobile::mobile_status,
+            mobile::mobile_push,
             mobile::mobile_enable,
             mobile::mobile_disable,
             mobile::mobile_revoke,
+            mobile::mobile_stop_leftover_ngrok,
             skills::installed::skills_list,
             skills::installed::skills_read,
             skills::installed::skills_delete,
@@ -388,9 +438,11 @@ pub fn run() {
             skills::install::skills_install,
             skills::install::skills_preview_folder,
             skills::install::skills_install_folder,
+            skills::install::skills_preview_local_folder,
+            skills::install::skills_install_local_folder,
             skills::agent_folders::skills_link_agent,
         ])
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while running Heidrun")
         .run(|app, event| {
             // ⌘Q with unsaved files: the app stays and shows them.
@@ -404,6 +456,7 @@ pub fn run() {
             // The app leaves for good: the Herdr session of Heidrun stops with it, like the processes of a normal macOS app.
             if let tauri::RunEvent::Exit = event {
                 herdr::stop_session_on_quit(KEEP_AGENTS_RUNNING.load(std::sync::atomic::Ordering::Relaxed));
+                mobile::stop_on_quit(app);
             }
         });
 }

@@ -3,9 +3,12 @@ import { mount } from "@vue/test-utils";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-const invokeMock = vi.hoisted(() => vi.fn());
+const invokeMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const copyMock = vi.hoisted(() => vi.fn(async () => {}));
+// False means that no pane could show the file: the Files window then opens it.
+const openFileViewMock = vi.hoisted(() => vi.fn(async (_absolutePath: string) => false));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: invokeMock }));
+vi.mock("../stores/file_view_panes", () => ({ FileViewPanes: { open: openFileViewMock } }));
 vi.mock("../lib/clipboard", () => ({ copy: copyMock }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 
@@ -42,6 +45,8 @@ async function mountPanel() {
 }
 
 beforeEach(() => {
+  openFileViewMock.mockClear();
+  openFileViewMock.mockResolvedValue(false);
   invokeMock.mockImplementation(async (command: string, args: { paths: string[]; path: string }) => {
     if (command === "file_full_path") {
       return `/work/heidrun/${args.path}`;
@@ -77,6 +82,7 @@ afterEach(() => {
   files.active = null;
   files.root = "";
   files.ignored = [];
+  files.submodules = [];
   files.expanded = new Set();
   for (const folder of Object.keys(filesPanelIgnoredChildren)) {
     delete filesPanelIgnoredChildren[folder];
@@ -91,6 +97,45 @@ afterEach(() => {
 });
 
 describe("FilesPanel", () => {
+
+	it('browses submodules, opens nested files, and refreshes while keeping folders unfolded', async () => {
+		let paths = ['modules/example/src/main.ts'];
+		invokeMock.mockImplementation(async (command: string) => {
+			if (command === 'files_list') {
+				return {
+					root: '/work/heidrun',
+					git: true,
+					files: paths,
+					submodules: ['modules/example', 'modules/empty'],
+					ignored: [],
+					status: {},
+					truncated: false,
+				};
+			}
+			return null;
+		});
+		const wrapper = await mountPanel();
+		await wrapper.get('[title="modules"]').trigger('click');
+		const submodule = wrapper.get('[title="modules/example"]');
+		expect(submodule.attributes('aria-expanded')).toBe('false');
+		expect(submodule.find('svg.bi-file-submodule').exists()).toBe(true);
+		expect(wrapper.get('[title="modules"]').find('.bi-folder2-open').exists()).toBe(true);
+		expect(wrapper.get('[title="modules/empty"]').attributes('aria-expanded')).toBe('false');
+		await submodule.trigger('click');
+		await wrapper.get('[title="modules/example/src"]').trigger('click');
+		await wrapper.get('[title="modules/example/src/main.ts"]').trigger('click');
+		expect(files.active).toBe('modules/example/src/main.ts');
+		expect(files.open).toBe(true);
+		paths = [...paths, 'modules/example/src/new.txt'];
+		await wrapper.get('[aria-label="Refresh"]').trigger('click');
+		await vi.waitFor(() => expect(wrapper.find('[title="modules/example/src/new.txt"]').exists()).toBe(true));
+		expect(wrapper.get('[title="modules/example"]').attributes('aria-expanded')).toBe('true');
+		await wrapper.get('[title="modules/example"]').trigger('click');
+		expect(wrapper.find('[title="modules/example/src"]').exists()).toBe(false);
+		expect(wrapper.get('[title="modules/example"]').find('svg.bi-file-submodule').exists()).toBe(true);
+		wrapper.unmount();
+	});
+
   it("shows the title and the folders first, then the files, and folds the folders at the start", async () => {
     const wrapper = await mountPanel();
     expect(wrapper.get(".title").text()).toBe("File explorer");
@@ -104,7 +149,16 @@ describe("FilesPanel", () => {
     expect(git.modal.open).toBe(false);
   });
 
-  it("opens a file in the Files window, and not in the large Git window, after a click on it", async () => {
+  it("opens a file in a file view pane, and not in the Files window, after a click on it (issue #714)", async () => {
+    openFileViewMock.mockResolvedValue(true);
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[1].trigger("click");
+    await vi.waitFor(() => expect(openFileViewMock).toHaveBeenCalledWith("/work/heidrun/README.md"));
+    expect(files.open).toBe(false);
+    expect(git.modal.open).toBe(false);
+  });
+
+  it("opens a file in the Files window, and not in the large Git window, after a click when no pane can show it", async () => {
     const wrapper = await mountPanel();
     await wrapper.findAll(".row")[1].trigger("click");
     await vi.waitFor(() => expect(files.active).toBe("README.md"));
@@ -593,7 +647,18 @@ describe("FilesPanel, the files and the folders that Git ignores", () => {
     expect(invokeMock.mock.calls.filter(([command]) => command === "folder_children")).toHaveLength(1);
   });
 
-  it("opens a file inside a folder that Git ignores in the Files window after a click on it", async () => {
+  it("opens a file inside a folder that Git ignores in a file view pane after a click on it (issue #714)", async () => {
+    openFileViewMock.mockResolvedValue(true);
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
+    await rowNamed(wrapper, "config.json")?.trigger("click");
+    await vi.waitFor(() => expect(openFileViewMock).toHaveBeenCalledWith("/work/heidrun/.heidrun/config.json"));
+    expect(files.open).toBe(false);
+  });
+
+  it("opens a file inside a folder that Git ignores in the Files window after a click when no pane can show it", async () => {
     settings.filesShowIgnored = true;
     const wrapper = await mountPanel();
     await rowNamed(wrapper, ".heidrun")?.trigger("click");

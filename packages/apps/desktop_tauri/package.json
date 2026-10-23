@@ -2,11 +2,11 @@
   "name": "desktop_tauri",
   "private": true,
   "license": "MIT",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "test": "cargo test",
+    "test": "pnpm --filter mobile_website build && cargo test",
     "target:clean": "tsx ../../dev_tools/worktree_tools/src/target_clean_cli.ts"
   },
   "devDependencies": {

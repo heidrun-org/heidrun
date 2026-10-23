@@ -1,7 +1,7 @@
 # Glossary of Heidrun: chats
 
 - Created: 14 October 2026
-- Last updated: 15 October 2026
+- Last updated: 16 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: chats](../user_interface/sidebars/chats/index.md)
@@ -13,11 +13,11 @@ This document gives one short definition for each word of the chats, the chat se
 
 ### Chat
 
-One saved conversation between the developer and a coding agent, for example Claude Code or Codex. The coding agent saves each chat in a file on the disk of the developer. A chat belongs to a workspace when the coding agent ran in the folder of that workspace. A chat is not a pane: the pane is the terminal, and the chat is the saved conversation.
+One saved conversation between the developer and a coding agent, for example Claude Code or Codex. The coding agent saves each chat in a file on the disk of the developer. A chat belongs to a workspace when the coding agent ran in the folder of that workspace. The source "AI cost" of the Statistics window also counts the chats that ran in a folder below it, such as a worktree, with the stored token usage. A chat is not a pane: the pane is the terminal, and the chat is the saved conversation.
 
 ### Chat session
 
-The word that the data layer uses for a chat: one saved conversation between the developer and a coding agent. The package `data_layer_chat_sessions` reads the chat sessions from the files of the coding agents, and the Past chats sidebar section lists the same conversations as chats. Use "chat" for what the developer sees in the user interface, and "chat session" for the package and its tables.
+The word that the data layer uses for a chat: one saved conversation between the developer and a coding agent. The package `data_layer_coding_agents` reads the chat sessions from the files of the coding agents, and the Past chats sidebar section lists the same conversations as chats. Use "chat" for what the developer sees in the user interface, and "chat session" for the package and its tables.
 
 ### Estimated cost of a chat
 

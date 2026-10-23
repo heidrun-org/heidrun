@@ -52,7 +52,7 @@ struct Parsed {
 }
 
 pub(crate) fn codex_home() -> PathBuf {
-    data_layer_chat_sessions::codex_home()
+    data_layer_coding_agents::codex_home()
 }
 
 fn collect_logs(dir: &Path, depth: u8, out: &mut Vec<(SystemTime, PathBuf)>) {

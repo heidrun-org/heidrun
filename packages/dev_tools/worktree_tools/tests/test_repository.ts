@@ -66,13 +66,42 @@ export class TestRepository {
 	}
 
 	/**
-	 * Creates a repository whose main checkout holds a debug build folder with two files, one of them in a subfolder.
+	 * Creates a repository with a submodule that contains a nested submodule and has a newer unselected commit.
+	 * @returns The path of the main checkout.
+	 */
+	static createWithSubmodules(): string {
+		const nestedRepositoryPath = TestRepository.create();
+		Fs.writeFileSync(Path.join(nestedRepositoryPath, 'rule.txt'), 'Nested rule');
+		TestRepository.git(nestedRepositoryPath, ['add', 'rule.txt']);
+		TestRepository.git(nestedRepositoryPath, ['commit', '--quiet', '-m', 'Add nested rule']);
+		const sharedRepositoryPath = TestRepository.create();
+		TestRepository.git(sharedRepositoryPath, [
+			'-c', 'protocol.file.allow=always', 'submodule', 'add', '--quiet', nestedRepositoryPath, 'nested',
+		]);
+		Fs.writeFileSync(Path.join(sharedRepositoryPath, 'rule.txt'), 'Recorded rule');
+		TestRepository.git(sharedRepositoryPath, ['add', '.']);
+		TestRepository.git(sharedRepositoryPath, ['commit', '--quiet', '-m', 'Add recorded rule and nested submodule']);
+		const mainCheckoutPath = TestRepository.create();
+		TestRepository.git(mainCheckoutPath, [
+			'-c', 'protocol.file.allow=always', 'submodule', 'add', '--quiet',
+			sharedRepositoryPath, 'submodules/shared',
+		]);
+		TestRepository.git(mainCheckoutPath, ['commit', '--quiet', '-a', '-m', 'Add shared submodule']);
+		Fs.writeFileSync(Path.join(sharedRepositoryPath, 'rule.txt'), 'Newer rule');
+		TestRepository.git(sharedRepositoryPath, ['commit', '--quiet', '-a', '-m', 'Change rule after selection']);
+		return mainCheckoutPath;
+	}
+
+	/**
+	 * Creates a repository whose main checkout holds a debug build and bundled command line files.
 	 * @returns The absolute path of the new main checkout.
 	 */
 	static createWithBuiltTarget(): string {
 		const repositoryPath = TestRepository.create();
 		TestRepository.writeTargetFile(repositoryPath, 'debug/heidrun', 'compiled application');
 		TestRepository.writeTargetFile(repositoryPath, 'debug/deps/libserde.rlib', 'compiled dependency');
+		TestRepository.writeTargetFile(repositoryPath, 'release/bundled_commands/heidrun_ctrl', 'heidrun_ctrl');
+		TestRepository.writeTargetFile(repositoryPath, 'release/bundled_commands/heidrun_data', 'heidrun_data');
 		return repositoryPath;
 	}
 

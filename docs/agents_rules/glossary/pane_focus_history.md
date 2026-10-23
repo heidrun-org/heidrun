@@ -1,7 +1,7 @@
 # Glossary of Heidrun: pane focus history
 
 - Created: 13 October 2026
-- Last updated: 14 October 2026
+- Last updated: 20 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: pane focus history](../user_interface/workspaces_tabs_and_panes/pane_focus_history.md)
@@ -11,7 +11,7 @@ This document gives one short definition for each word of the navigation through
 
 ### Top bar
 
-The horizontal row at the very top of the window, above the three frames. From the left, it holds the Back button, the Forward button, the search button, the theme button, and the more button.
+The horizontal row at the very top of the window, above the three frames. From the left, it holds the Back button, the Forward button, the search button, the theme button, and the more button. The search button shows the selected workspace name inside its border.
 
 ### Pane focus history
 

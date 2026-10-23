@@ -65,14 +65,15 @@ const WORKTREE_PART_MAX_LENGTH: usize = 32;
 
 /// The name of the Herdr session for the build whose package folder is `manifest_dir`. Herdr allows one attach client
 /// for each terminal, so two Heidrun applications in one session refuse each other's terminals. A development build
-/// that comes from a worktree therefore gets its own session, `heidrun_` followed by the name of the worktree. Every
-/// other build, the release build and the development build of the main checkout, uses the session `heidrun`.
+/// that comes from a worktree therefore gets its own session, `heidrun_` followed by the name of the worktree. The installed
+/// application uses `heidrun`; development in the main checkout uses `heidrun_development`.
+/// The application identity selects development, including an optimised development bundle.
 fn session_name_for(manifest_dir: &str, is_development_build: bool) -> String {
     if is_development_build == false {
         return HEIDRUN_SESSION.to_string();
     }
     let Some((_, after_worktrees_folder)) = manifest_dir.split_once(WORKTREES_FOLDER) else {
-        return HEIDRUN_SESSION.to_string();
+        return "heidrun_development".to_string();
     };
     let worktree = after_worktrees_folder.split("/packages/").next().unwrap_or(after_worktrees_folder);
     let cleaned: String = worktree
@@ -83,14 +84,14 @@ fn session_name_for(manifest_dir: &str, is_development_build: bool) -> String {
     let start = end_of_name.len().saturating_sub(WORKTREE_PART_MAX_LENGTH);
     let worktree_part = end_of_name[start..].trim_start_matches('_');
     if worktree_part.is_empty() {
-        return HEIDRUN_SESSION.to_string();
+        return "heidrun_development".to_string();
     }
     format!("{HEIDRUN_SESSION}_{worktree_part}")
 }
 
 /// The name of the Herdr session that this build of Heidrun uses when no environment variable chooses one.
 pub fn session_name() -> String {
-    session_name_for(env!("CARGO_MANIFEST_DIR"), cfg!(debug_assertions))
+    session_name_for(env!("CARGO_MANIFEST_DIR"), crate::application_profile::is_development())
 }
 
 /// The value of an environment variable, or `None` when the variable is not set or is empty.
@@ -228,6 +229,33 @@ async fn connect() -> Result<UnixStream, String> {
 
 /// One request on a fresh connection. Waits for the matching response line.
 pub async fn request(method: &str, params: Value) -> Result<Value, String> {
+    let mut params = params;
+    let folder = if method == "workspace.create" {
+        let folder = crate::workspace_folders::absolute_folder(params.get("cwd").and_then(Value::as_str))?;
+        params["cwd"] = json!(folder);
+        Some(folder)
+    } else {
+        None
+    };
+    let mut result = raw_request(method, params.clone()).await?;
+    if let Some(folder) = folder {
+        let workspace_id = result.pointer("/workspace/workspace_id").and_then(Value::as_str)
+            .ok_or("Workspace creation returned no identifier")?;
+        crate::workspace_folders::save(workspace_id, &folder)?;
+        result["workspace"]["workspace_folder"] = json!(folder);
+    }
+    if method == "session.snapshot" {
+        crate::workspace_folders::enrich(&mut result)?;
+    }
+    if method == "workspace.close" {
+        if let Some(workspace_id) = params.get("workspace_id").and_then(Value::as_str) {
+            crate::workspace_folders::forget(workspace_id)?;
+        }
+    }
+    Ok(result)
+}
+
+async fn raw_request(method: &str, params: Value) -> Result<Value, String> {
     let mut stream = connect().await?;
     let id = next_id();
     let mut line = serde_json::to_string(&json!({ "id": id, "method": method, "params": params }))
@@ -419,12 +447,17 @@ mod herdr_tests {
     }
 
     #[test]
-    fn a_release_build_and_the_main_checkout_use_the_session_heidrun() {
+    fn the_installed_application_uses_heidrun_and_main_checkout_development_is_separate() {
         let main_checkout = "/Users/someone/webwork/heidrun/packages/apps/desktop_tauri";
         let worktree = "/Users/someone/webwork/heidrun/.claude/worktrees/fix-terminal-detached-483/packages/apps/desktop_tauri";
-        assert_eq!(session_name_for(main_checkout, true), "heidrun");
+        assert_eq!(session_name_for(main_checkout, true), "heidrun_development");
         assert_eq!(session_name_for(main_checkout, false), "heidrun");
         assert_eq!(session_name_for(worktree, false), "heidrun");
+    }
+
+    #[test]
+    fn a_worktree_without_a_usable_name_never_selects_the_installed_session() {
+        assert_eq!(session_name_for("/project/.claude/worktrees/___/packages/apps/desktop_tauri", true), "heidrun_development");
     }
 
     #[test]

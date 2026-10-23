@@ -12,7 +12,7 @@
   "installedSkillLabel": "Compétence installée",
   "installedSkillTitle": "Afficher les compétences installées : inspecter ou supprimer une compétence",
   "findNewSkillsLabel": "Trouver de nouvelles compétences",
-  "findNewSkillsTitle": "Chercher sur skills.sh : inspecter ou installer une compétence",
+  "findNewSkillsTitle": "Trouver une compétence sur skills.sh, dans un dossier, ou sur GitHub ou GitLab : l'inspecter ou l'installer",
   "settingsLabel": "Réglages",
   "settingsTitle": "Ouvrir les réglages"
 }

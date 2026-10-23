@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { RequiredProgramsStatus } from "./missing_programs";
 import type { CodexUsage, PaneInfo, SessionSnapshot, TabInfo, WorkspaceInfo } from "./types";
 
 export function request<T = any>(method: string, params: Record<string, unknown> = {}): Promise<T> {
@@ -24,6 +25,11 @@ export function paths(): Promise<{ socket: string; socket_exists: boolean; bin: 
 
 export function startServer(): Promise<string> {
   return invoke("herdr_server_start");
+}
+
+/** Tells which programs of other makers are installed: Herdr, which is required, and ngrok, for the mobile access only. */
+export function requiredProgramsStatus(): Promise<RequiredProgramsStatus> {
+  return invoke("required_programs_status");
 }
 
 /** Shows the main window, which is created hidden so that the user never sees it empty before the splash image. */
@@ -60,6 +66,55 @@ export async function split(paneId: string, direction: "right" | "down", cwd?: s
     focus: false,
   });
   return r.pane;
+}
+
+/** What Herdr answers to the call `pane.move`. */
+type PaneMoveAnswer = { move_result: { changed: boolean; reason?: string | null } };
+
+/**
+ * Moves a pane into a new tab of its workspace. The terminal of the pane keeps running. Herdr closes the tab that the pane
+ * leaves when it has no other pane.
+ * @param paneId - the pane to move
+ * @param workspaceId - the workspace that gets the new tab
+ * @returns the answer of Herdr; `move_result.changed` is false when Herdr did not move the pane
+ */
+export function movePaneToNewTab(paneId: string, workspaceId: string): Promise<PaneMoveAnswer> {
+  return request<PaneMoveAnswer>("pane.move", {
+    pane_id: paneId,
+    destination: { type: "new_tab", workspace_id: workspaceId },
+    focus: false,
+  });
+}
+
+/**
+ * Moves a pane into a tab, as the second half of a split of a pane of that tab. The terminal of the pane keeps running.
+ * @param paneId - the pane to move
+ * @param tabId - the tab that receives the pane
+ * @param destinationPaneId - the pane that gets a neighbor
+ * @param direction - `right`: side by side. `down`: one above the other. The moved pane is the second one.
+ * @returns the answer of Herdr; `move_result.changed` is false when Herdr did not move the pane
+ */
+export function movePaneNextToPane(
+  paneId: string,
+  tabId: string,
+  destinationPaneId: string,
+  direction: "right" | "down",
+): Promise<PaneMoveAnswer> {
+  return request<PaneMoveAnswer>("pane.move", {
+    pane_id: paneId,
+    destination: { type: "tab", tab_id: tabId, split: direction, target_pane_id: destinationPaneId, ratio: 0.5 },
+    focus: false,
+  });
+}
+
+/**
+ * Exchanges the places of two panes of one tab.
+ * @param paneId - the first pane
+ * @param destinationPaneId - the second pane
+ * @returns the answer of Herdr; `swap.changed` is false when Herdr did not swap the panes
+ */
+export function swapPanes(paneId: string, destinationPaneId: string): Promise<{ swap: { changed: boolean; reason?: string | null } }> {
+  return request("pane.swap", { source_pane_id: paneId, target_pane_id: destinationPaneId });
 }
 
 /**
@@ -134,11 +189,13 @@ export function run(paneId: string, command: string) {
   return cli(["pane", "run", paneId, command]);
 }
 
-export async function read(paneId: string, lines = 80): Promise<string> {
+/** The end of the output of a pane. With `format` "ansi", the text keeps the colors and the styles, as escape codes. */
+export async function read(paneId: string, lines = 80, format: "text" | "ansi" = "text"): Promise<string> {
   const r = await request<{ read: { text: string } }>("pane.read", {
     pane_id: paneId,
     source: "recent_unwrapped",
     lines,
+    ...(format === "ansi" ? { format } : {}),
   });
   return r.read.text;
 }

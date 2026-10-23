@@ -1,7 +1,7 @@
 # Directory Context: `/packages/dev_tools/install_script_tests`
 
 ## Purpose
-A full npm package that holds the tests of the script `scripts/install.sh`, which installs the latest Heidrun in `/Applications` with one command. The tests run the real script with fake commands.
+A full npm package that holds the tests of the script `scripts/install.sh`, which installs the latest Heidrun in `/Applications` and links its command lines in a temporary user bin folder. The tests run the real script with fake commands.
 
 ## Key Exports & Entry Points
 - `tests/install_script.test.ts`: the Vitest tests. They check the download, the mount, the copy, the eject, the deletion of the temporary folder, the installed version, and the message of each stop.
@@ -9,7 +9,7 @@ A full npm package that holds the tests of the script `scripts/install.sh`, whic
 - Command to test this folder: `pnpm --filter install_script_tests test`
 
 ## Rules
-- The tests run the real file `scripts/install.sh` with `/bin/sh`. They never copy its text.
+- The tests run the real file `scripts/install.sh` with `/bin/sh`. They never copy its text. Their app fixture includes executable command files in `Contents/Resources/binaries`.
 - The tests replace `uname`, `pgrep`, `curl`, `hdiutil`, and `ditto` with fake commands in the first folder of `PATH`, and install in a temporary folder with the variable `HEIDRUN_APPLICATIONS_FOLDER`. A test never touches `/Applications` and never uses the network.
 - The tests do not check that the web address of the latest disk image works. That check needs a real release that has the file `Heidrun_aarch64.dmg`.
 - No package in `packages/apps` imports this package.

@@ -1,86 +1,59 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import DialogCloseButton from "./DialogCloseButton.vue";
-import Icon from "./Icon.vue";
-import { askConfirm } from "../stores/confirm";
 import { currentProject } from "../stores/project";
 import { toast } from "../stores/session";
-import { VARIABLES, addMacro, macroEditor, macros, projectMacros, removeMacro, updateMacro } from "../stores/macros";
+import { VARIABLES, addMacro, macroEditor, macros, projectMacros, updateMacro } from "../stores/macros";
 import { t } from "../i18n/index";
 
-const NEW = "__new__";
-
-/** The selector value of a macro: where it is kept, then its id. */
-const choices = computed(() => [
-  ...projectMacros.value.map((macro) => ({ value: `project:${macro.id}`, fromProject: true, macro })),
-  ...macros.personal.map((macro) => ({ value: `personal:${macro.id}`, fromProject: false, macro })),
-]);
-
-const selected = ref<string>(NEW);
-const label = ref("");
-const description = ref("");
-const text = ref("");
+const selectedId = macroEditor.selectedId;
+const isFromProject = macroEditor.isFromProject;
+const isNew = selectedId === null;
+const selectedMacro = computed(() =>
+  (isFromProject ? projectMacros.value : macros.personal).find((macro) => macro.id === selectedId),
+);
+const label = ref(selectedMacro.value?.label ?? '');
+const description = ref(selectedMacro.value?.description ?? '');
+const text = ref(selectedMacro.value?.text ?? '');
 const inProject = ref(false);
+const isSaving = ref(false);
 
-const isNew = computed(() => selected.value === NEW);
-
-function fillFields() {
-  const choice = choices.value.find((c) => c.value === selected.value);
-  if (choice === undefined) {
-    label.value = "";
-    description.value = "";
-    text.value = "";
-    return;
+// Another program, such as heidrun_ctrl, may delete the macro that is open.
+watch(selectedMacro, (macro) => {
+  if (isNew === false && macro === undefined) {
+    close();
   }
-  label.value = choice.macro.label;
-  description.value = choice.macro.description;
-  text.value = choice.macro.text;
-}
-
-watch(selected, fillFields);
-
-function startNew() {
-  selected.value = NEW;
-  fillFields();
-}
+});
 
 async function save() {
-  if (text.value.trim() === "") {
-    toast(t("macroEditor.textRequired"));
+  if (isSaving.value === true) {
     return;
   }
+  if (text.value.trim() === '') {
+    toast(t('macroEditor.textRequired'));
+    return;
+  }
+  isSaving.value = true;
   try {
-    if (isNew.value) {
-      const id = await addMacro(label.value, description.value, text.value, inProject.value);
-      selected.value = `${inProject.value ? "project" : "personal"}:${id}`;
-      toast(inProject.value ? t("macroEditor.addedToProject") : t("macroEditor.saved"));
-      return;
+    if (isNew === true) {
+      await addMacro(label.value, description.value, text.value, inProject.value);
+      toast(inProject.value ? t('macroEditor.addedToProject') : t('macroEditor.saved'));
+    } else {
+      await updateMacro(selectedId, isFromProject, label.value, description.value, text.value);
+      toast(t('macroEditor.saved'));
     }
-    const choice = choices.value.find((c) => c.value === selected.value)!;
-    await updateMacro(choice.macro.id, choice.fromProject, label.value, description.value, text.value);
-    toast(t("macroEditor.saved"));
+    close();
   } catch (error) {
     toast(String(error));
+  } finally {
+    isSaving.value = false;
   }
 }
 
 function discard() {
-  fillFields();
-}
-
-async function remove() {
-  const choice = choices.value.find((c) => c.value === selected.value);
-  if (choice === undefined) {
-    return;
-  }
-  await removeMacro(choice.macro.id, choice.fromProject);
-  startNew();
-}
-
-async function askRemove() {
-  if (await askConfirm(t("macroEditor.delete"), t("macroEditor.deleteConfirm"))) {
-    await remove();
-  }
+  label.value = selectedMacro.value?.label ?? '';
+  description.value = selectedMacro.value?.description ?? '';
+  text.value = selectedMacro.value?.text ?? '';
 }
 
 function close() {
@@ -95,13 +68,7 @@ function onKeyDown(event: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
-  window.addEventListener("keydown", onKeyDown, true);
-  const first = choices.value[0];
-  if (first !== undefined) {
-    selected.value = first.value;
-  }
-});
+onMounted(() => window.addEventListener("keydown", onKeyDown, true));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
 </script>
 
@@ -109,24 +76,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
   <div class="overlay" @mousedown.self="close">
     <dialog class="dialog dialog-instant dialog-nonmodal" open aria-labelledby="macro-editor-title">
       <div class="dialog-header">
-        <div id="macro-editor-title" class="dialog-title me-auto" role="heading" aria-level="2">{{ t("macroEditor.title") }}</div>
+        <div id="macro-editor-title" class="dialog-title me-auto" role="heading" aria-level="2">{{ t(isNew ? "macroEditor.createTitle" : "macroEditor.title") }}</div>
         <DialogCloseButton :title="t('macroEditor.close')" :label="t('macroEditor.close')" @click="close" />
       </div>
 
       <div class="dialog-body">
-        <div class="mb-3">
-          <label class="form-label" for="macro-editor-select">{{ t("macroEditor.macro") }}</label>
-          <div class="d-flex align-items-center gap-2">
-            <select id="macro-editor-select" v-model="selected" class="form-control">
-              <option :value="NEW">{{ t("macroEditor.newOption") }}</option>
-              <option v-for="choice in choices" :key="choice.value" :value="choice.value">
-                {{ choice.macro.label }}{{ choice.fromProject ? ` (${t("macroEditor.project")})` : "" }}
-              </option>
-            </select>
-            <button type="button" class="btn" :title="t('macroEditor.newTitle')" @click="startNew"><Icon name="plus-lg" /> {{ t("macroEditor.new") }}</button>
-          </div>
-        </div>
-
         <div class="mb-3">
           <label class="form-label" for="macro-editor-label">{{ t("macroEditor.labelField") }}</label>
           <input id="macro-editor-label" v-model="label" class="form-control" autocomplete="off" spellcheck="false" />
@@ -150,14 +104,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
       </div>
 
       <div class="dialog-footer">
-        <button v-if="!isNew" type="button" class="btn text-danger-emphasis me-auto" :title="t('macroEditor.delete')" @click="askRemove"><Icon name="trash" /> {{ t("macroEditor.deleteLabel") }}</button>
-        <button type="button" class="btn lg" :title="t('macroEditor.discardTitle')" @click="discard">{{ t("macroEditor.discard") }}</button>
-        <button type="button" class="btn lg primary" @click="save">{{ t("macroEditor.save") }}</button>
+        <button type="button" class="btn lg" :disabled="isSaving" :title="t('macroEditor.discardTitle')" @click="discard">{{ t("macroEditor.discard") }}</button>
+        <button type="button" class="btn lg primary" :disabled="isSaving" @click="save">{{ t("macroEditor.save") }}</button>
       </div>
     </dialog>
   </div>
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 59; background: rgba(0, 0, 0, 0.55); }
+.overlay { position: fixed; inset: 0; z-index: 59; background: var(--overlay); }
 </style>

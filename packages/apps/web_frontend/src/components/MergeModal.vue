@@ -40,7 +40,7 @@ async function go() {
 
       <div class="opts">
         <label class="sr" for="synchronize-method">{{ t("mergeModal.method") }}</label>
-        <select id="synchronize-method" v-model="merging.method" :disabled="merging.busy">
+        <select class="form-control" id="synchronize-method" v-model="merging.method" :disabled="merging.busy">
           <option value="merge">{{ t("mergeModal.methodMerge") }}</option>
           <option value="squash">{{ t("mergeModal.methodSquash") }}</option>
           <option value="rebase">{{ t("mergeModal.methodRebase") }}</option>
@@ -62,10 +62,10 @@ async function go() {
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.overlay { position: fixed; inset: 0; z-index: 60; background: var(--overlay); display: flex; align-items: center; justify-content: center; padding: 24px; }
 .window-box {
-  width: min(560px, 100%); padding: 22px; border-radius: 14px; background: var(--panel); border: 1px solid #3a3150;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; gap: 10px;
+  width: min(560px, 100%); padding: 22px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line-modal);
+  box-shadow: 0 24px 64px var(--shadow); display: flex; flex-direction: column; gap: 10px;
 }
 .eyebrow { color: var(--question); }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
@@ -74,17 +74,15 @@ h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: var(--font-size); font-weight: 600; background: var(--chip); color: var(--text-2); }
 .chip.ok { background: var(--tint-ok); color: var(--ok); } .chip.warn { background: var(--tint-warn); color: var(--accent); }
-.chip.crit { background: var(--tint-crit); color: var(--blocked); } .chip.pending { background: var(--tint-working); color: var(--working); }
+.chip.crit { background: var(--tint-crit); color: var(--blocked-text); } .chip.pending { background: var(--tint-working); color: var(--working-text); }
 .chip.muted { color: var(--muted); }
 .warn { margin: 0; font-size: var(--font-size); color: var(--accent); }
 .opts { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
-select { height: 32px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 8px; }
+select { height: 32px; }
 .check { display: flex; align-items: center; gap: 6px; font-size: var(--font-size); color: var(--text-2); }
 .check input { accent-color: var(--question); }
 .hint { margin: 0; font-size: var(--font-size); color: var(--muted); }
 .err { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--tint-err); color: var(--fail); font-size: var(--font-size); white-space: pre-wrap; }
 .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
-.btn.go { background: #7a4fc2; border-color: transparent; color: #fff; font-weight: 600; }
-.btn.go:hover:not(:disabled) { background: #8a5fd4; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

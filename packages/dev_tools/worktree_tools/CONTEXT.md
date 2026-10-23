@@ -1,7 +1,7 @@
 # Directory Context: `/packages/dev_tools/worktree_tools`
 
 ## Purpose
-A full npm package with two command line tools for Git worktrees. The first tool creates a worktree, clones the compiled Rust files of the main checkout into it, and installs its packages. The second tool finds and deletes the Cargo target folders of the worktrees that no build has used for some days.
+A full npm package with two command line tools for Git worktrees. The first tool creates a worktree, initializes its submodules, clones the compiled Rust files and bundled command line resources of the main checkout into it, and installs its packages. The second tool finds and deletes the Cargo target folders of the worktrees that no build has used for some days.
 
 ## Key Exports & Entry Points
 - `src/index.ts`: the public interface for another package. It exports the classes `WorktreeCreate` and `TargetClean` and their types.
@@ -14,8 +14,9 @@ A full npm package with two command line tools for Git worktrees. The first tool
 - Command to test this folder: `pnpm --filter worktree_tools test`
 
 ## Rules
+- Each new worktree initializes all submodules recursively at the recorded commits before cloning compiled files and installing packages; an initialization failure keeps the worktree and stops the command with the recovery commands.
 - A worktree is always created inside the folder `.claude/worktrees` of the main checkout, never beside it. That folder is on the same disk as the main checkout, which the clone needs.
-- The clone copies only the folder `packages/apps/desktop_tauri/target/debug`, with `cp -c -R -p`, on macOS only. When the clone is not possible, the worktree is still created, and the command says why the clone did not happen.
+- On macOS, the clone copies `packages/apps/desktop_tauri/target/debug` and `packages/apps/desktop_tauri/target/release/bundled_commands` with `cp -c -R -p`. When the clone is not possible, the worktree is still created, and the command says why the clone did not happen.
 - The command `pnpm worktree:create` ends with `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a folder `node_modules`. When the installation fails, the command prints the error and exits with the code 1, and the worktree stays. The tests use a repository with an empty `package.json` and its `pnpm-lock.yaml`, so the installation needs no network.
 - The first checkout in the list of `git worktree list` is the main checkout. The cleaning tool never deletes its target folder.
 - The cleaning tool deletes nothing without the option `--yes`.
@@ -23,5 +24,6 @@ A full npm package with two command line tools for Git worktrees. The first tool
 - The script `target:clean` in the package `desktop_tauri` only runs the command line file of this package. No package in `packages/apps` imports this package.
 
 ## Background
+- Submodule initialization comes from [issue #708](https://github.com/heidrun-org/heidrun/issues/708).
 - The installation of the packages comes from [issue #331](https://github.com/heidrun-org/heidrun/issues/331).
 - The package was created by [issue #209](https://github.com/heidrun-org/heidrun/issues/209). The compiler cache tools `kache` and `sccache` failed in [issue #203](https://github.com/heidrun-org/heidrun/issues/203).

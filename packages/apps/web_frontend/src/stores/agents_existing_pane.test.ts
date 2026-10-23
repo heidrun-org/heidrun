@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as api from "../lib/api";
-import { launchAgent } from "./agents";
+import { agentCommand, launchAgent } from "./agents";
 import { selectPane } from "./session";
+import { CompositionBar } from './composition_bar';
+import { settings } from './settings';
 import type { PaneInfo } from "../lib/types";
 
+vi.mock('./workspace_folders', () => ({ WorkspaceFolders: { require: () => '/work/app' } }));
+vi.mock('./guards', () => ({ allowCommand: vi.fn(async () => true) }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => undefined) }));
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
@@ -22,7 +26,7 @@ vi.mock("./session", async (importOriginal) => ({
 const ROOT_PANE = { pane_id: "w2:p1", tab_id: "w2:t1", workspace_id: "w2" } as PaneInfo;
 
 /** Launches a free agent in the first pane of a new workspace, and waits for the pause before the command is typed. */
-async function launchInRootPane(tool: "claude" | "codex") {
+async function launchInRootPane(tool: "claude" | "codex" | "agy") {
   const launched = launchAgent({
     workspaceId: "w2",
     cwd: "/work/app",
@@ -39,6 +43,10 @@ async function launchInRootPane(tool: "claude" | "codex") {
 
 beforeEach(() => {
   vi.useFakeTimers();
+	settings.isCompositionBarShownOnAgentStart = false;
+	for (const paneId of Object.keys(CompositionBar.byPane)) {
+		CompositionBar.removePane(paneId);
+	}
   vi.mocked(api.newTab).mockClear();
   vi.mocked(api.renameTab).mockClear();
   vi.mocked(api.run).mockClear();
@@ -64,6 +72,28 @@ describe("launchAgent with an existing pane (issue #379)", () => {
     expect(api.run).toHaveBeenCalledWith("w2:p1", "codex");
   });
 
+  it("builds the Antigravity command with a safely quoted starting prompt", () => {
+    expect(agentCommand("agy", null, "gemini-3.8-flash-high", "Review Jerome's change")).toBe(
+      "agy --model 'gemini-3.8-flash-high' -i 'Review Jerome'\\''s change'",
+    );
+  });
+
+  it("starts Antigravity with its prompt in the command line", async () => {
+    const launched = launchAgent({
+      workspaceId: "w2",
+      cwd: "/work/app",
+      tool: "agy",
+      agent: null,
+      model: null,
+      label: "agy",
+      prompt: "Review this change",
+      existingPane: ROOT_PANE,
+    });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(await launched).toBe("ok");
+    expect(api.run).toHaveBeenCalledWith("w2:p1", "agy -i 'Review this change'");
+  });
+
   it("still opens a new tab when no pane exists", async () => {
     const launched = launchAgent({
       workspaceId: "w1",
@@ -80,4 +110,52 @@ describe("launchAgent with an existing pane (issue #379)", () => {
     expect(api.renameTab).not.toHaveBeenCalled();
     expect(api.run).toHaveBeenCalledWith("new-p1", "claude");
   });
+});
+
+
+describe('initial composition bar visibility (issue #726)', () => {
+	it.each(['claude', 'codex', 'agy'] as const)(
+		'keeps the composition bar hidden by default for %s',
+		async (tool) => {
+			expect(await launchInRootPane(tool)).toBe('ok');
+			expect(CompositionBar.forPane(ROOT_PANE.pane_id).isOpen).toBe(false);
+		},
+	);
+
+	it.each(['claude', 'codex', 'agy'] as const)(
+		'opens the composition bar for %s in a new workspace or split pane when enabled',
+		async (tool) => {
+			settings.isCompositionBarShownOnAgentStart = true;
+			expect(await launchInRootPane(tool)).toBe('ok');
+			const compositionBar = CompositionBar.forPane(ROOT_PANE.pane_id);
+			expect(compositionBar.isOpen).toBe(true);
+			compositionBar.isOpen = false;
+			settings.isCompositionBarShownOnAgentStart = false;
+			settings.isCompositionBarShownOnAgentStart = true;
+			expect(compositionBar.isOpen).toBe(false);
+		},
+	);
+
+	it('opens a new tab composition bar without changing other panes when enabled', async () => {
+		const existingBar = CompositionBar.forPane('existing-pane');
+		existingBar.text = 'Keep this draft';
+		settings.isCompositionBarShownOnAgentStart = true;
+		const launched = launchAgent({
+			workspaceId: 'w1',
+			cwd: '/work/app',
+			tool: 'claude',
+			agent: null,
+			model: null,
+			label: 'claude',
+			prompt: '',
+		});
+		await vi.advanceTimersByTimeAsync(1_000);
+		expect(await launched).toBe('ok');
+		const newBar = CompositionBar.forPane('new-p1');
+		expect(newBar.isOpen).toBe(true);
+		expect(existingBar.isOpen).toBe(false);
+		expect(existingBar.text).toBe('Keep this draft');
+		settings.isCompositionBarShownOnAgentStart = false;
+		expect(newBar.isOpen).toBe(true);
+	});
 });

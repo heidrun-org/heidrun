@@ -19,13 +19,12 @@ import {
   state,
   workspaceLabel,
 } from "../stores/session";
-import { startDefaultNewTab, startDefaultSplit } from "../stores/newPane";
+import { NewPane } from "../stores/new_pane";
 import { statusLabel, paneName } from "../lib/format";
 import { FONTS, openSettings, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runLauncher } from "../stores/project";
-import { macros, projectMacros, resolveMacroVariables } from "../stores/macros";
+import { hardCodedMacros, macros, projectMacros, resolveMacroVariables } from "../stores/macros";
 import { insertIntoFocusedPane } from "../stores/input";
-import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
 import { isPinned, togglePinnedPane } from "../stores/pinned_panes";
 import { openFiles } from "../stores/files";
@@ -64,7 +63,7 @@ const items = computed<Item[]>(() => {
   }
 
   // Macros: fill the input bar (editable before sending).
-  for (const macro of [...projectMacros.value, ...macros.personal].filter((x) => !lower || x.label.toLowerCase().includes(lower)).slice(0, 6)) {
+  for (const macro of [...projectMacros.value, ...macros.personal, ...hardCodedMacros.value].filter((x) => !lower || x.label.toLowerCase().includes(lower)).slice(0, 6)) {
     list.push({
       section: t("commandPalette.section.macros"),
       label: macro.label,
@@ -102,11 +101,10 @@ const items = computed<Item[]>(() => {
     }
   }
   const actions: Item[] = [
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newAgent"), hint: "⇧⌘T", run: () => (newAgent.open = true) },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTab"), hint: "⌘T", run: () => startDefaultNewTab() },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTerminal"), run: () => newTerminal() },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitRight"), hint: "⌘D", run: () => startDefaultSplit("right") },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitDown"), hint: "⇧⌘D", run: () => startDefaultSplit("down") },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTab"), hint: "⌘T", run: () => NewPane.startDefaultNewTab() },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTerminal"), hint: "⇧⌘T", run: () => newTerminal() },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitRight"), hint: "⌘D", run: () => NewPane.startDefaultSplit("right") },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitDown"), hint: "⇧⌘D", run: () => NewPane.startDefaultSplit("down") },
     ...(sel ? [{ section: t("commandPalette.section.terminals"), label: t("commandPalette.closePane", { pane: paneName(sel) }), hint: "⌘W ⌘W", run: () => closePane(sel.pane_id) }] : []),
     ...(state.selectedTabId ? [{ section: t("commandPalette.section.terminals"), label: t("commandPalette.closeTab"), run: () => closeTab(state.selectedTabId!) }] : []),
     ...(state.selectedWorkspaceId ? [{ section: t("commandPalette.section.rename"), label: t("commandPalette.renameWorkspace"), run: () => startRename("ws", state.selectedWorkspaceId!) }] : []),
@@ -191,7 +189,7 @@ onMounted(() => nextTick(() => input.value?.focus()));
           id="palette-input"
           ref="input"
           v-model="query"
-          class="mono"
+          class="form-control mono"
           :placeholder="t('commandPalette.placeholder')"
           spellcheck="false"
           autocomplete="off"
@@ -206,7 +204,7 @@ onMounted(() => nextTick(() => input.value?.focus()));
           <button :title="t('commandPalette.runTitle')"
             v-for="{ item, i } in g.items"
             :key="i"
-            class="row"
+            class="list-action row"
             :class="{ active: i === index, mono: item.mono }"
             @mouseenter="index = i"
             @click="execute(item)"
@@ -221,15 +219,15 @@ onMounted(() => nextTick(() => input.value?.focus()));
 </template>
 
 <style scoped>
-.scrim { position: fixed; inset: 0; background: rgba(5, 6, 7, 0.55); z-index: 40; display: flex; justify-content: center; align-items: flex-start; padding-top: 120px; }
+.scrim { position: fixed; inset: 0; background: var(--overlay); z-index: 40; display: flex; justify-content: center; align-items: flex-start; padding-top: 120px; }
 .palette {
   width: min(560px, calc(100% - 32px)); border-radius: 14px; border: 1px solid var(--line-modal); background: var(--field);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); overflow: hidden;
+  box-shadow: 0 24px 64px var(--shadow); overflow: hidden;
 }
 .field { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px; border-bottom: 1px solid var(--line-soft); }
-.prompt { color: var(--working); font-size: var(--font-size); }
-.field input { flex: 1; border: none; background: none; outline: none; font-size: var(--font-size); color: var(--text); }
-kbd { font: 400 var(--font-size) var(--mono); color: var(--faint); }
+.prompt { color: var(--working-text); font-size: var(--font-size); }
+.field input { flex: 1; }
+kbd { font: 400 var(--font-size) var(--mono); color: var(--muted); }
 .list { padding: 8px; max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .sec { padding: 10px 10px 4px; }
 .row {

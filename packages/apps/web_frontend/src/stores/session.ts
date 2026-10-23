@@ -1,12 +1,16 @@
+import { WorkspaceFolders } from './workspace_folders';
+import { FinishedStatus } from '../lib/finished_status';
 import { computed, reactive, ref, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import * as api from "../lib/api";
-import { notify } from "../lib/notify";
+import { notify, notifyPhone } from "../lib/notify";
 import { settings } from "./settings";
 import { agentKind, codexWindows, paneName } from "../lib/format";
+import { DetectionFamilies } from "../lib/detection_families";
 import { findChoices, findQuestion, type ChoiceMenu } from "../lib/refs";
 import { allowCommand } from "./guards";
+import { ZenMode } from "./zen_mode";
 import { t } from "../i18n/index";
 import type {
   AgentInfo,
@@ -84,6 +88,9 @@ export interface OutputWatch {
 
 const DISMISSED_KEY = "heidrun.dismissed";
 
+/** The latest Herdr snapshot, before applying local completion acknowledgements. */
+let rawSnapshot: SessionSnapshot | null = null;
+
 function loadDismissed(): Record<string, string> {
   try {
     return JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? "{}");
@@ -102,8 +109,6 @@ export const state = reactive({
   codex: null as CodexUsage | null,
   paletteOpen: false,
   shortcutsOpen: false,
-  /** Panes that just turned blocked: they pulse once. */
-  pulse: {} as Record<string, number>,
   /** Status changes of all agents, most recent first. */
   activity: [] as ActivityEntry[],
   /** When each pane entered its current status (local clock). */
@@ -194,15 +199,35 @@ export const tabPanes = computed(() => allPanes.value.filter((p) => p.tab_id ===
 
 export const selectedPane = computed(() => allPanes.value.find((p) => p.pane_id === state.selectedPaneId) ?? null);
 
-/** Agents waiting on the user, blocked first, then most recent first. */
+/**
+ * Identifies the exact status acknowledged by a card removal.
+ * @param p - The pane and its coding agent information.
+ * @returns The terminal, status, and lifecycle sequence key.
+ */
 export function attentionKey(p: AgentInfo): string {
-  return `${p.agent_status}:${p.state_change_seq ?? 0}`;
+  return FinishedStatus.key(p);
 }
 
+/**
+ * Hides the current card and changes an acknowledged Finished completion to Idle in Heidrun.
+ * @param p - The status represented by the card being removed.
+ * @returns Nothing.
+ */
 export function dismiss(p: AgentInfo) {
-  delete state.questions[p.pane_id];
-  state.dismissed[p.pane_id] = attentionKey(p);
-  saveDismissed();
+	const current = rawSnapshot?.panes.find((pane) => pane.pane_id === p.pane_id);
+	const agent = rawSnapshot?.agents.find((pane) => pane.pane_id === p.pane_id);
+	if (current !== undefined && attentionKey({
+		...current,
+		...agent,
+	}) !== attentionKey(p)) {
+		return;
+	}
+	delete state.questions[p.pane_id];
+	state.dismissed[p.pane_id] = attentionKey(p);
+	saveDismissed();
+	if (rawSnapshot !== null) {
+		state.snapshot = FinishedStatus.apply(rawSnapshot, state.dismissed);
+	}
 }
 
 function saveDismissed() {
@@ -229,10 +254,23 @@ const ttlMs = () => (settings.finishedTtl > 0 ? settings.finishedTtl * 60_000 : 
 function expired(p: AgentInfo): boolean {
   if (p.agent_status !== "done") return false;
   const since = state.since[p.pane_id];
-  return since != null && now.value - since > ttlMs();
+  return since != null && Date.now() - since >= ttlMs();
 }
 
 function pruneFinished() {
+	if (rawSnapshot !== null) {
+		const agents = new Map(rawSnapshot.agents.map((pane) => [pane.pane_id, pane]));
+		for (const pane of rawSnapshot.panes) {
+			const view = {
+				...pane,
+				...agents.get(pane.pane_id),
+			};
+			if (expired(view) && state.questions[pane.pane_id] === undefined
+				&& state.dismissed[pane.pane_id] !== attentionKey(view)) {
+				dismiss(view);
+			}
+		}
+	}
   const limit = ttlMs();
   if (limit === Infinity) return;
   const t = Date.now();
@@ -335,13 +373,26 @@ const claudeWindows: Record<"q5h" | "q7d", WindowReading | undefined> = (() => {
   }
 })();
 
+interface AntigravityQuota {
+  at: number;
+  buckets: { id: string; percent: number; resetsAt?: number }[];
+}
+const ANTIGRAVITY_QUOTA_KEY = "heidrun.antigravity-quota";
+let antigravityQuota: AntigravityQuota | null = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(ANTIGRAVITY_QUOTA_KEY) ?? "null");
+  } catch {
+    return null;
+  }
+})();
+
 const num = (v?: string) => (v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : undefined);
 
 // Session id seen with each pane's last reading: a new one (/clear, /resume) drops it.
 const lastSession = new Map<string, string>();
 
 export function contextFor(p: AgentInfo): ContextUsage | null {
-  const sid = p.tokens?.hd_sid;
+  const sid = p.tokens?.hd_sid ?? p.tokens?.hd_agy_sid;
   if (sid && lastSession.get(p.pane_id) !== sid) {
     lastSession.set(p.pane_id, sid);
     lastContext.delete(p.pane_id);
@@ -357,6 +408,11 @@ export function contextFor(p: AgentInfo): ContextUsage | null {
 
 function readContext(p: AgentInfo): ContextUsage | null {
   const t = p.tokens ?? {};
+  const antigravity = num(t.hd_agy_ctx);
+  if (antigravity != null) {
+    const size = num(t.hd_agy_ctx_size);
+    return { percent: antigravity, size, used: size ? Math.round((antigravity / 100) * size) : undefined };
+  }
   const claude = num(t.hd_ctx);
   if (claude != null) {
     const size = num(t.hd_ctx_size);
@@ -415,6 +471,48 @@ export const quotas = computed<QuotaBlock[]>(() => {
     blocks.push({ provider: "claude", label: "Claude", windows, cost: cost || undefined, updatedAt });
   }
 
+  // Antigravity sends all account buckets together. Keep the newest complete snapshot across its panes.
+  let newestAntigravityAt = antigravityQuota?.at ?? 0;
+  for (const p of allPanes.value) {
+    const t = p.tokens;
+    const at = num(t?.hd_agy_ts) ?? 0;
+    const count = Math.min(20, Math.max(0, Math.floor(num(t?.hd_agy_count) ?? 0)));
+    if (!t || at < newestAntigravityAt || count === 0) continue;
+    const buckets = [];
+    for (let index = 0; index < count; index += 1) {
+      const id = t[`hd_agy_${index}_id`];
+      const remaining = num(t[`hd_agy_${index}_remaining`]);
+      if (!id || remaining == null) continue;
+      const reset = t[`hd_agy_${index}_reset`];
+      const resetsAt = reset ? Date.parse(reset) / 1000 : undefined;
+      buckets.push({ id, percent: Math.max(0, Math.min(100, (1 - remaining) * 100)), resetsAt: Number.isFinite(resetsAt) ? resetsAt : undefined });
+    }
+    if (buckets.length) {
+      buckets.sort((left, right) => {
+        const priority = (id: string) => id === "gemini-weekly" ? 0 : id === "3p-weekly" ? 1 : 2;
+        return priority(left.id) - priority(right.id) || left.id.localeCompare(right.id);
+      });
+      newestAntigravityAt = at;
+      antigravityQuota = { at, buckets };
+      try {
+        localStorage.setItem(ANTIGRAVITY_QUOTA_KEY, JSON.stringify(antigravityQuota));
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  if (antigravityQuota?.buckets.length) {
+    const windows = antigravityQuota.buckets.map((bucket) => ({
+      id: `antigravity:${bucket.id}`,
+      name: antigravityBucketName(bucket.id),
+      percent: bucket.resetsAt != null && bucket.resetsAt < Date.now() / 1000 ? 0 : bucket.percent,
+      resetsAt: bucket.resetsAt,
+      period: "week" as const,
+      windowMinutes: 10080,
+    }));
+    blocks.push({ provider: "antigravity", label: "Antigravity", windows, updatedAt: antigravityQuota.at });
+  }
+
   const c = state.codex;
   if (c?.primary || c?.secondary) {
     const windows = codexWindows(c, Date.now() / 1000);
@@ -423,19 +521,55 @@ export const quotas = computed<QuotaBlock[]>(() => {
   return blocks;
 });
 
+function antigravityBucketName(id: string): string {
+  if (id === "gemini-weekly") return t("sessionStore.antigravity.geminiWeekly");
+  if (id === "3p-weekly") return t("sessionStore.antigravity.thirdPartyWeekly");
+  return `${id.replace(/[-_]/g, " ")} · ${t("sessionStore.window.week")}`;
+}
+
 // ---- Snapshot refresh -----------------------------------------------------
 
 let refreshTimer: number | undefined;
 let inflight = false;
 let again = false;
 let lastPaneKey = "";
+let pendingWorkspaceFocusId: string | null = null;
+const workspaceFocusRequests = new Map<string, string>();
 
 export function scheduleRefresh(delay = 60) {
   window.clearTimeout(refreshTimer);
   refreshTimer = window.setTimeout(refresh, delay);
 }
 
+let refreshHoldCount = 0;
+
+/**
+ * Stops the refresh of the snapshot until the returned function runs. A refresh that comes in the meantime is dropped. When
+ * the last hold ends, the snapshot is read once. A move of a pane holds the refresh, so that the window never shows the state
+ * between two calls to Herdr.
+ *
+ * @returns The function that ends this hold and, when it is the last hold, reads the snapshot. Calling it a second time does
+ * nothing. It resolves after the snapshot is applied.
+ */
+export function holdRefresh(): () => Promise<void> {
+  refreshHoldCount += 1;
+  let isReleased = false;
+  return async () => {
+    if (isReleased) {
+      return;
+    }
+    isReleased = true;
+    refreshHoldCount -= 1;
+    if (refreshHoldCount === 0) {
+      await refresh();
+    }
+  };
+}
+
 export async function refresh() {
+  if (refreshHoldCount > 0) {
+    return;
+  }
   if (inflight) {
     again = true;
     return;
@@ -527,6 +661,9 @@ function trackRun(
 
 /** Reads the menu of a blocked agent, retrying while it is still being drawn. */
 async function readChoices(paneId: string, delays = [500, 900, 1600]) {
+  if (DetectionFamilies.isEnabled(settings, "questionsAndChoices") === false) {
+    return;
+  }
   for (const delay of delays) {
     await new Promise((r) => window.setTimeout(r, delay));
     const before = state.snapshot?.panes.find((p) => p.pane_id === paneId);
@@ -606,11 +743,20 @@ export async function answerChoice(paneId: string, n: number, checked = false, e
  * (« Veux-tu que je … ? ») is a decision to make, like a blocking prompt: it
  * shows in « À traiter » and gets its own notification.
  */
-async function checkQuestion(paneId: string, name: string, ws: string, notifyQuestion: boolean, notifyDone = false) {
+async function checkQuestion(
+	paneId: string,
+	name: string,
+	ws: string,
+	notifyQuestion: boolean,
+	notifyDone = false,
+	pushToPhone = false,
+	expectedKey?: string,
+) {
   // Let the agent finish drawing its answer.
   await new Promise((r) => window.setTimeout(r, 700));
   let question: string | null = null;
-  for (let attempt = 0; attempt < 3 && question === null; attempt++) {
+  const isReadingQuestions = DetectionFamilies.isEnabled(settings, "questionsAndChoices");
+  for (let attempt = 0; isReadingQuestions && attempt < 3 && question === null; attempt++) {
     try {
       question = findQuestion(await api.read(paneId, 120));
       break;
@@ -621,29 +767,78 @@ async function checkQuestion(paneId: string, name: string, ws: string, notifyQue
   }
   const pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
   if (!pane || pane.agent_status === "working" || pane.agent_status === "blocked") return;
+	const view = paneView(pane);
+	if (expectedKey !== undefined && attentionKey(view) !== expectedKey) {
+		return;
+	}
+	if (state.dismissed[paneId] === attentionKey(view)) {
+		return;
+	}
   if (question) {
     state.questions[paneId] = { text: question, at: Date.now() };
     // Shown again even if an earlier "terminé" card was closed.
     delete state.dismissed[paneId];
+    if (pushToPhone) void notifyPhone();
     if (notifyQuestion) notify(t("sessionStore.notify.question", { name }), `${ws ? `${ws} · ` : ""}${question}`);
   } else {
     delete state.questions[paneId];
+    if (pushToPhone) void notifyPhone();
     if (notifyDone) notify(t("sessionStore.notify.done", { name }), ws);
   }
 }
 
+// The detection of the questions and of the numbered choices follows its switch at once: turning it off removes the questions
+// and the menus already read, and turning it on reads the menus of the blocked agents again.
+watch(
+  () => DetectionFamilies.isEnabled(settings, "questionsAndChoices"),
+  (isEnabled) => {
+    if (isEnabled === false) {
+      for (const paneId of Object.keys(state.questions)) {
+        delete state.questions[paneId];
+      }
+      for (const paneId of Object.keys(state.choices)) {
+        delete state.choices[paneId];
+      }
+      return;
+    }
+    for (const pane of state.snapshot?.panes ?? []) {
+      if (pane.agent_status === "blocked") {
+        void readChoices(pane.pane_id, [0]);
+      }
+    }
+  },
+);
+
 function applySnapshot(snap: SessionSnapshot) {
-  const previous = new Map((state.snapshot?.panes ?? []).map((p) => [p.pane_id, p.agent_status]));
+  const previousAgents = new Map((rawSnapshot?.agents ?? []).map((pane) => [pane.pane_id, pane]));
+	const previous = new Map((rawSnapshot?.panes ?? []).map((pane) => [pane.pane_id, {
+		...pane,
+		...previousAgents.get(pane.pane_id),
+	}]));
   const agents = new Map(snap.agents.map((a) => [a.pane_id, a]));
   const now = Date.now();
+	let isDismissalChanged = false;
 
   for (const pane of snap.panes) {
-    const before = previous.get(pane.pane_id);
+    const earlier = previous.get(pane.pane_id);
+		const before = earlier?.agent_status;
     const after = pane.agent_status;
-    if (before === after) continue;
+		const view = {
+			...pane,
+			...agents.get(pane.pane_id),
+		};
+		const isNewCompletion = after === 'done' && earlier?.agent_status === 'done'
+			&& attentionKey(earlier) !== attentionKey(view);
+		if (before === after && isNewCompletion === false) {
+			continue;
+		}
+		if (state.dismissed[pane.pane_id] !== undefined
+			&& state.dismissed[pane.pane_id] !== attentionKey(view)) {
+			delete state.dismissed[pane.pane_id];
+			isDismissalChanged = true;
+		}
     state.since[pane.pane_id] = now;
     if (!pane.agent) continue;
-    const view = { ...pane, ...(agents.get(pane.pane_id) ?? {}) };
     const ws = snap.workspaces.find((w) => w.workspace_id === pane.workspace_id)?.label ?? "";
     const tab = snap.tabs.find((x) => x.tab_id === pane.tab_id);
     trackRun(pane.pane_id, before, after, now, {
@@ -654,24 +849,29 @@ function applySnapshot(snap: SessionSnapshot) {
       workspaceId: pane.workspace_id,
       cwd: pane.foreground_cwd || pane.cwd || null,
     });
-    if (after === "working" || after === "blocked") delete state.questions[pane.pane_id];
+		if (after === 'working' || after === 'blocked' || isNewCompletion) {
+			delete state.questions[pane.pane_id];
+		}
     if (after !== "blocked") delete state.choices[pane.pane_id];
     else readChoices(pane.pane_id);
-    if (before === undefined) {
-      // First sight: an agent already done may have ended on a question.
-      if (after === "done") checkQuestion(pane.pane_id, paneName(view), ws, false);
+    if (before === undefined || isNewCompletion) {
+      // A new completion may arrive without a snapshot of the intervening work.
+			if (after === 'done') {
+				checkQuestion(pane.pane_id, paneName(view), ws, false, false, false, attentionKey(view));
+			}
       continue;
     }
     if (after === "blocked") {
-      state.pulse[pane.pane_id] = now;
-      window.setTimeout(() => delete state.pulse[pane.pane_id], 1400);
+      void notifyPhone();
       if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
         notify(t("sessionStore.notify.blocked", { name: paneName(view) }), ws);
       }
     } else if ((after === "done" || after === "idle") && (before === "working" || before === "blocked")) {
       // Finished: look at how the answer ends before notifying ("a terminé" or the question).
       const away = !document.hasFocus() || state.selectedPaneId !== pane.pane_id;
-      checkQuestion(pane.pane_id, paneName(view), ws, away, after === "done" && away);
+			checkQuestion(
+				pane.pane_id, paneName(view), ws, away, after === 'done' && away, true, attentionKey(view),
+			);
     }
   }
 
@@ -683,9 +883,28 @@ function applySnapshot(snap: SessionSnapshot) {
       endRun(r, now);
     }
   }
-
-  state.snapshot = snap;
+	if (state.snapshot === null) {
+		for (const workspace of snap.workspaces) {
+			const request = workspace.tokens?.heidrun_focus_request;
+			if (request !== undefined) {
+				workspaceFocusRequests.set(workspace.workspace_id, request);
+			}
+		}
+	}
+	rawSnapshot = snap;
+  state.snapshot = FinishedStatus.apply(snap, state.dismissed);
+	if (isDismissalChanged) {
+		saveDismissed();
+	}
   fixSelection(snap);
+	pruneFinished();
+	if (pendingWorkspaceFocusId !== null
+		&& snap.workspaces.some((workspace) => workspace.workspace_id === pendingWorkspaceFocusId)) {
+		selectWorkspace(pendingWorkspaceFocusId);
+		pendingWorkspaceFocusId = null;
+	} else if (again === false) {
+		pendingWorkspaceFocusId = null;
+	}
 
   const ids = snap.panes.filter((p) => p.agent).map((p) => p.pane_id).sort();
   const key = ids.join(",");
@@ -698,6 +917,7 @@ function applySnapshot(snap: SessionSnapshot) {
 }
 
 function fixSelection(snap: SessionSnapshot) {
+  ZenMode.exitIfPaneIsMissing(snap.panes.map((pane) => pane.pane_id));
   const ws = snap.workspaces;
   if (!ws.some((w) => w.workspace_id === state.selectedWorkspaceId)) {
     const savedId = settings.selectedWorkspaceId;
@@ -720,6 +940,7 @@ function fixSelection(snap: SessionSnapshot) {
     const layout = snap.layouts.find((l) => l.tab_id === state.selectedTabId);
     state.selectedPaneId = layout?.focused_pane_id ?? panes[0]?.pane_id ?? null;
   }
+  ZenMode.selectPaneForTab(state.selectedTabId, state.selectedPaneId);
 }
 
 // ---- Codex usage polling --------------------------------------------------
@@ -816,9 +1037,14 @@ export function selectWorkspaceAt(index: number) {
 }
 
 export function selectPane(p: PaneInfo) {
+	const view = allPanes.value.find((pane) => pane.pane_id === p.pane_id);
+	if (view?.agent_status === 'done') {
+		dismiss(view);
+	}
   state.selectedWorkspaceId = p.workspace_id;
   state.selectedTabId = p.tab_id;
   state.selectedPaneId = p.pane_id;
+  ZenMode.focusPane(p.pane_id, p.tab_id);
 }
 
 // ---- Actions --------------------------------------------------------------
@@ -851,8 +1077,8 @@ function humanError(e: string): string {
 export function newTerminal() {
   const ws = selectedWorkspace.value;
   if (!ws) return;
-  const cwd = selectedPane.value?.cwd ?? null;
   return guard(async () => {
+    const cwd = WorkspaceFolders.require(ws.workspace_id);
     const pane = await api.newTab(ws.workspace_id, cwd);
     await refresh();
     if (pane) selectPane(pane);
@@ -873,7 +1099,7 @@ export async function splitPane(direction: "right" | "down" = "right", paneId?: 
     return undefined;
   }
   return guard(async () => {
-    const pane = await api.split(p.pane_id, direction, p.cwd);
+    const pane = await api.split(p.pane_id, direction, WorkspaceFolders.require(p.workspace_id));
     await refresh();
     if (pane) selectPane(pane);
     return pane;
@@ -914,6 +1140,7 @@ export async function openFolderAsWorkspace(cwd: string, label: string): Promise
 }
 
 export function closePane(paneId: string) {
+  ZenMode.exitForPane(paneId);
   return guard(() => api.closePane(paneId));
 }
 
@@ -1071,11 +1298,17 @@ export async function runInNewPane(command: string, watch?: string) {
   const base = selectedPane.value;
   const ws = selectedWorkspace.value;
   if (!ws) return;
-  const w = whereOf(base?.pane_id);
-  if (!(await allowCommand(command, w.cwd, w.where || ws.label))) return;
+  const cwd = WorkspaceFolders.get(ws.workspace_id);
+  if (cwd === null) {
+    toast(t('workspaceFolderRecovery.required'));
+    return;
+  }
+  if ((await allowCommand(command, cwd, ws.label)) === false) {
+    return;
+  }
   rememberCommand(command);
   const pane = await guard(async () =>
-    base ? api.split(base.pane_id, "right", base.cwd) : api.newTab(ws.workspace_id, null),
+    base ? api.split(base.pane_id, "right", cwd) : api.newTab(ws.workspace_id, cwd),
   );
   if (!pane) return;
   // Give the new shell a moment to print its prompt before typing into it.
@@ -1151,8 +1384,38 @@ export async function startHerdr() {
   }
 }
 
+/** The fields used from a workspace event published by Herdr. */
+type WorkspaceEvent = {
+	/** Herdr's wire event name, such as workspace_focused. */
+	event?: string;
+	/** The workspace identifier or updated workspace carried by the event. */
+	data?: {
+		/** The target of a direct focus event. */
+		workspace_id?: string;
+		/** The workspace after a metadata change. */
+		workspace?: WorkspaceInfo;
+	};
+};
+
 export async function start() {
-  await listen("herdr://event", () => scheduleRefresh());
+	await listen<WorkspaceEvent>('herdr://event', async (event) => {
+		const workspace = event.payload.data?.workspace;
+		const request = workspace?.tokens?.heidrun_focus_request;
+		let workspaceId = event.payload.event === 'workspace_focused'
+			? event.payload.data?.workspace_id : undefined;
+		if (event.payload.event === 'workspace_metadata_updated'
+			&& workspace !== undefined && request !== undefined
+			&& workspaceFocusRequests.get(workspace.workspace_id) !== request) {
+			workspaceFocusRequests.set(workspace.workspace_id, request);
+			workspaceId = workspace.workspace_id;
+		}
+		if (typeof workspaceId === 'string') {
+			pendingWorkspaceFocusId = workspaceId;
+			await refresh();
+			return;
+		}
+		scheduleRefresh();
+	});
   await listen("herdr://connected", () => refresh());
   await listen("herdr://resync", () => scheduleRefresh(150));
   await listen<string>("herdr://disconnected", (e) => {
@@ -1163,7 +1426,8 @@ export async function start() {
   if (!state.connected && settings.autoStartHerdr && state.error.includes("herdr_unreachable")) {
     await startHerdr();
   }
-  // Safety net: events invalidate the cache, a slow poll catches anything missed.
-  window.setInterval(() => scheduleRefresh(0), 5000);
+  // No timer reads the snapshot of Herdr: it gives the page a new list of workspaces each time, so everything that
+  // watches this list runs again. A lost event is covered by the refresh after "herdr://connected" and "herdr://resync".
+  // Codex writes its usage outside Heidrun and no event announces it, so the usage of Codex keeps a timer.
   window.setInterval(refreshCodex, 10_000);
 }

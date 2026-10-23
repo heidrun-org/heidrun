@@ -48,12 +48,57 @@ describe("FindNewSkillsModal", () => {
     expect(findNewSkillsModal.open).toBe(false);
   });
 
-  it("shows the level, then the search, and no list of installed skills", async () => {
+  it("shows the lines in this order: installation level, source of the skill, the field of the source, and the result", async () => {
     const { wrapper } = await mountWindow();
     const html = wrapper.html();
-    expect(html.indexOf("levelChoice")).toBeGreaterThan(-1);
-    expect(html.indexOf("levelChoice")).toBeLessThan(html.indexOf('class="search"'));
+    const positions = ["levelChoice", "sourceChoice", 'class="searchField"', "Result"].map((text) => html.indexOf(text));
+    expect(positions.every((position) => position > -1)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
     expect(wrapper.findAll(".list .row")).toHaveLength(0);
+  });
+
+  it("gives every line a circled question mark that opens an information card", async () => {
+    const { wrapper } = await mountWindow();
+    const parts = wrapper.findAll(".information-card-part");
+    // The title of the window has its own tooltip. The lines have the cards: level, source, search, and result.
+    expect(parts).toHaveLength(4);
+    for (const part of parts) {
+      await part.trigger("click");
+      expect(wrapper.findAll("[data-help-block]").length).toBeGreaterThan(0);
+      await part.trigger("click");
+    }
+  });
+
+  it("closes an open information card with the key Escape first, and the window with a second key Escape", async () => {
+    await prepare(invoke);
+    const { findNewSkillsModal } = await import("../stores/skills");
+    const { default: FindNewSkillsModal } = await import("./FindNewSkillsModal.vue");
+    const wrapper = mount(FindNewSkillsModal, { attachTo: document.body });
+    await flushPromises();
+    findNewSkillsModal.open = true;
+    const part = wrapper.get(".information-card-part");
+    await part.trigger("click");
+    expect(wrapper.find("[data-help-block]").exists()).toBe(true);
+    await part.trigger("keydown", { key: "Escape" });
+    expect(wrapper.find("[data-help-block]").exists()).toBe(false);
+    expect(findNewSkillsModal.open).toBe(true);
+    await wrapper.get("h2").trigger("keydown", { key: "Escape" });
+    expect(findNewSkillsModal.open).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("gives every input a visible label", async () => {
+    const { wrapper } = await mountWindow();
+    for (const [index, input] of wrapper.findAll("input:not([type=radio])").entries()) {
+      const label = wrapper.find(`label[for="${input.attributes("id")}"]`);
+      expect(label.exists(), `input ${index}`).toBe(true);
+      expect(label.text()).not.toBe("");
+    }
+    await wrapper.findAll(".sourceChoice input[type=radio]")[1].setValue(true);
+    await wrapper.findAll(".sourceChoice input[type=radio]")[2].setValue(true);
+    for (const input of wrapper.findAll("input:not([type=radio])")) {
+      expect(wrapper.find(`label[for="${input.attributes("id")}"]`).exists()).toBe(true);
+    }
   });
 
   it("shows the results of the search, with the buttons Inspect and Install", async () => {
@@ -82,7 +127,7 @@ describe("FindNewSkillsModal", () => {
       ...session.state.snapshot,
       workspaces: [
         ...(session.state.snapshot?.workspaces ?? []),
-        { workspace_id: "w2", number: 2, label: "other", agent_status: "idle", worktree: { path: "/work/other" } },
+        { workspace_id: "w2", number: 2, label: "other", agent_status: "idle", workspace_folder: "/work/other" },
       ],
     } as typeof session.state.snapshot;
     invoke.mockClear();

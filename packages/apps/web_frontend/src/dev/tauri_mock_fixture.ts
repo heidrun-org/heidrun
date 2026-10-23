@@ -1,6 +1,6 @@
 import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder, ChatUsage } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
-import type { AiCostItems } from '../lib/ai_cost';
+import type { AiCostAnswer, AiCostHourRow, AiCostSynchronization, AiCostWorkspace } from '../lib/ai_cost';
 import type { PersonWorkItems } from '../lib/person_work';
 import type { UserActivityRecord } from '../lib/user_activity';
 
@@ -193,6 +193,49 @@ export class TauriMockFixture {
 		});
 	}
 
+	/**
+	 * The answer of the Tauri command `chat_references_find`: the stored rows of the issues and of the pull requests whose
+	 * numbers are asked. The number 123 has no row, so the card shows that GitHub does not know it.
+	 *
+	 * @param issueNumbers - The numbers of the issues.
+	 * @param pullRequestNumbers - The numbers of the pull requests.
+	 * @returns The rows, in the shape that the data layer stores them.
+	 */
+	static buildStoredReferences(issueNumbers: number[], pullRequestNumbers: number[]): { issues: unknown[]; pullRequests: unknown[] } {
+		const rowOf = (number: number, kind: 'issue' | 'pr'): unknown[] => {
+			if (number === 123) {
+				return [];
+			}
+			const answer = JSON.parse(TauriMockFixture.buildForgeAnswer([kind, 'view', String(number)])) as {
+				title: string;
+				state: string;
+				body: string;
+				labels: { name: string; color: string }[];
+				author: { login: string };
+				createdAt: string;
+				headRefName?: string;
+				baseRefName?: string;
+			};
+			return [
+				{
+					number,
+					title: answer.title,
+					state: answer.state,
+					body: answer.body,
+					author: answer.author.login,
+					labels: answer.labels.map((label) => label.name),
+					labelColors: Object.fromEntries(answer.labels.map((label) => [label.name, label.color])),
+					createdAt: answer.createdAt,
+					...(kind === 'pr' ? { headRefName: answer.headRefName, baseRefName: answer.baseRefName } : {}),
+				},
+			];
+		};
+		return {
+			issues: issueNumbers.flatMap((number) => rowOf(number, 'issue')),
+			pullRequests: pullRequestNumbers.flatMap((number) => rowOf(number, 'pr')),
+		};
+	}
+
 	/** The translation table of the clustered dynamic topics that the mock keeps, as the file on the disk does. */
 	private static _topicClusterRows: Record<string, string> = {};
 
@@ -213,6 +256,35 @@ export class TauriMockFixture {
 	 */
 	static setTopicClusterRows(rows: Record<string, string>): void {
 		TauriMockFixture._topicClusterRows = { ...rows };
+	}
+
+	/** The content of the file `.heidrun/config.json` of the fake project, which the mock keeps as the file on the disk does. */
+	private static _projectConfig: unknown = { version: 1, launchers: [] };
+
+	/**
+	 * The answer of the Tauri command `project_load`: the fake project, with the configuration that the last call of
+	 * `setProjectConfig` saved.
+	 *
+	 * @param cwd - The folder of the workspace.
+	 * @returns The root, the path of the configuration file, the configuration, and no detected command.
+	 */
+	static buildProject(cwd: string): unknown {
+		return {
+			root: cwd,
+			config_path: `${cwd}/.heidrun/config.json`,
+			config: JSON.parse(JSON.stringify(TauriMockFixture._projectConfig)),
+			detected: [],
+		};
+	}
+
+	/**
+	 * Replaces the configuration of the fake project, as the Tauri command `project_save` does.
+	 *
+	 * @param config - The new content of the file `.heidrun/config.json`.
+	 * @returns Nothing.
+	 */
+	static setProjectConfig(config: unknown): void {
+		TauriMockFixture._projectConfig = JSON.parse(JSON.stringify(config));
 	}
 
 	/**
@@ -249,9 +321,9 @@ export class TauriMockFixture {
 	}
 
 	/**
-	 * The answer of the Tauri command `user_activity_records_in_range`: fake active periods in the last week, in UTC, as the
-	 * data layer gives them. Seven periods are in the last hour, and they cross the limits of the slots of five minutes.
-	 * The last slot of the last hour has no period. Four more periods fall on each of the seven days, from three hours
+	 * The answer of the Tauri command `user_activity_records_in_range`: fake active periods in the last 30 days, in UTC, as the
+	 * data layer gives them. Seven periods are in the last hour, and the last two minutes
+	 * have no period. Four more periods fall on each of the 30 days, from three hours
 	 * before the end of the time range, and they are 20 to 55 minutes long. Each period belongs to one of three folders: the
 	 * folder of the first workspace for three periods of every five, the folder of the second workspace for one period of
 	 * every five, and the folder of a worktree that was removed for the last one, so that the histogram has workspaces to
@@ -272,7 +344,7 @@ export class TauriMockFixture {
 			[9 * 60 + 30, 9 * 60],
 			[4 * 60, 2 * 60 + 30],
 		];
-		for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+		for (let dayIndex = 0; dayIndex < 30; dayIndex += 1) {
 			for (let sessionIndex = 0; sessionIndex < 4; sessionIndex += 1) {
 				const startedBefore = dayIndex * 24 * 3600 + (3 + 3 * sessionIndex) * 3600;
 				const lengthMinutes = 20 + ((dayIndex * 7 + sessionIndex * 11) % 36);
@@ -302,7 +374,9 @@ export class TauriMockFixture {
 	 * The answer of the Tauri command `person_work_in_range`: the fake work of two people in the last 30 days. Jérôme
 	 * Étienne writes one to five commits each day and opens a pull request every other day, and his login on GitHub is
 	 * `jerome-etienne`. He opens an issue every fifth day. Eric writes a commit every third day, and opens nothing on GitHub.
+	 * Each commit adds and deletes some lines.
 	 * - issue #482
+	 * - issue #523
 	 *
 	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
 	 * @returns The fake commits, pull requests, and issues, the oldest first, and no error of GitHub.
@@ -324,6 +398,8 @@ export class TauriMockFixture {
 					authorName: 'Jérôme Étienne',
 					authorEmail: 'jerome@example.com',
 					committedAt: new Date(dayEnd - (3 + index) * 3600 * 1000).toISOString(),
+					insertions: 20 + ((daysBefore * 7 + index * 13) % 80),
+					deletions: 5 + ((daysBefore * 5 + index * 11) % 40),
 				});
 			}
 			if (daysBefore % 3 === 0) {
@@ -331,6 +407,8 @@ export class TauriMockFixture {
 					authorName: 'Eric',
 					authorEmail: 'eric@example.com',
 					committedAt: new Date(dayEnd - 2 * 3600 * 1000).toISOString(),
+					insertions: 15,
+					deletions: 4,
 				});
 			}
 			if (daysBefore % 2 === 0) {
@@ -350,47 +428,101 @@ export class TauriMockFixture {
 		return result;
 	}
 
+	/** The folders whose fake history the Tauri command `ai_cost_synchronize` imported. */
+	private static readonly _importedAiCostFolders = new Set<string>();
+
 	/**
-	 * The answer of the Tauri command `ai_cost_in_range`: the fake chats of the last 30 days, each with the cost of each hour
-	 * where it used tokens. Claude Code has two chats on each day: one that costs 1 to 5 dollars in two hours, and one that
-	 * costs a few cents. Every fourth day, a longer chat of Claude Code goes on after midnight and costs money on the next day
-	 * too. Codex has one chat every other day that costs under 2 dollars. One chat of Codex has no known price.
-	 * - issue #482
-	 *
-	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
-	 * @returns The fake chats, the oldest first.
+	 * Forgets the imported folders, so that the next read of the AI cost finds every workspace not imported, as a new
+	 * installation does.
 	 */
-	static buildAiCostItems(until: number): AiCostItems {
-		const hourMs = 3600 * 1000;
-		const dayMs = 24 * hourMs;
-		const hour = (dayEnd: number, hoursBefore: number, costUsd: number | null) => ({
-			at: new Date(dayEnd - hoursBefore * hourMs).toISOString(),
-			costUsd,
-		});
-		const result: AiCostItems = { chats: [] };
-		for (let daysBefore = 29; daysBefore >= 0; daysBefore -= 1) {
-			const dayEnd = until - daysBefore * dayMs;
-			const cost = 1 + ((daysBefore * 7 + 3) % 5);
-			result.chats.push({
-				codingAgent: 'claude',
-				hours: [hour(dayEnd, 10, cost * 0.6), hour(dayEnd, 9, cost * 0.4)],
-			});
-			result.chats.push({
-				codingAgent: 'claude',
-				hours: [hour(dayEnd, 4, 0.02 + (daysBefore % 4) * 0.01)],
-			});
-			if (daysBefore % 4 === 2) {
-				result.chats.push({
-					codingAgent: 'claude',
-					hours: [hour(dayEnd, 2, 1.5), hour(dayEnd, 1, 1), hour(dayEnd + dayMs, 22, 2)],
-				});
-			}
-			if (daysBefore % 2 === 1) {
-				const costUsd = daysBefore === 7 ? null : 0.3 + (daysBefore % 5) * 0.3;
-				result.chats.push({ codingAgent: 'codex', hours: [hour(dayEnd, 6, costUsd)] });
+	static resetAiCostImports(): void {
+		TauriMockFixture._importedAiCostFolders.clear();
+	}
+
+	/**
+	 * The state of the workspaces for the AI cost: a folder is imported after `ai_cost_synchronize` imported it.
+	 *
+	 * @param folders - The folders that the caller asked for.
+	 * @returns One state for each folder.
+	 */
+	private static _buildAiCostWorkspaces(folders: string[]): AiCostWorkspace[] {
+		return folders.map((folder) => ({
+			folder,
+			repository: 'heidrun-org/heidrun',
+			synchronizedAt: TauriMockFixture._importedAiCostFolders.has(folder) ? new Date().toISOString() : null,
+			error: null,
+		}));
+	}
+
+	/**
+	 * The answer of the Tauri command `ai_cost_synchronize`. A folder that was not imported is imported only when the caller
+	 * allows it.
+	 *
+	 * @param folders - The folders of the workspaces.
+	 * @param isImportAllowed - True when the developer pressed the button "Import the history".
+	 * @returns The state of each workspace, and no warning about the prices.
+	 */
+	static buildAiCostSynchronization(folders: string[], isImportAllowed: boolean): AiCostSynchronization {
+		if (isImportAllowed === true) {
+			for (const folder of folders) {
+				TauriMockFixture._importedAiCostFolders.add(folder);
 			}
 		}
-		return result;
+		return { workspaces: TauriMockFixture._buildAiCostWorkspaces(folders), priceWarning: null };
+	}
+
+	/**
+	 * The answer of the Tauri command `ai_cost_in_range`: the fake tokens and costs of the last 30 days, one row for each coding
+	 * agent and each hour that had tokens. A dollar of cost is 400,000 tokens. The rows exist only when at least one asked folder
+	 * is imported. Claude Code costs 1 to 5 dollars each day, with a few cents more from a small chat, and every fourth day a
+	 * longer chat goes on after midnight and costs money on the next day too. Codex costs under 2 dollars every other day. One
+	 * day of Codex has no known price. The cost of a day is spread over the hours of work of the day, so the sum of the hours of a
+	 * day is the cost of that day.
+	 * - issue #482
+	 * - issue #616
+	 *
+	 * @param folders - The folders of the workspaces.
+	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
+	 * @returns The state of the workspaces and the rows, the oldest first.
+	 */
+	static buildAiCostAnswer(folders: string[], until: number): AiCostAnswer {
+		const workspaces = TauriMockFixture._buildAiCostWorkspaces(folders);
+		const answer: AiCostAnswer = { workspaces, hours: [], priceVersion: 1, pricesCheckedAt: new Date().toISOString() };
+		if (workspaces.every((workspace) => workspace.synchronizedAt === null)) {
+			return answer;
+		}
+		const end = new Date(until);
+		const workHours: Record<string, number[]> = { claude: [9, 10, 11, 13, 14, 15, 16, 17], codex: [11, 12, 16] };
+		const rows = (daysBefore: number, codingAgent: string, costUsd: number | null): AiCostHourRow[] => {
+			const dayStart = new Date(end.getFullYear(), end.getMonth(), end.getDate() - (daysBefore + 1));
+			const dayTokens = Math.round((costUsd ?? 0.5) * 400_000);
+			const day = `${dayStart.getFullYear()}-${String(dayStart.getMonth() + 1).padStart(2, '0')}-${String(dayStart.getDate()).padStart(2, '0')}`;
+			const hours = workHours[codingAgent];
+			const weights = hours.map((_, index) => 1 + ((daysBefore + index * 3) % 4));
+			const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+			let tokensGiven = 0;
+			return hours.map((hour, index) => {
+				const tokens = index === hours.length - 1 ? dayTokens - tokensGiven : Math.floor((dayTokens * weights[index]) / totalWeight);
+				tokensGiven += tokens;
+				return {
+					startedAt: new Date(dayStart.getFullYear(), dayStart.getMonth(), dayStart.getDate(), hour).toISOString(),
+					day,
+					codingAgent,
+					tokens,
+					costUsd: costUsd === null ? null : (costUsd * tokens) / dayTokens,
+					unpricedTokens: costUsd === null ? tokens : 0,
+				};
+			});
+		};
+		for (let daysBefore = 29; daysBefore >= 0; daysBefore -= 1) {
+			const longChatYesterday = (daysBefore + 1) % 4 === 2 ? 2 : 0;
+			const longChatToday = daysBefore % 4 === 2 ? 2.5 : 0;
+			const claudeCost = 1 + ((daysBefore * 7 + 3) % 5) + 0.02 + (daysBefore % 4) * 0.01 + longChatToday + longChatYesterday;
+			const codexCost = daysBefore === 7 ? null : 0.3 + (daysBefore % 5) * 0.3;
+			const dayRows = [...rows(daysBefore, 'claude', claudeCost), ...(daysBefore % 2 === 1 ? rows(daysBefore, 'codex', codexCost) : [])];
+			answer.hours.push(...dayRows.sort((first, second) => first.startedAt.localeCompare(second.startedAt)));
+		}
+		return answer;
 	}
 
 	/**
@@ -643,6 +775,7 @@ export class TauriMockFixture {
 			workspaces: [
 				{
 					workspace_id: 'workspace_1',
+					workspace_folder: heidrunFolder,
 					number: 1,
 					label: 'heidrun',
 					focused: true,
@@ -652,11 +785,12 @@ export class TauriMockFixture {
 					agent_status: 'blocked',
 					worktree: {
 						branch: 'dev_jerome',
-						path: heidrunFolder,
+						checkout_path: heidrunFolder,
 					},
 				},
 				{
 					workspace_id: 'workspace_2',
+					workspace_folder: websiteFolder,
 					number: 2,
 					label: 'website',
 					focused: false,

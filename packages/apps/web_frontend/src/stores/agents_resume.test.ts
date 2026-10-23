@@ -3,6 +3,8 @@ import * as api from "../lib/api";
 import { launchAgent } from "./agents";
 import { toast } from "./session";
 
+vi.mock('./workspace_folders', () => ({ WorkspaceFolders: { require: () => '/work/app' } }));
+vi.mock('./guards', () => ({ allowCommand: vi.fn(async () => true) }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => undefined) }));
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),

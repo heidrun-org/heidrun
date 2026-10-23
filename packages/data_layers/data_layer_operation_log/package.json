@@ -1,0 +1,9 @@
+{
+  "name": "data_layer_operation_log",
+  "private": true,
+  "license": "MIT",
+  "version": "0.3.0",
+  "scripts": {
+    "test": "cargo test"
+  }
+}

@@ -117,7 +117,6 @@ function buildLaugh() {
         "--drift-x": `${(distance * Math.cos(angle)).toFixed(2)}em`,
         "--drift-y": `${(distance * Math.sin(angle)).toFixed(2)}em`,
         "--drift-rotation": `${(spinDirection * randomBetween(30, 200)).toFixed(0)}deg`,
-        "--drift-scale": randomBetween(0.9, 1.5).toFixed(2),
         "--spark-delay": `${randomBetween(0, BURST_MAXIMUM_DELAY).toFixed(2)}s`,
       },
     };
@@ -284,13 +283,13 @@ onBeforeUnmount(() => {
   overflow: hidden;
   border-radius: inherit;
   background: radial-gradient(circle at 50% 38%, var(--screen-glow), transparent 60%), var(--screen-background);
-  --screen-background: #0b0c0e;
-  --screen-glow: rgba(255, 215, 106, 0.2);
-  --title-color: #ffd76a;
-  --title-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
-  --joke-color: #fff;
-  --joke-shadow: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
-  --image-shadow: drop-shadow(0 8px 24px rgba(255, 215, 106, 0.35));
+  --screen-background: var(--illustration-bg);
+  --screen-glow: var(--illustration-wash);
+  --title-color: var(--illustration-accent);
+  --title-shadow: 0 2px 12px var(--illustration-shadow);
+  --joke-color: var(--illustration-text);
+  --joke-shadow: drop-shadow(0 2px 6px var(--illustration-shadow));
+  --image-shadow: drop-shadow(0 8px 24px var(--illustration-hover));
   --second-line-delay: 2s;
   --second-line-fade-duration: 3s;
   --laugh-delay: calc(var(--second-line-delay) + var(--second-line-fade-duration));
@@ -396,7 +395,7 @@ onBeforeUnmount(() => {
 @keyframes empty-tab-firework {
   0% {
     opacity: 0;
-    transform: translate(0, 0) rotate(0deg) scale(0.4);
+    transform: translate(0, 0) rotate(0deg);
   }
   15% {
     opacity: 1;
@@ -406,7 +405,7 @@ onBeforeUnmount(() => {
   }
   100% {
     opacity: 0;
-    transform: translate(var(--drift-x), var(--drift-y)) rotate(var(--drift-rotation)) scale(var(--drift-scale));
+    transform: translate(var(--drift-x), var(--drift-y)) rotate(var(--drift-rotation));
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -422,11 +421,11 @@ onBeforeUnmount(() => {
 /* The theme store sets data-theme="light" on the root element: the screen keeps its dark colors only in the dark theme. */
 :root[data-theme="light"] .empty-tab-screen {
   --screen-background: var(--bg);
-  --screen-glow: rgba(255, 184, 48, 0.5);
+  --screen-glow: var(--illustration-glow);
   --title-color: var(--accent);
-  --title-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
+  --title-shadow: 0 2px 10px var(--illustration-muted);
   --joke-color: var(--text);
-  --joke-shadow: drop-shadow(0 1px 3px rgba(255, 255, 255, 0.9));
-  --image-shadow: drop-shadow(0 10px 22px rgba(120, 70, 0, 0.45));
+  --joke-shadow: drop-shadow(0 1px 3px var(--illustration-highlight));
+  --image-shadow: drop-shadow(0 10px 22px var(--illustration-button-shadow));
 }
 </style>

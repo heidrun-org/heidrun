@@ -7,10 +7,10 @@ use serde_json::Value;
 use std::sync::OnceLock;
 
 /// The text of the file `schemas/issue.schema.json`.
-const ISSUE_SCHEMA: &str = include_str!("../../schemas/issue.schema.json");
+pub const ISSUE_SCHEMA: &str = include_str!("../../schemas/issue.schema.json");
 
 /// The text of the file `schemas/pull_request.schema.json`.
-const PULL_REQUEST_SCHEMA: &str = include_str!("../../schemas/pull_request.schema.json");
+pub const PULL_REQUEST_SCHEMA: &str = include_str!("../../schemas/pull_request.schema.json");
 
 /// The compiled check of an issue. It is built at the first use.
 static ISSUE_VALIDATOR: OnceLock<Validator> = OnceLock::new();

@@ -5,12 +5,16 @@ import PaneCard from "./PaneCard.vue";
 import { t } from "../i18n/index";
 import { PaneSeparators, type PaneOuterEdge, type PaneOuterEdges, type PaneSeparator } from "../lib/pane_separators";
 import { setSplitRatios } from "../stores/session";
+import { PaneMoveDrag } from "../stores/pane_move";
 import { gridLayout, keptTabs } from "../stores/pinned_panes";
 import type { AgentInfo, PaneLayoutSnapshot } from "../lib/types";
 
 // The columns of the window that sit against the panes: a corner where a line between panes reaches one of them
 // also moves that column. The parent moves the column, see `outerStart` and `outerMove`.
-const props = defineProps<{ outerEdges: PaneOuterEdges }>();
+const props = withDefaults(
+  defineProps<{ outerEdges: PaneOuterEdges; zenPaneId?: string | null }>(),
+  { zenPaneId: null },
+);
 const emit = defineEmits<{
   /** The user starts to drag a corner that touches a column of the window. */
   outerStart: [edge: PaneOuterEdge];
@@ -26,6 +30,12 @@ const emit = defineEmits<{
 // neighbour: two panes that touch have one line between them, and no gap. The right edge and the bottom edge of a pane stay
 // exactly at the edge of its share.
 const BORDER = "1px";
+const ZEN_PANE_STYLE = {
+  left: "0",
+  top: "0",
+  width: "100%",
+  height: "100%",
+};
 
 /**
  * Gives the start and the size of a pane along one axis.
@@ -76,7 +86,16 @@ function placePanes(layout: PaneLayoutSnapshot | null, panes: AgentInfo[]) {
 // The panes of every tab that the developer opened sit in one list, so that a pane keeps its element, and its terminal, when
 // its tab is selected or not. A tab that is not selected is hidden, and its terminal stays alive with its screen.
 const placed = computed(() =>
-  keptTabs.value.flatMap((tab) => placePanes(tab.layout, tab.panes).map((cell) => ({ ...cell, isShown: tab.isSelected }))),
+  keptTabs.value.flatMap((tab) =>
+    placePanes(tab.layout, tab.panes).map((cell) => {
+      const isZenPane = props.zenPaneId === cell.pane.pane_id;
+      return {
+        ...cell,
+        isShown: tab.isSelected && (props.zenPaneId === null || isZenPane),
+        style: isZenPane ? ZEN_PANE_STYLE : cell.style,
+      };
+    }),
+  ),
 );
 
 const isGridEmpty = computed(() => placed.value.some((cell) => cell.isShown) === false);
@@ -86,6 +105,9 @@ const isGridEmpty = computed(() => placed.value.some((cell) => cell.isShown) ===
 const GAP = "var(--pane-gap)";
 
 const separators = computed(() => {
+  if (props.zenPaneId !== null) {
+    return [];
+  }
   const layout = gridLayout.value;
   if (layout === null || layout.area.width <= 0 || layout.area.height <= 0) {
     return [];
@@ -162,6 +184,22 @@ type Drag = {
 
 const gridEl = ref<HTMLElement | null>(null);
 const drag = ref<Drag | null>(null);
+
+// While the developer drags a pane header over another pane, the grid shows the half of that pane where the dragged pane goes.
+const movePreviewStyle = computed(() => {
+  const box = PaneMoveDrag.state.previewBox;
+  const grid = gridEl.value;
+  if (box === null || grid === null) {
+    return null;
+  }
+  const gridBox = grid.getBoundingClientRect();
+  return {
+    left: `${box.left - gridBox.left}px`,
+    top: `${box.top - gridBox.top}px`,
+    width: `${box.right - box.left}px`,
+    height: `${box.bottom - box.top}px`,
+  };
+});
 const hoveredCornerKey = ref<string | null>(null);
 
 // Like Visual Studio Code: a line is drawn in colour under the pointer, and a corner under the pointer or in a drag
@@ -284,6 +322,7 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
       <PaneCard :pane="item.pane" />
     </div>
     <div v-if="isGridEmpty" class="empty"><EmptyTabScreen /></div>
+    <div v-if="movePreviewStyle !== null" class="move-preview" :style="movePreviewStyle" aria-hidden="true"></div>
     <div
       v-for="item in separatorItems"
       :key="item.separator.splitId"
@@ -337,6 +376,12 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
 .separator.right { width: var(--pane-gap); cursor: col-resize; }
 .separator:hover, .separator.lit, .separator:focus-visible { background: var(--done); }
 .separator:focus-visible { outline: none; }
+/* The half of the destination pane where the dragged pane goes. It has the look of the layer of a drop of images, and it lets the pointer
+   through, so that the pane under it keeps receiving the pointer. */
+.move-preview {
+  position: absolute; z-index: 8; pointer-events: none; box-sizing: border-box;
+  border: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
 /* The corner has no drawing: the lines that meet there show it. */
 .corner { position: absolute; z-index: 7; width: var(--corner-size); height: var(--corner-size); cursor: move; touch-action: none; }
 </style>

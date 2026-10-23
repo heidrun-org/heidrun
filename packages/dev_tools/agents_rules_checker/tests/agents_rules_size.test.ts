@@ -29,11 +29,11 @@ describe('AgentsRulesSize', () => {
 	});
 
 	describe('readMaximumSizeInBytes', () => {
-		it('reads the number of bytes in the sentence about the maximum size', () => {
+		it('reads the number of bytes in the line of the maximum size', () => {
 			const temporaryAgentsFilePath = Path.join(TemporaryFolder.create(), 'AGENTS.md');
 			Fs.writeFileSync(
 				temporaryAgentsFilePath,
-				'The maximum size of a file in the folder `docs/agents_rules`, and in all its subfolders, is 1234 bytes.\n',
+				'### Docs folder agents rules system values\n\n- Maximum size of a file: 1234 bytes.\n',
 			);
 			expect(AgentsRulesSize.readMaximumSizeInBytes(temporaryAgentsFilePath)).toBe(1234);
 		});

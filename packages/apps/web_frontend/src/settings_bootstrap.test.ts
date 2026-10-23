@@ -19,16 +19,21 @@ class SettingsBootstrapTestHelper {
 	 */
 	static readonly FILE_NAMES = [
 		'SettingsModal.vue',
+		'settings/settings_design_section.vue',
 		'settings/SettingsAgentsSection.vue',
+		'settings/SettingsConfirmationsSection.vue',
 		'settings/SettingsDynamicTopicsSection.vue',
-		'settings/SettingsFinishedItemsSection.vue',
 		'settings/SettingsGeneralSection.vue',
+		'settings/SettingsGuardsSection.vue',
 		'settings/SettingsMobileAccessSection.vue',
-		'settings/SettingsMouseSection.vue',
-		'settings/SettingsNewTabSection.vue',
 		'settings/SettingsNotificationsSection.vue',
+		'settings/SettingsSidebarsSection.vue',
 		'settings/SettingsSwitchRow.vue',
 		'settings/SettingsTerminalSection.vue',
+		'settings/SettingsTextDetectionFamily.vue',
+		'settings/SettingsTextDetectionSample.vue',
+		'settings/SettingsTextDetectionSection.vue',
+		'settings/SettingsVoiceInputSection.vue',
 	];
 
 	/**
@@ -79,7 +84,7 @@ class SettingsBootstrapTestHelper {
 }
 
 describe('the Settings window (issue 412)', () => {
-	it('writes no style rule of its own, except the dark layer behind the window and the box of the QR code', () => {
+	it('writes no style rule of its own, except the dark layer behind the window, the box of the QR code, and the box of the command', () => {
 		const styledClassNameList: Record<string, string[]> = {};
 		for (const fileName of SettingsBootstrapTestHelper.FILE_NAMES) {
 			const classNameList = SettingsBootstrapTestHelper.listStyledClassNames(SettingsBootstrapTestHelper.readComponent(fileName));
@@ -89,7 +94,7 @@ describe('the Settings window (issue 412)', () => {
 		}
 		expect(styledClassNameList).toEqual({
 			'SettingsModal.vue': ['overlay'],
-			'settings/SettingsMobileAccessSection.vue': ['qr'],
+			'settings/SettingsMobileAccessSection.vue': ['qr', 'command'],
 		});
 	});
 
@@ -124,13 +129,13 @@ describe('the Settings window (issue 412)', () => {
 		expect(checkedCount).toBeGreaterThanOrEqual(4);
 	});
 
-	it('gives every button a Bootstrap class: btn, btn-close, or nav-link', () => {
+	it('gives every button a Bootstrap class: btn, btn-close, nav-link, or list-group-item', () => {
 		let checkedCount = 0;
 		for (const fileName of SettingsBootstrapTestHelper.FILE_NAMES) {
 			const sourceText = SettingsBootstrapTestHelper.readComponent(fileName);
 			for (const tag of SettingsBootstrapTestHelper.listOpeningTags(sourceText, 'button')) {
 				checkedCount += 1;
-				expect({ fileName, tag, hasBootstrapClass: /class="[^"]*\b(btn|btn-close|nav-link)\b/.test(tag) }).toEqual({
+				expect({ fileName, tag, hasBootstrapClass: /class="[^"]*\b(btn|btn-close|nav-link|list-group-item)\b/.test(tag) }).toEqual({
 					fileName,
 					tag,
 					hasBootstrapClass: true,

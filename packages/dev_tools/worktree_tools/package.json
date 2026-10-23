@@ -2,7 +2,7 @@
   "name": "worktree_tools",
   "private": true,
   "license": "MIT",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
@@ -12,7 +12,7 @@
     "target_clean": "./src/target_clean_cli.ts"
   },
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run --minWorkers=1 --maxWorkers=2"
   },
   "dependencies": {
     "commander": "^15.0.0",

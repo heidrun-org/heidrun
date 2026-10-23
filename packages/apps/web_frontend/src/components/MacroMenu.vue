@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
-import { nextTick, onBeforeUnmount, ref } from "vue";
-import { insertText } from "../stores/session";
-import { macroEditor, macros, projectMacros, resolveMacroVariables, type Macro } from "../stores/macros";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
+import { askConfirm } from "../stores/confirm";
+import { insertText, toast } from "../stores/session";
+import { hardCodedMacros, macroEditor, macros, projectMacros, removeMacro, resolveMacroVariables, type Macro } from "../stores/macros";
 import { t } from "../i18n/index";
 
 const props = defineProps<{ paneId: string }>();
@@ -48,6 +49,18 @@ function onKeyDown(event: KeyboardEvent) {
   }
 }
 
+/** The groups of the menu that have macros, in order: the project, the personal macros, then the hard-coded macros. */
+const groups = computed(() =>
+  [
+    { id: "project", title: t("macroMenu.project"), items: projectMacros.value },
+    { id: "personal", title: t("macroMenu.personal"), items: macros.personal },
+    { id: "hardCoded", title: t("macroMenu.hardCoded"), items: hardCodedMacros.value },
+  ].filter((group) => group.items.length > 0),
+);
+
+/** The titles of the groups show only when the menu has more than one group. */
+const hasSeveralGroups = computed(() => groups.value.length > 1);
+
 // A click writes the text; a Shift+click writes it and presses Enter.
 async function useMacro(macro: Macro, event: MouseEvent) {
   close();
@@ -55,9 +68,24 @@ async function useMacro(macro: Macro, event: MouseEvent) {
   await insertText(props.paneId, text, event.shiftKey);
 }
 
-function edit() {
+function edit(macro: Macro | null, isFromProject = false) {
   close();
+  macroEditor.selectedId = macro?.id ?? null;
+  macroEditor.isFromProject = isFromProject;
   macroEditor.open = true;
+}
+
+async function remove(macro: Macro, isFromProject: boolean) {
+  close();
+  const isConfirmed = await askConfirm(t('macroMenu.deleteConfirm', { label: macro.label }), t('macroMenu.delete'));
+  if (isConfirmed === false) {
+    return;
+  }
+  try {
+    await removeMacro(macro.id, isFromProject);
+  } catch (error) {
+    toast(String(error));
+  }
 }
 
 onBeforeUnmount(close);
@@ -66,7 +94,7 @@ onBeforeUnmount(close);
 <template>
   <button
     ref="button"
-    class="tool"
+    class="btn icon small tool"
     :class="{ on: open }"
     :aria-expanded="open"
     :aria-label="t('macroMenu.label')"
@@ -82,32 +110,37 @@ onBeforeUnmount(close);
       ref="menu"
       class="menu show position-fixed overflow-y-auto"
       role="menu"
-      :style="{ top: `${position.top}px`, right: `${position.right}px`, width: 'min(320px, calc(100vw - 16px))', maxHeight: '70vh' }"
+      :style="{ top: `${position.top}px`, right: `${position.right}px`, width: 'min(420px, calc(100vw - 16px))', maxHeight: '70vh' }"
       @mousedown.stop
     >
-      <template v-for="group in [{ id: 'project', title: t('macroMenu.project'), items: projectMacros }, { id: 'personal', title: t('macroMenu.personal'), items: macros.personal }]" :key="group.id">
-        <template v-if="group.items.length > 0">
-          <div v-if="projectMacros.length > 0" class="menu-header">{{ group.title }}</div>
-          <button v-for="macro in group.items" :key="group.id + macro.id" type="button" class="menu-item text-wrap" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
-            <span class="d-block fw-medium">{{ macro.label }}</span>
-            <span v-if="macro.description !== ''" class="d-block text-body-secondary">{{ macro.description }}</span>
+      <template v-for="(group, index) in groups" :key="group.id">
+        <div v-if="index > 0" class="menu-divider" role="separator"></div>
+        <div v-if="hasSeveralGroups" class="menu-header">{{ group.title }}</div>
+        <div v-for="macro in group.items" :key="group.id + macro.id" class="position-relative">
+          <button type="button" class="menu-item text-wrap text-break" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
+            <span class="d-flex flex-column gap-1 align-self-start">
+              <span class="fw-medium" :class="{ 'pe-5': group.id !== 'hardCoded' }">{{ macro.label }}</span>
+              <small v-if="macro.description !== ''" class="text-body-secondary">{{ macro.description }}</small>
+            </span>
           </button>
-        </template>
+          <span v-if="group.id !== 'hardCoded'" class="position-absolute top-0 end-0 d-flex align-items-center mt-1">
+            <button type="button" class="btn icon small" role="menuitem" :aria-label="t('macroMenu.editMacro', { label: macro.label })" :title="t('macroMenu.edit')" @click.stop="edit(macro, group.id === 'project')">
+              <Icon name="pencil" />
+            </button>
+            <button type="button" class="btn icon small text-danger-emphasis" role="menuitem" :aria-label="t('macroMenu.deleteMacro', { label: macro.label })" :title="t('macroMenu.delete')" @click.stop="remove(macro, group.id === 'project')">
+              <Icon name="trash" />
+            </button>
+          </span>
+        </div>
       </template>
       <div class="menu-divider" role="separator"></div>
-      <button type="button" class="menu-item d-flex align-items-center gap-2 text-primary-emphasis" role="menuitem" @click="edit">
-        <Icon name="pencil" /> {{ t("macroMenu.edit") }}
+      <button type="button" class="menu-item d-flex align-items-center gap-2 text-primary-emphasis" role="menuitem" @click="edit(null)">
+        <Icon name="plus-lg" /> {{ t("macroMenu.create") }}
       </button>
-      <div class="menu-divider" role="separator"></div>
-      <div class="menu-text text-body-secondary">{{ t("macroMenu.hint") }}</div>
     </div>
   </Teleport>
 </template>
 
 <style scoped>
-.tool {
-  width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.tool:hover, .tool.on { background: var(--hover); color: var(--text); }
+.tool { display: inline-flex; align-items: center; justify-content: center; }
 </style>

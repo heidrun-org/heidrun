@@ -2,7 +2,7 @@
   "name": "video_recorder",
   "private": true,
   "license": "MIT",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
@@ -12,7 +12,7 @@
     "video_cut": "./src/video_cut_cli.ts"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run --minWorkers=1 --maxWorkers=2",
     "video:record": "tsx src/video_record_cli.ts",
     "video:cut": "tsx src/video_cut_cli.ts"
   },

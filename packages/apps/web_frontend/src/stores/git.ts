@@ -1,7 +1,8 @@
+import { WorkspaceFolders } from './workspace_folders';
 // Git state per workspace, and merge requests / pull requests from GitLab or GitHub.
 import { computed, reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import { allPanes, selectedPane, state as session, workspaces } from "./session";
+import { allPanes, state as session, workspaces } from "./session";
 import { refContext, type Forge } from "../lib/refs";
 import { t } from "../i18n/index";
 
@@ -127,13 +128,8 @@ export function openGitModal(path: string | null = null) {
   git.modal.open = true;
 }
 
-/** Folder of a workspace: the selected pane if it is in it, else its first pane. */
-export function workspaceCwd(wsId: string): string | null {
-  const sel = selectedPane.value;
-  if (sel && sel.workspace_id === wsId) return sel.foreground_cwd || sel.cwd || null;
-  const p = allPanes.value.find((x) => x.workspace_id === wsId && (x.foreground_cwd || x.cwd));
-  return p ? p.foreground_cwd || p.cwd || null : null;
-}
+/** The fixed workspace folder saved by the desktop application. */
+export const workspaceCwd = WorkspaceFolders.get;
 
 /** Reads the Git status of a workspace again. A failure leaves the status empty. */
 export async function loadStatus(wsId: string) {
@@ -489,8 +485,9 @@ export function startGit() {
     if (sel && tick % 9 === 0) loadForge(sel);
   }, 10_000);
   watch(
-    () => session.selectedWorkspaceId,
-    (id) => id && refreshGit(id),
+    () => [session.selectedWorkspaceId, session.selectedWorkspaceId === null
+      ? null : workspaceCwd(session.selectedWorkspaceId)] as const,
+    ([id]) => id && refreshGit(id),
     { immediate: true },
   );
   watch(

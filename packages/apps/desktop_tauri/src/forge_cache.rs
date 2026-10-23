@@ -112,7 +112,7 @@ impl ForgeCache {
 
 /// The file of the cache: `forge_cache.json` in the folder of the data of Heidrun.
 fn cache_path() -> PathBuf {
-    crate::chats::data_dir().join(CACHE_FILE)
+    crate::app_data::data_dir().join(CACHE_FILE)
 }
 
 /// The current time, in milliseconds since 1970.

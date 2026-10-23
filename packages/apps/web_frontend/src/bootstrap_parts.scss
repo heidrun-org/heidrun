@@ -18,6 +18,8 @@
 @use "bootstrap/scss/forms/form-text";
 @use "bootstrap/scss/forms/form-control";
 @use "bootstrap/scss/forms/switch";
+@use "bootstrap/scss/forms/radio";
+@use "bootstrap/scss/forms/form-field";
 @use "bootstrap/scss/helpers/theme-colors";
 @use "bootstrap/scss/dialog";
 @use "bootstrap/scss/menu";
@@ -41,6 +43,7 @@ $application-utilities: (
       start: flex-start,
       center: center,
       between: space-between,
+      end: flex-end,
     ),
   ),
   "border": (
@@ -97,7 +100,9 @@ $application-utilities: (
     property: align-items,
     class: align-items,
     values: (
+      start: flex-start,
       center: center,
+      end: flex-end,
     ),
   ),
   "align-self": (
@@ -133,6 +138,7 @@ $application-utilities: (
     values: (
       1: 0.25rem,
       3: 1rem,
+      auto: auto,
     ),
   ),
   "margin-end": (
@@ -152,11 +158,21 @@ $application-utilities: (
       auto: auto,
     ),
   ),
+  "margin-top": (
+    important: true,
+    property: margin-top,
+    class: mt,
+    values: (
+      1: 0.25rem,
+      2: 0.5rem,
+    ),
+  ),
   "margin-bottom": (
     important: true,
     property: margin-bottom,
     class: mb,
     values: (
+      2: 0.5rem,
       3: 1rem,
     ),
   ),
@@ -174,6 +190,15 @@ $application-utilities: (
     class: ps,
     values: (
       3: 1rem,
+    ),
+  ),
+  "padding-end": (
+    important: true,
+    property: padding-right,
+    class: pe,
+    values: (
+      2: 0.5rem,
+      5: 3rem,
     ),
   ),
   "padding-top": (
@@ -372,6 +397,7 @@ $application-utilities: (
 .form-control,
 select.form-control {
   --control-font-size: var(--font-size);
+  --control-border-color: var(--control-border);
   font-family: inherit;
   box-shadow: none;
 }
@@ -381,7 +407,7 @@ select.form-control {
 // shows the ring, so the ring has the same color and width whatever opens it.
 .form-control:focus-visible,
 .form-control:focus-within {
-  outline: 2px solid var(--done);
+  outline: 2px solid var(--focus);
   outline-offset: -1px;
 }
 

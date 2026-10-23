@@ -20,17 +20,12 @@ async function click(e: MouseEvent) {
 </script>
 
 <template>
-  <button class="confirm" :aria-label="props.question" :title="props.question" @mousedown.stop @click="click">
+  <button class="btn small confirm" :class="{ icon: props.label === undefined }" :aria-label="props.question" :title="props.question" @mousedown.stop @click="click">
     <Icon v-if="props.icon" :name="props.icon" />
     <template v-if="props.label">{{ props.label }}</template>
   </button>
 </template>
 
 <style scoped>
-.confirm {
-  border: none; background: transparent; color: var(--muted); border-radius: 6px;
-  min-width: 22px; height: 22px; padding: 0 6px; font-size: var(--font-size); line-height: 1;
-  display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; gap: 6px;
-}
-.confirm:hover { background: var(--hover); color: var(--text); }
+.confirm { min-width: 22px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; gap: 6px; }
 </style>

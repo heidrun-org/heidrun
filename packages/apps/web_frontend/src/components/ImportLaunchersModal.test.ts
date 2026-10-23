@@ -99,7 +99,7 @@ describe("ImportLaunchersModal", () => {
     const { invoke } = await import("@tauri-apps/api/core");
     vi.mocked(open).mockResolvedValueOnce(path as never);
     vi.mocked(invoke).mockResolvedValueOnce(scripts as never);
-    await wrapper.get("button.btn:not(.primary)").trigger("click");
+    await wrapper.get(".source > button:first-child").trigger("click");
     await flushPromises();
     return { open, invoke };
   }
@@ -169,7 +169,7 @@ describe("ImportLaunchersModal", () => {
     const { invoke } = await import("@tauri-apps/api/core");
     vi.mocked(open).mockResolvedValueOnce("/Users/me/webwork/heidrun/web/package.json" as never);
     vi.mocked(invoke).mockRejectedValueOnce("not valid JSON");
-    await wrapper.get("button.btn:not(.primary)").trigger("click");
+    await wrapper.get(".source > button:first-child").trigger("click");
     await flushPromises();
     expect(wrapper.find(".picked").exists()).toBe(false);
     expect(wrapper.findAll(".list-group-item")).toHaveLength(2);
@@ -180,7 +180,7 @@ describe("ImportLaunchersModal", () => {
     const { open } = await import("@tauri-apps/plugin-dialog");
     const { invoke } = await import("@tauri-apps/api/core");
     vi.mocked(open).mockResolvedValueOnce(null as never);
-    await wrapper.get("button.btn:not(.primary)").trigger("click");
+    await wrapper.get(".source > button:first-child").trigger("click");
     await flushPromises();
     expect(packageScriptCalls(invoke)).toHaveLength(0);
     expect(wrapper.find(".picked").exists()).toBe(false);

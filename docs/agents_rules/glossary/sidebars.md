@@ -1,11 +1,11 @@
 # Glossary of Heidrun: sidebars
 
 - Created: 14 October 2026
-- Last updated: 14 October 2026
+- Last updated: 21 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: sidebars](../user_interface/sidebars/index.md)
-- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 425](https://github.com/heidrun-org/heidrun/issues/425), [issue 430](https://github.com/heidrun-org/heidrun/issues/430), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 446](https://github.com/heidrun-org/heidrun/issues/446)
+- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 425](https://github.com/heidrun-org/heidrun/issues/425), [issue 430](https://github.com/heidrun-org/heidrun/issues/430), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 446](https://github.com/heidrun-org/heidrun/issues/446), [issue 714](https://github.com/heidrun-org/heidrun/issues/714)
 
 This document gives one short definition for each word of the sidebars and their sidebar sections. The other words of Heidrun are in [index.md](index.md).
 
@@ -45,7 +45,7 @@ The sidebar section of the left sidebar that shows what lives on GitHub or on Gi
 
 ### File explorer sidebar section
 
-The sidebar section of the left sidebar that shows the whole folder tree of the Git repository of the selected workspace, with the icon `folder2`. Its menu has an option "Ignored files" that shows or hides the files and the folders that Git ignores. A click on a folder folds or unfolds it. A click on a file opens the file in the Files window. A right click on a file opens a context menu that copies the path of the file. It only reads files.
+The sidebar section of the left sidebar that shows the whole folder tree of the Git repository of the selected workspace, with the icon `folder2`. Its menu has an option "Ignored files" that shows or hides the files and the folders that Git ignores. A click on a folder folds or unfolds it. A click on a file opens the file in a file view pane, read only. A right click on a file opens a context menu that copies the path of the file. It only reads files.
 
 ### Sidebar icon bar
 
@@ -53,7 +53,7 @@ The narrow vertical bar of icons at the outer edge of each sidebar, like the bar
 
 ### Files window
 
-The window that shows a file in a tab, the file viewer. The developer can edit the file there. It opens from a click on a file in the File explorer sidebar section, with the shortcut ⌘P, and from a file name in a terminal. It is not the large Git window.
+The window that shows a file in a tab, the file viewer. The developer can edit the file there. It opens with the shortcut ⌘P, from a file name in a terminal, and from a click on a file in the File explorer sidebar section when no pane can show the file in a file view pane. It is not the large Git window.
 
 ### Large Git window
 

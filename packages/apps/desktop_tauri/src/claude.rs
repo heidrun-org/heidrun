@@ -12,11 +12,11 @@ use std::path::PathBuf;
 const SCRIPT: &str = include_str!("../../../../scripts/claude-statusline.sh");
 
 pub(crate) fn claude_dir() -> PathBuf {
-    data_layer_chat_sessions::claude_dir()
+    data_layer_coding_agents::claude_dir()
 }
 
 fn desk_dir() -> PathBuf {
-    dirs::home_dir().unwrap_or_default().join(".config").join("heidrun")
+    crate::app_data::data_dir()
 }
 
 fn settings_path() -> PathBuf {
@@ -71,7 +71,9 @@ fn current_command(m: &Map<String, Value>) -> Option<String> {
 }
 
 fn is_ours(cmd: &str) -> bool {
-    cmd.contains("heidrun/claude-statusline.sh") || cmd.contains("Heidrun/scripts/claude-statusline.sh")
+    cmd == script_path().to_string_lossy()
+        || (crate::application_profile::is_development() == false
+            && (cmd.contains("heidrun/claude-statusline.sh") || cmd.contains("Heidrun/scripts/claude-statusline.sh")))
 }
 
 /// Moves what the former name "Herdr Desk" left in the Claude Code settings: the backup file, and the
@@ -106,7 +108,8 @@ pub fn claude_statusline_state() -> Result<StatuslineState, String> {
     let m = read_settings()?;
     let installed = current_command(&m).map(|c| is_ours(&c)).unwrap_or(false);
     // Keep the installed copy in step with this version of the app.
-    if installed && std::fs::read_to_string(script_path()).ok().as_deref() != Some(SCRIPT) {
+    if installed && crate::application_profile::is_development() == false
+        && std::fs::read_to_string(script_path()).ok().as_deref() != Some(SCRIPT) {
         let _ = std::fs::write(script_path(), SCRIPT);
         #[cfg(unix)]
         {
@@ -125,6 +128,7 @@ pub fn claude_statusline_state() -> Result<StatuslineState, String> {
 
 #[tauri::command]
 pub fn claude_statusline_install() -> Result<StatuslineState, String> {
+    crate::application_profile::require_installed_integration()?;
     let mut m = read_settings()?;
     std::fs::create_dir_all(desk_dir()).map_err(|e| e.to_string())?;
 
@@ -189,6 +193,7 @@ pub fn claude_set_rc_startup(enabled: bool) -> Result<Option<bool>, String> {
 /// Hides (or shows again) the status line row in Claude Code; reporting continues.
 #[tauri::command]
 pub fn claude_statusline_set_hidden(hidden: bool) -> Result<StatuslineState, String> {
+    crate::application_profile::require_installed_integration()?;
     std::fs::create_dir_all(desk_dir()).map_err(|e| e.to_string())?;
     if hidden {
         std::fs::write(hidden_path(), "1\n").map_err(|e| e.to_string())?;
@@ -201,6 +206,7 @@ pub fn claude_statusline_set_hidden(hidden: bool) -> Result<StatuslineState, Str
 /// Puts the user's own status line back (or removes ours if there was none).
 #[tauri::command]
 pub fn claude_statusline_uninstall() -> Result<StatuslineState, String> {
+    crate::application_profile::require_installed_integration()?;
     let mut m = read_settings()?;
     let chained = std::fs::read_to_string(next_path()).ok().map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
     match chained {
@@ -353,89 +359,6 @@ pub fn claude_commands(cwd: Option<String>) -> Vec<String> {
     out.sort();
     out.dedup();
     out
-}
-
-// ---- Agents ---------------------------------------------------------------
-
-#[derive(Serialize, Debug, PartialEq)]
-pub struct AgentDef {
-    pub name: String,
-    pub description: String,
-    pub model: Option<String>,
-    /// "projet" (.claude/agents of the folder or a parent) or "perso" (~/.claude/agents).
-    pub source: String,
-}
-
-/// `---\nname: x\ndescription: …\nmodel: sonnet\n---` → the three fields (simple YAML only).
-fn parse_agent(text: &str, fallback: &str, source: &str) -> Option<AgentDef> {
-    let rest = text.trim_start_matches('\u{feff}').strip_prefix("---")?;
-    let end = rest.find("\n---")?;
-    let (mut name, mut description, mut model) = (None, String::new(), None);
-    for line in rest[..end].lines() {
-        let Some((k, v)) = line.split_once(':') else { continue };
-        let v = v.trim().trim_matches(|c| c == '"' || c == '\'').to_string();
-        match k.trim() {
-            "name" if !v.is_empty() => name = Some(v),
-            "description" => description = v,
-            "model" if !v.is_empty() && v != "inherit" => model = Some(v),
-            _ => {}
-        }
-    }
-    let name = name.unwrap_or_else(|| fallback.to_string());
-    // Passed to `claude --agent`: anything else is not a name we launch.
-    if name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || "-_.".contains(c)) {
-        return None;
-    }
-    Some(AgentDef { name, description: description.replace("\\n", " "), model, source: source.into() })
-}
-
-fn read_agents(dir: &std::path::Path, source: &str, out: &mut Vec<AgentDef>) {
-    let Ok(entries) = std::fs::read_dir(dir) else { return };
-    let mut files: Vec<_> = entries.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|x| x == "md")).collect();
-    files.sort();
-    for p in files {
-        let stem = p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
-        if let Some(a) = std::fs::read_to_string(&p).ok().and_then(|t| parse_agent(&t, &stem, source)) {
-            if !out.iter().any(|x| x.name == a.name) {
-                out.push(a);
-            }
-        }
-    }
-}
-
-/// Subagents Claude Code knows in this folder: the project's first (nearest folder
-/// wins), then the user's own.
-#[tauri::command]
-pub fn claude_agents(cwd: Option<String>) -> Vec<AgentDef> {
-    let mut out = Vec::new();
-    let home = dirs::home_dir().unwrap_or_default();
-    if let Some(cwd) = cwd {
-        let mut dir = Some(std::path::Path::new(&cwd));
-        while let Some(d) = dir {
-            if d == home {
-                break;
-            }
-            read_agents(&d.join(".claude").join("agents"), "projet", &mut out);
-            dir = d.parent();
-        }
-    }
-    read_agents(&claude_dir().join("agents"), "perso", &mut out);
-    out
-}
-
-#[cfg(test)]
-mod agent_tests {
-    use super::*;
-
-    #[test]
-    fn parses_agent_frontmatter() {
-        let a = parse_agent("---\nname: bruno\ndescription: \"Revue de code\"\nmodel: sonnet\ntools: Read\n---\nTu es…", "x", "projet").unwrap();
-        assert_eq!(a, AgentDef { name: "bruno".into(), description: "Revue de code".into(), model: Some("sonnet".into()), source: "projet".into() });
-        let b = parse_agent("---\ndescription: d\nmodel: inherit\n---\n", "lohan", "perso").unwrap();
-        assert_eq!((b.name.as_str(), b.model), ("lohan", None));
-        assert!(parse_agent("pas de frontmatter", "x", "perso").is_none());
-        assert!(parse_agent("---\nname: a; rm -rf /\n---\n", "x", "perso").is_none());
-    }
 }
 
 // ---- Transcripts (mosaic of a session's agents) ------------------------------

@@ -9,6 +9,68 @@ Keep your agents working. Know which one needs you.
 
 This file gives the rules for working on this repository. The file `README.md` describes the application itself.
 
+## Installed Heidrun and Heidrun Development
+
+Heidrun and Heidrun Development are separate applications with separate permissions. Plain "Heidrun" means the installed application that the developer uses. Always write "Heidrun Development" in full when referring to the application used for development testing.
+
+| Application | Purpose | macOS application identifier | Permission for Codex |
+| --- | --- | --- | --- |
+| Heidrun | The installed application used by the developer | `dev.heidrun-org.heidrun` | Revoked. Codex must not control this application. |
+| Heidrun Development | The application built from the checkout or temporary worktree being tested | `dev.heidrun-org.heidrun.development` | Only development testing authorized by the developer. |
+
+The identifiers are defined in [tauri.conf.json](packages/apps/desktop_tauri/tauri.conf.json) and [tauri.development.conf.json](packages/apps/desktop_tauri/tauri.development.conf.json). Development identity is independent of Rust optimization settings: an optimized development build is still Heidrun Development.
+
+### Before application interaction
+
+- Select Heidrun Development by its exact application identifier or by the full path of the development application built from the intended checkout or temporary worktree. Verify both the application identifier and the checkout or temporary worktree before the first interaction. Verify that the returned window belongs to Heidrun Development before sending input.
+- Never select the installed application by the name "Heidrun" or by the identifier `dev.heidrun-org.heidrun`. Never launch, focus, click, type in, close, capture the window of, or change the settings, workspaces, tabs, or panes of the installed application for development testing. Do not access the installed application to test whether permission has been revoked.
+- A terminal running Codex inside installed Heidrun does not give Codex permission to control installed Heidrun. A similar appearance, the current working folder, a previous approval, and permission for Heidrun Development do not change this restriction.
+- If the correct Heidrun Development application or its window cannot be identified, stop application interaction. Never fall back to installed Heidrun.
+
+### Command-line access to Herdr
+
+The same restriction applies to command-line tools and direct socket requests. Never control the installed application's Herdr session as a substitute for controlling Heidrun Development.
+
+- Before any Herdr command or socket request, verify the resolved session and socket against the intended development application. Do not send discovery commands to an inherited session just because Codex is running inside Herdr.
+- Installed Heidrun normally uses the session `heidrun`. Heidrun Development in the main checkout normally uses `heidrun_development`. Heidrun Development in a temporary worktree uses a separate session derived from the worktree name. The selection rules are in [herdr.rs](packages/apps/desktop_tauri/src/herdr.rs).
+- Check environment overrides, including `HERDR_SOCKET_PATH`, `HERDR_SESSION`, and `HEIDRUN_DEVELOPMENT_SESSION`. The development application clears inherited Herdr variables at startup in [application_profile.rs](packages/apps/desktop_tauri/src/application_profile.rs); a separate command started by Codex can still inherit the installed application's variables.
+- For a verified development session, clear inherited `HERDR_SOCKET_PATH` and `HERDR_SESSION` from the environment of the command and pass the verified session explicitly with `herdr --session <verified-development-session> ...`. For a direct socket request, use only the verified development socket. Stop when the resolved destination is installed Heidrun or is uncertain.
+
+### Codex Computer Use permission
+
+Repository instructions and saved Codex permissions are separate. Editing this file does not revoke a saved application approval. Keep an explicit denial for installed Heidrun in the user's Codex configuration:
+
+```toml
+[computer_use.macos.bundle_ids]
+"dev.heidrun-org.heidrun" = "deny"
+```
+
+Merge this entry into any existing table without replacing unrelated settings. Do not add an approval for Heidrun Development as a side effect of denying installed Heidrun. The exact application identifier makes the rule specific to installed Heidrun. See the [official Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+
+If Heidrun remains listed under Always-allowed apps in Codex's Computer Use settings, remove that saved approval separately. Verify the saved rule through Codex configuration, and report any unresolved saved-approval removal or need to reload an existing Codex session. Do not claim that a configuration read proves that an already-running Computer Use session has reloaded the rule. Computer Use permissions do not block shell commands, so the Herdr restrictions above still apply.
+
+This restriction follows [issue 769](https://github.com/heidrun-org/heidrun/issues/769).
+
+## Git submodules
+
+Clone Heidrun with its submodules:
+
+```sh
+git clone --recurse-submodules git@github.com:heidrun-org/heidrun.git
+```
+
+After a pull, or in an existing clone without initialized submodules, run this command from the checkout root:
+
+```sh
+git submodule update --init --recursive
+```
+
+- `submodules/coding_agent_plugin` contains the independent [coding agent skills repository](https://github.com/jeromeetienne/coding_agent_plugin) at the commit recorded by Heidrun.
+- Make shared skill changes in the independent repository. Heidrun's existing `.agents/skills` remain in place and are not synchronized automatically.
+- `pnpm worktree:create` initializes the submodules of the new worktree before installing packages.
+- To adopt a newer published skill version, check out the intended commit inside the submodule and commit the updated submodule reference in Heidrun. A normal submodule update restores the recorded commit; it does not follow the latest remote commit.
+- The submodule contains instructions and is outside the pnpm workspace. The application build, tests, and release scripts do not import the submodule.
+
 ## Project memory
 
 This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
@@ -18,150 +80,61 @@ This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 - The branch `dev_eric` is the personal development branch of Eric. Eric's work goes on `dev_eric`.
 - Each developer works on the personal development branch of that developer only. Never put the work of Jérôme on `dev_eric`, and never put the work of Eric on `dev_jerome`.
 
+## Docs folder
+
+The folder `docs` belongs to the coding agents: the coding agents write its files, and the coding agents read them. Every file and every folder in the folder `docs` follows the skill [docs_folder_system](.agents/skills/docs_folder_system/SKILL.md). Read the skill before you add, change, rename, move, or delete a file or a folder in the folder `docs` ([issue 811](https://github.com/heidrun-org/heidrun/issues/811)).
+The skill names no detail of this repository: it reads the values of this repository in the section "Docs folder system values" below.
+
+### Docs folder system values
+
+- Documentation folder: `docs`
+- Files with no metadata header: `docs/release_notes/prefix.md`. The release script copies this file into the text of every GitHub release, so a header would appear in every release.
+
 ## Agent rules
 
-The folder `docs/agents_rules` holds all the rules that every agent follows. Read the glossary before you change the code, and keep the glossary up to date when a word changes. The rules of the user interface are split by topic into many small files: read only the files that match the part that you change, and keep them up to date when a rule changes.
+The folder `docs/agents_rules` holds all the rules that every coding agent obeys. Before you change the code, read the glossary and the rule files that match the part that you change, as the skill [docs_folder_agents_rules_system](.agents/skills/docs_folder_agents_rules_system/SKILL.md) says. This skill needs the skill [docs_folder_system](.agents/skills/docs_folder_system/SKILL.md). Start at [docs/agents_rules/index.md](docs/agents_rules/index.md): each file `index.md` says what each rule file holds and when to read it ([issue 811](https://github.com/heidrun-org/heidrun/issues/811)).
+The skill names no detail of this repository: it reads the values of this repository in the section "Docs folder agents rules system values" below.
 
-- The glossary, in the folder `docs/agents_rules/glossary`: the definition of each word that the project uses for one of its parts, and the official name "coding agent" for Claude Code, Codex, and Antigravity. Use these words, and no other word, in the code, in the documents, and in the conversations. Read the files that match the part that you change:
-  - [index.md](docs/agents_rules/glossary/index.md): the list of the files of the glossary.
-  - [workspaces_tabs_and_panes.md](docs/agents_rules/glossary/workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, the column of pinned panes, and the usage wheel.
-  - [sidebars.md](docs/agents_rules/glossary/sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Clipboard, Launchers, Source control, Code hosting, and File explorer sidebar sections, the launcher, the sidebar icon bar, the Files window, the large Git window, and the Left sidebar enable disable button.
-  - [chats.md](docs/agents_rules/glossary/chats.md): the chat, the chat session, the Past chats sidebar section, and the Chats sort dropdown menu.
-  - [dynamic_topics.md](docs/agents_rules/glossary/dynamic_topics.md): the definition of each word of the dynamic topics of the Past chats sidebar section: the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar. Read it when you change the Past chats sidebar section or the dynamic topics.
-  - [code_hosting.md](docs/agents_rules/glossary/code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it when you change the Code hosting sidebar section.
-  - [status_bar.md](docs/agents_rules/glossary/status_bar.md): the status bar, the status bar section, the information card, and the Workspace status bar section.
-  - [pane_focus_history.md](docs/agents_rules/glossary/pane_focus_history.md): the definition of each word of the navigation through the panes that had the focus: the top bar, the pane focus history, the Back button, and the Forward button. Read it when you change the top bar or the focus of the panes.
-  - [person_work.md](docs/agents_rules/glossary/person_work.md): the definition of each word of the statistic of the work of one person: the Work of one person tab, its source, the Git history, the AI cost, the person, the person chooser, the time range, the day, the three totals, and the bar chart. Read it when you change the tab "Work of one person" of the Statistics window.
-  - [statistics_charts.md](docs/agents_rules/glossary/statistics_charts.md): the definition of the chart legend and of the chart information card, which every chart of the Statistics window has. Read it when you add or change a chart of the Statistics window.
-  - [user_activity.md](docs/agents_rules/glossary/user_activity.md): the definition of each word of the activity of the developer in front of Heidrun: the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot. Read it when you change the detection of the activity of the developer, its sidebar section, or the Statistics window.
-- [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
+### Docs folder agents rules system values
 
-The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
-
-- The window, in the folder `docs/agents_rules/user_interface/window`:
-  - [layout.md](docs/agents_rules/user_interface/window/layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
-  - [colors_and_scroll_bars.md](docs/agents_rules/user_interface/window/colors_and_scroll_bars.md): the colors and the scroll bars.
-  - [abbreviated_times.md](docs/agents_rules/user_interface/window/abbreviated_times.md): the circled question mark after each abbreviated time, such as "Just now", and its title with the exact time.
-  - [statistics_window.md](docs/agents_rules/user_interface/window/statistics_window.md): the item "Statistics" of the More menu, the Statistics window, its tab list, and where the data of the tab "User activity" comes from.
-  - [statistics_charts.md](docs/agents_rules/user_interface/window/statistics_charts.md): the rules that every chart of the Statistics window follows: a chart legend, and a chart information card in HTML with an arrow that points to the bar under the pointer. Read it each time that you add or change a chart of the Statistics window, and add the same legend, the same card, and the same tests to a new chart.
-  - [statistics_user_activity.md](docs/agents_rules/user_interface/window/statistics_user_activity.md): the tab "User activity" of the Statistics window: the time range, the slot length, the workspaces, the histogram of the user activity time, and its tests.
-  - [statistics_user_activity_stacked_bars.md](docs/agents_rules/user_interface/window/statistics_user_activity_stacked_bars.md): the stacked bars of the histogram of the tab "User activity": the parts, the colors of the workspaces, the legend, the chart information card, and its tests.
-  - [statistics_person_work.md](docs/agents_rules/user_interface/window/statistics_person_work.md): the tab "Work of one person" of the Statistics window: the source (Git history or AI cost), the person chooser, the time range, the totals, the bar chart of each day, what counts, and where its data comes from.
-  - [statistics_ai_cost.md](docs/agents_rules/user_interface/window/statistics_ai_cost.md): the source "AI cost" of the tab "Work of one person": what counts, the cost of each hour of a chat, the chats with no known price, where its data comes from, and its tests.
-  - [status_bar.md](docs/agents_rules/user_interface/window/status_bar.md): the status bar and the menu of the status item.
-  - [status_bar_git.md](docs/agents_rules/user_interface/window/status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, the fetch in the background, and the counts.
-  - [window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, and the goat sounds.
-- The workspaces, the tabs, and the panes, in the folder `docs/agents_rules/user_interface/workspaces_tabs_and_panes`:
-  - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
-  - [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
-  - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes and the state "Needs you".
-  - [pane_focus_history.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
-- The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
-  - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the clipboard.
-  - [source_control.md](docs/agents_rules/user_interface/sidebars/source_control.md): the Source control sidebar section.
-  - [code_hosting.md](docs/agents_rules/user_interface/sidebars/code_hosting.md): the Code hosting sidebar section: the header buttons, the icon, the two lists, the rows, the information card, and the cache.
-  - [code_hosting_search.md](docs/agents_rules/user_interface/sidebars/code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".
-  - [files.md](docs/agents_rules/user_interface/sidebars/files.md): the File explorer sidebar section.
-  - [needs_you_workspaces.md](docs/agents_rules/user_interface/sidebars/needs_you_workspaces.md): the list of workspaces at the bottom of the Needs you sidebar section, and the section "Needs you" of the Settings window.
-  - [user_activity.md](docs/agents_rules/user_interface/sidebars/user_activity.md): the User activity sidebar section, the detection of the activity of the developer, and the user activity records.
-- The Past chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
-  - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
-  - [chats_header_and_sort.md](docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md): the two button groups at the top, the views, and the Chats sort dropdown menu.
-  - [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, the tokens, and the estimated cost, its cache, and the width of an information card.
-  - [past_chats_settings_section.md](docs/agents_rules/user_interface/sidebars/chats/past_chats_settings_section.md): the section "Past chats" of the Settings window, with the delay between two reads of the chats.
-  - The information cards of a chat, in the folder `docs/agents_rules/user_interface/sidebars/chats/information_cards`:
-    - [files_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/files_line.md): the files line and its information card.
-    - [references_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/references_line.md): the references line and its information card.
-    - [dates_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/dates_line.md): the dates line and its information card, with the tokens and the estimated cost of the chat.
-    - [worktrees_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/worktrees_line.md): the worktrees line and its information card.
-  - The dynamic topics, in the folder `docs/agents_rules/user_interface/sidebars/chats/dynamic_topics`:
-    - [settings_section.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/settings_section.md): the section "Dynamic topics" of the Settings window.
-    - [clusters.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/clusters.md): the clustered dynamic topics, the translation table, and the button "Rebuild the clusters".
-    - [display.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/display.md): the dynamic topics on the row of each chat, and the dynamic topic bar.
-    - [extraction_methods.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/extraction_methods.md): the methods "Keyword" and "Language model", and their caches.
-
-The maximum size of a file in the folder `docs/agents_rules`, and in all its subfolders, is 10000 bytes. When a file is larger, split it by topic into smaller files, and list the new files here. The test of the package `agents_rules_checker` fails when a file is larger.
-
-## Documentation metadata
-
-Every documentation file in the folder `docs`, and in all its subfolders, has a metadata header immediately after its title.
-
-- The header has these lines, in this order:
-  - `Created`: the date on which the file was created.
-  - `Last updated`: the date of the last change of the file.
-  - `Status`: one short phrase that says what the file is, for example "Maintained index for agents and tools".
-  - `Related framing`: a link to the document that sets the frame of this file, for example the project instructions.
-  - `Related rules`: a link to each rule file that applies to this file. Add this line only when a rule file applies.
-  - `Related issue`: a link to the GitHub issue that this file comes from. Add this line only when an issue exists.
-- Write each date as day, month name, and year, for example `13 October 2026`.
-- Update `Last updated` in every change of the file, and keep the date accurate.
-- Write each link as a relative link that works from the folder of the file.
-- The file `docs/release_notes/prefix.md` has no header. The release script copies this file into the text of every GitHub release, so a header would appear in every release.
-
-Example, for the file `docs/team_collaboration_process/index.md`:
-
-```markdown
-# Team collaboration process index
-
-- Created: 4 October 2026
-- Last updated: 8 October 2026
-- Status: Maintained index for agents and tools
-- Related framing: [Project instructions](../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../agents_rules/glossary/index.md)
-
-This file lists the files and the subfolders of this folder, for agents and tools.
-
-- [README.md](README.md): the overview of this folder, for people.
-- [team_workflow.md](team_workflow.md): the way several developers work on one repository.
-```
-
-## Documentation folders
-
-Every folder in the folder `docs`, at every depth, has two files that describe the folder. The folder `docs` itself has them too.
-
-- `README.md` is for people. It says in plain words what the folder is for, and how to read the files of the folder. It has the metadata header, and its `Status` is "Maintained overview for people".
-- `index.md` is for agents and tools. It has the metadata header, and its `Status` is "Maintained index for agents and tools". After the header, it has one introduction sentence, then one bullet for each file and each subfolder of the folder, in this form: a relative link, a colon, and one sentence that says what the file or the subfolder holds. The bullet for a subfolder links to the file `index.md` of that subfolder. The bullet for `README.md` is included. The file does not repeat the content of the files that it lists.
-- When you add, rename, move, or delete a file or a subfolder of the folder `docs`, update the file `index.md` of its folder in the same change.
-- When you create a new folder in the folder `docs`, create its two files in the same change, and add a bullet for the new folder in the file `index.md` of its parent folder.
+- Agent rules folder: `docs/agents_rules`
+- Glossary folder: `docs/agents_rules/glossary`. The glossary also gives the official name "coding agent" for Claude Code, Codex, and Antigravity.
+- Maximum size of a file: 10000 bytes.
+- Size test command: `pnpm --filter agents_rules_checker test`
 
 ## Issue Fix Workflow
 
-Every issue fix in this repository has three parts: the Issue Fix Setup, the Issue Fix Review, then the Issue Fix Completion. In the Issue Fix Setup, you make the change. In the Issue Fix Review, the developer tests the change. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
+Every issue fix in this repository follows the skill [issue_fix_workflow](.agents/skills/issue_fix_workflow/SKILL.md). Read the skill before you start an issue fix, each time that the developer asks to fix an issue ([issue 656](https://github.com/heidrun-org/heidrun/issues/656)).
+The skill names no detail of this repository: it reads the values of this repository in the section "Issue Fix Workflow values" below.
 
-The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub and GitLab" for how to create an issue.
+### Issue Fix Workflow values
 
-### Issue Fix Setup
+- Target branch: the personal development branch of the developer, as the section "Project memory" says: `dev_jerome` for Jérôme, and `dev_eric` for Eric.
+- Worktree creation command: `pnpm worktree:create <name>`, run at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree. The command initializes the submodules at their recorded commits with `git submodule update --init --recursive`. At the end, the command runs `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. Do not run `pnpm install` by hand after the command. When the installation fails, the command prints the error and exits with a non-zero code, and the worktree stays.
+- Worktree folder: `.claude/worktrees/<name>`, inside the main checkout.
+- Launch command: `cd <path of the temporary worktree> && pnpm dev`.
+- Issue tracker commands: this repository is on GitHub, so use the `gh` command here. Use the `glab` command only for a repository on GitLab, as [github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md) says.
+  - Read an issue: `gh issue view <number> --comments`. On GitLab: `glab issue view <number> --comments`.
+  - Comment on an issue: `gh issue comment <number> --body "<comment>"`. On GitLab: `glab issue note <number> --message "<comment>"`.
+  - Create an issue: see the section "GitHub and GitLab".
+  - Create a pull request: `gh pr create`. On GitLab, create a merge request: `glab mr create`.
+  - Merge a pull request: `gh pr merge`. On GitLab, merge the merge request: `glab mr merge`. The section "Project memory" says which branches are never deleted.
+  - Close an issue: `gh issue close <number>`. On GitLab: `glab issue close <number>`.
+  - The text of an issue and of a comment follows the section "GitHub and GitLab", part "Writing the text of an issue".
+- Chat rename: available in Claude Code only. The identifier of this chat is in the environment variable `CLAUDE_CODE_HOST_SESSION_ID`. Read it with `echo $CLAUDE_CODE_HOST_SESSION_ID`, then give it as `session_id` to the tool `mcp__ccd_session_mgmt__set_session_title`. Never search for this chat in the list of sessions: this chat is often missing from the list. For Codex, or when the variable is empty, the rename is not available.
+- Background: the Issue Fix Review exists because the developer cannot validate a change without the application ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)), it has two separate messages ([issue 526](https://github.com/heidrun-org/heidrun/issues/526)), and the Issue Fix Implementation starts again after each change request ([issue 610](https://github.com/heidrun-org/heidrun/issues/610)).
 
-1. Read the issue.
-2. Create a temporary worktree for the fix. Always create it. Never make the change in the main checkout, and never create only a temporary branch without a worktree. Name the temporary branch after the fix and the issue number, for example `remove-docs-issues-35`.
-   - To create the temporary worktree, run `pnpm worktree:create <name>` at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command `pnpm worktree:create` also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree. At the end, the command runs `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. Do not run `pnpm install` by hand after the command. When the installation fails, the command prints the error and exits with a non-zero code, and the worktree stays.
-   - Work only in the folder of the temporary worktree, `.claude/worktrees/<name>`. Read, edit, write, build, test, and run every file there, and never in the main checkout.
-3. Make the change in the temporary worktree. Every commit message mentions the issue number.
+## Bug Triage Workflow
 
-### Issue Fix Review
+The Bug Triage Workflow keeps the list of open issues small. It has four steps: collect the open issues, classify each issue, report to the developer in the chat, and decide. A triage starts only when the developer asks for it in the chat. The coding agent closes an issue only when the developer names the number of the issue. The full steps are in the skill [bug_triage_workflow](.agents/skills/bug_triage_workflow/SKILL.md). Read the skill before you start a triage ([issue 655](https://github.com/heidrun-org/heidrun/issues/655)).
 
-The Issue Fix Review starts when the change is done in the temporary worktree. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). Before you ask anything about the pull request (on GitLab, the merge request) or about the merge, always do these steps, in this order:
+## Git Cleanup Adviser
 
-1. Tell the developer to look at the result.
-2. Give the command line that launches the application in the temporary worktree, in its own `bash` code block:
-   ```bash
-   cd <path of the temporary worktree> && pnpm dev
-   ```
-3. Say in one or two short lines what to look at, so that the developer can validate the change.
-4. Only then ask whether the developer is satisfied and wants the pull request.
+The Git Cleanup Adviser reviews Git branches and worktrees and reports which ones appear safe to remove, with evidence. It gives advice only and does not remove branches or worktrees. Read the skill [.agents/skills/git_cleanup_adviser/SKILL.md](.agents/skills/git_cleanup_adviser/SKILL.md) when the developer asks which branches or worktrees can be removed ([issue 673](https://github.com/heidrun-org/heidrun/issues/673)).
 
-- Give the command line again each time that the developer asks for a change and you change the work.
-- Never start the Issue Fix Completion (the last commit, the pull request, the merge, and the closing of the issue) before the developer says that the result is good.
+## CONTEXT.md files
 
-### Issue Fix Completion
-
-The Issue Fix Completion starts when the developer says that the result of the Issue Fix Review is good.
-
-1. Make the last commit. It uses `fixes #<issue number>` in its message.
-2. Create a pull request (on GitLab, a merge request) from the temporary branch.
-3. Merge the pull request (on GitLab, the merge request) into the personal development branch of the developer, for example `dev_jerome` or `dev_eric`.
-4. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree.
-5. Close the issue.
+Before you edit or add a file in a folder, read the nearest file `CONTEXT.md` in this folder or in its parent folders. The skill [context_md_system](.agents/skills/context_md_system/SKILL.md) gives all the rules of the `CONTEXT.md` files. Read the skill each time that you create a folder that holds source code, change the exported interface or the responsibility of a folder, or change a `CONTEXT.md` file ([issue 676](https://github.com/heidrun-org/heidrun/issues/676)).
 
 ## GitHub and GitLab
 
@@ -211,17 +184,30 @@ The file `.env.example` at the root of the repository lists and explains every e
 ## Tests
 
 - `pnpm test` at the repository root runs the tests of every package, and exits with a non-zero code when a test fails.
+- The script `test` of every package that uses Vitest is `vitest run --minWorkers=1 --maxWorkers=2`, so that Vitest starts at most two worker processes at the same time, and the computer of the developer stays fast. Vitest 2 needs both options: the default minimum is the number of processor cores minus one, and Vitest stops with an error when the minimum is higher than the maximum. Give both options to every new package that uses Vitest.
 - `pnpm --filter web_frontend test` runs the Vitest tests of the package `packages/apps/web_frontend`. The test files sit next to the code, and are named `*.test.ts`.
-- `pnpm --filter desktop_tauri test` runs `cargo test` for the package `packages/apps/desktop_tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
-- `pnpm --filter website_public test` runs the Vitest tests of the package `packages/auxiliary/website_public`: the configuration, the pages, the page of shortcuts, the identity texts, the macOS quarantine message in the release text and the developer documents, the splash image component, the favicon, and a complete build of the website. The test files sit in the folder `tests`.
-- `pnpm --filter raw_coding_agent_cli test` runs `cargo test` for the package `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The tests of the command line sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
-- `pnpm --filter data_layer_code_hosting test` runs `cargo test` for the package `packages/data_layers/data_layer_code_hosting`: the two JSON schemas, the SQLite file, the reading of the pages of GitHub with a fake GitHub, the modes initialize and update, and the read-only query. The tests of the command line use a fake `gh` command and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
-- `pnpm --filter data_layer_source_control test` runs `cargo test` for the package `packages/data_layers/data_layer_source_control`: the JSON schema, the SQLite file, the reading of the commits of a real Git repository, the modes initialize and update, and the read-only query. The tests of the command line use a real Git repository in a temporary folder and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
-- `pnpm --filter data_layer_user_activity test` runs `cargo test` for the package `packages/data_layers/data_layer_user_activity`: the JSON schema, the SQLite file, the reading of the file of user activity records, the modes initialize and update, and the read-only query. The tests of the command line use a fake file of user activity records in a temporary folder and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
-- `pnpm --filter data_layer_chat_sessions test` runs `cargo test` for the package `packages/data_layers/data_layer_chat_sessions`: the reading of the chat session files of Claude Code and of Codex, the cache of the scans, the JSON schema, the SQLite file with its link tables, the modes initialize and update, and the read-only query. The tests of the command line use fake folders of the two coding agents and a real Git repository with a fake remote, and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter desktop_tauri test` builds the package `mobile_website`, then runs `cargo test` for the package `packages/apps/desktop_tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter website_public test` runs the Vitest tests of the package `packages/auxiliary/website_public`: the configuration, the pages, the page of shortcuts, the identity texts, the macOS quarantine message in the release text and the developer documents, the splash image component, the favicon, the link preview cards (the Open Graph tags, the X card tags, and the card image), and a complete build of the website. The test files sit in the folder `tests`.
+- `pnpm --filter coding_agent_cli test` runs `cargo test` for the package `packages/auxiliary/coding_agent_cli`, with fake `claude` and `codex` commands. The tests of the command line sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter mobile_website test` runs the Vitest tests of the package `packages/auxiliary/mobile_website`: the Needs you screen, the Panes screen, the screen of one pane with the macro button and the microphone button, the Launchers screen, the bottom bar, the confirmation sheet, the pairing key and the calls to the mobile server, the address of each screen, the colors of the output, the development server with its fake computer, and the rules of a page under a strict content security policy. The tests start the whole page against a fake computer, and the test files sit in the folder `tests`. `pnpm --filter mobile_website build` builds the website. `pnpm --filter mobile_website dev` starts a development server that reloads the page when a file changes, with a fake computer, or with the real desktop application when the variables `MOBILE_API_TARGET` and `MOBILE_API_HOST` (the host name of the tunnel) are set.
+- `pnpm --filter mobile_server test` builds the package `mobile_website`, then runs `cargo test` for the package `packages/auxiliary/mobile_server`: the checks of a request (the header Host, which must be the host name of the tunnel, the header Origin, the pairing key, and the lock after ten bad keys), the closed list of methods, the routes with a fake handler, the files of the mobile website with their types, the file `mobile.json`, the finding of the program `ngrok`, the reading of the address of the tunnel, and the life of the server on the loopback address, with a fake `ngrok` program. One more test opens a real tunnel, so it runs only by hand with `cargo test live_ -- --ignored`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter data_layer_code_hosting test` runs `cargo test` for the package `packages/data_layers/data_layer_code_hosting`: the events of the operation log that each public function writes (the tree of the nested operations, the parameters, the counts, and the failures), the two JSON schemas, the SQLite file, the reading of the pages of GitHub with a fake GitHub, the modes initialize and update, and the read-only query. The tests of the command line use a fake `gh` command and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter data_layer_source_control test` runs `cargo test` for the package `packages/data_layers/data_layer_source_control`: the events of the operation log that each public function writes (the tree of the nested operations, the parameters, the counts, and the failures), the JSON schema, the SQLite file, the reading of the commits of a real Git repository, the modes initialize and update, and the read-only query. The tests of the command line use a real Git repository in a temporary folder and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter data_layer_user_activity test` runs `cargo test` for the package `packages/data_layers/data_layer_user_activity`: the events of the operation log that each public function writes (the tree of the nested operations, the parameters, the counts, and the failures), the JSON schema, the SQLite file, the reading of the file of user activity records, the modes initialize and update, and the read-only query. The tests of the command line use a fake file of user activity records in a temporary folder and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter data_layer_coding_agents test` runs `cargo test` for the package `packages/data_layers/data_layer_coding_agents`: the events of the operation log that each public function writes (the tree of the nested operations, the parameters, the counts, and the failures), the reading of the chat session files of Claude Code and of Codex, the cache of the scans, the reading of the memory files, the subagents, and the skills with their headers, the four JSON schemas, the SQLite file with its link tables and the three tables of the configuration of the coding agent, the mark of a removed file, the tokens of each minute (the table, the index and its query plan, the write that changes only the rows that changed, the chat session that two files hold, the folder and the workspaces that overlap, the days of a time zone with a day of 23 or 25 hours), the model prices (the versions, the fetch that fails, the refresh once a day), the view with the cost (a model with no price has no cost, and the prices of the cached tokens that fall back to the input price), the modes initialize and update, and the read-only query. The tests of the command line use fake folders of the two coding agents, a fake home folder, and a real Git repository with a fake remote, and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter heidrun_data test` runs `cargo test` for the package `packages/data_layers/heidrun_data`: the four sources and their fixed order, the command `operations` (the actions info, summary, list, replay, snapshot, and overhead, the usage patterns, the operations that never ended, the replay of a query on a snapshot, the replay of a synchronization in an isolated file that never touches the real file, the log that cannot be written, and the programs that write the log together), the commands `update`, `initialize`, `query`, `sources`, `schema`, `usage` (the tokens and the cost by minute, hour, and day, in a time zone), and `read` with the history of one file, the limit added to a query, the output formats, the errors as JSON, the lock of the SQLite file, and the file `SKILL.md` compared with the help and the schema. The tests of the command line use a real Git repository in a temporary folder, a fake `gh` command, fake folders of the two coding agents with one memory file, one skill in the repository, a fake home folder, and a fake file of user activity records, and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter data_layer_operation_log test` runs `cargo test` for the package `packages/data_layers/data_layer_operation_log`: the record format and its version, the removal of the secrets from a text, a field, and an address, the SQL statement without its values, the file that grows to 8 MiB and is replaced, the lines that two threads write together, the events that cannot be written and are reported by the next event, the nesting of the operations, the operation that panics or is dropped, the reading of the file with the unfinished operations (running or interrupted), the filters, the groups and the percentiles, and the measure of the cost of the log (a budget of 1 millisecond and 2 KiB for an operation). The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter voice_input test` runs `cargo test` for the package `packages/auxiliary/voice_input`: the conversion of the audio of the microphone to 16 kilohertz and one channel, the list of the 12 Whisper models, the download of a model with a fake server (a complete download, a download that stops early, a missing file, and no server), the cleaning of the text of Whisper, the refusal of an unknown language, and a spoken sentence changed into text with the real model `tiny`, which the first run downloads once from Hugging Face into the folder of the build, with the logs of Whisper that go to a file (the rotation of a large file, and the lines of the real model in the file). One test records the real microphone and runs only by hand with `cargo test live_ -- --ignored`. The building of the package needs `cmake`. The tests of the integration sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter heidrun_ctrl test` runs `cargo test` for the package `packages/auxiliary/heidrun_ctrl`: the three kinds of macro, the file of the personal macros, the keys `prompts` and `launchers` of the file `.heidrun/config.json` with their other keys kept (and the old key `actions`), the four orders list, add, update, and delete on the macros and on the launchers with their errors, the launcher of the kind Coding agent kept intact, the output formats markdown and json, the arguments of the command line, and the file `SKILL.md` compared with the help, with its examples run. The tests of the command line use a temporary `HEIDRUN_DIR` and a temporary project and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
 - `pnpm --filter change_log_generator test` runs the Vitest tests of the package `packages/dev_tools/change_log_generator`: the range of the pull requests, the heading, the place of a section in the file, and the command line. The test files sit in the folder `tests`.
 - `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/dev_tools/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.
 - `pnpm --filter video_recorder test` runs the Vitest tests of the package `packages/dev_tools/video_recorder`: the calculation of the cut and of `clicks.json`, the command line `video:cut` with a real `ffmpeg`, and the click logger script. The test files sit in the folder `tests`.
 - `pnpm --filter install_script_tests test` runs the Vitest tests of the package `packages/dev_tools/install_script_tests`: the script `scripts/install.sh`, run with a fake `curl`, a fake `hdiutil`, a fake `ditto`, a fake `uname`, and a fake `pgrep`, in a temporary folder in place of `/Applications`. It checks the copy, the eject, the deletion of the temporary folder, and the message of each stop. The test files sit in the folder `tests`.
-- `pnpm --filter agents_rules_checker test` runs the Vitest tests of the package `packages/dev_tools/agents_rules_checker`: the maximum size of a file in the folder `docs/agents_rules` and in all its subfolders, as the section "Agent rules" gives it. The test files sit in the folder `tests`.
+- `pnpm --filter agents_rules_checker test` runs the Vitest tests of the package `packages/dev_tools/agents_rules_checker`: the maximum size of a file in the folder `docs/agents_rules` and in all its subfolders, as the section "Docs folder agents rules system values" gives it, and the skill `issue_fix_workflow` (it names no detail of this repository, it names every value, it has the four parts, its link in the folder `.claude/skills` works, and the section "Issue Fix Workflow values" of this file gives every value), the skill `context_md_system` (it names no detail of this repository, it has its rules and its template, this file points to it, and its link in the folder `.claude/skills` works), and the skills `docs_folder_system` and `docs_folder_agents_rules_system` (each names no detail of this repository, names every value, has its rules and its template, this file points to it and gives every value, and its link in the folder `.claude/skills` works, and the second skill names the first skill). The test files sit in the folder `tests`.
+- `pnpm --filter data_layer_boundary_checker test` runs the Vitest tests of the package `packages/dev_tools/data_layer_boundary_checker`: the check that the Past chats sidebar section and the Statistics window get all their data through the packages of the folder `packages/data_layers` (the Rust files of the folders `past_chats` and `statistics` of the desktop application, the files outside these folders that name a package of the data layer, the manifest `Cargo.toml`, and the web page files of the two parts), run on the real repository, and the bypass tests that add each kind of forbidden code to a copy of the files and prove that the check fails. The test files sit in the folder `tests`.
+- `pnpm --filter multi_layer_graph test` runs the Vitest tests of the package `packages/experiments/multi_layer_graph`: the reading of a temporary SQLite file with the tables of the data layer packages, the finding of `#N` and `Fixes #N` in a text, the building of the multi-layer graph, the command line, and the degree, the neighbors, the search, and the markup of the panels of the page. The test files sit in the folder `tests`.
+- `pnpm --filter parallax_dino_runner test` runs the Vitest tests of the package `packages/experiments/parallax_dino_runner`: the lane change and the jump of the dinosaur, the touch between the dinosaur and the things, the shots and the size change of the rocks, the ammunition and the crates, the size and the lane of the thing of each commit, the generator of the commits and the crates, the end of a run at the newest commit, the file `commits.json` and the fake commits, the script that reads the Git history of a real Git repository in a temporary folder and gives the lanes, the static build with relative addresses and no network address, the speed and the score, the parallax layers, the random numbers with a seed, the world of the game with its commands and its runs, and the shape of the pixel pictures. The test files sit in the folder `tests`.
+- `pnpm --filter promotional_videos test` runs the Vitest tests of the package `packages/experiments/promotional_videos`: the scenario "the dinosaur hits a boulder" played with the rules of the game on a fixture of 40 commits, the keys of the commands, and the filter graph of `ffmpeg` (the comic words, the crossfade of the intro, the delay of the recorded sound, the fade-out of the intro music, the end of the outro music at its last silence, and the fade to the outro). The tests also read the reports of `ffmpeg` that find the last silence of a music file, and they compare the document `data/scenarios/video_game_first.scenario.md` with the scenario of the code. The tests start no browser. The test files sit in the folder `tests`.
+- `pnpm --filter localai_decisions_candle test` runs `cargo test --release` for the package `packages/experiments/localai_decisions_candle`: the token identifiers, the logits, the probabilities, and the chosen labels of the real model GLiNER2.5-Decide compared with the results of the Python package gliner2 on 33 examples (the 21 examples of the model card and 12 edge cases, such as a long text, French, Chinese, and Hindi), the splitting of words compared with the Python word splitter on 19 texts, the choice of labels from logits (one label, several labels, the threshold, and `top_k`), the refusal of models with another architecture or another encoder, the limit of 512 tokens, the command line tool (a text from the arguments, from a file, and from standard input, a file of tasks, and the errors), and the refusal of a backend that the build does not include. The tests need the model `fastino/GLiNER2.5-Decide` in the Hugging Face cache, and the first run downloads it (1.9 GB). The Python results are saved in `tests/fixtures`, and the script in `python_reference` writes them again. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file, and the other tests sit in the folder `tests`. The command `pnpm test` at the root does not run these tests, because they need the model of 1.9 GB. The benchmark tests check the fixed decision count, average time and throughput, error propagation, the built-in cases, and the benchmark command options.
+- `pnpm --filter localai_decisions_llamacpp test` runs `cargo test --release` for the package `packages/experiments/localai_decisions_llamacpp`: the answers and the number of prompt tokens of the real model Kev-0.8B compared with the answers of the server of llama.cpp v0.6.0 on 8 requests (the example of the server README, an object state, special tokens in the text, 10 levels, French, chat messages, a long state, and 12 options), the errors of a request with the messages of the server, the batch size, the refused GPU of a processor build, the model names, the command line tool (the short form, a request from a file and from standard input, and the errors), the escape of the special tokens, the text of a JSON value for Kev, the sorted keys, the confidence formulas, and the filter `tojson` with the floats of llama.cpp. The tests need the model `ggml-org/Kev-0.8B-GGUF` (file `Q8_0`) in the Hugging Face cache, and the first run downloads it (0.81 GB). The first build compiles llama.cpp and needs `cmake`. The answers of the server are saved in `tests/fixtures`, and the script in `server_reference` writes them again. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file, and the other tests sit in the folder `tests`. The command `pnpm test` at the root does not run these tests, because they need the model of 0.81 GB. The benchmark tests check the fixed decision count, average time and throughput, error propagation, the built-in cases, and the benchmark command options.
 - When you add a feature, add the tests that match the feature in the same change. When you fix a bug, add a test that fails without the fix.

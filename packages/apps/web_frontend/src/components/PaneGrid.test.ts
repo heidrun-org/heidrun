@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import type { PaneLayoutSnapshot } from "../lib/types";
+import paneGridSource from "./PaneGrid.vue?raw";
 
 const mocks = await vi.hoisted(async () => {
   const { computed, ref } = await import("vue");
@@ -34,6 +35,7 @@ vi.mock("../stores/pinned_panes", () => ({
 vi.mock("./PaneCard.vue", () => ({ default: { template: "<div></div>" } }));
 
 import PaneGrid from "./PaneGrid.vue";
+import { PaneMoveDrag } from "../stores/pane_move";
 
 const AREA = { x: 0, y: 0, width: 120, height: 40 };
 
@@ -394,5 +396,42 @@ describe("PaneGrid tab switch", () => {
     mocks.gridLayout.value = null;
     await wrapper.vm.$nextTick();
     expect(wrapper.find(".empty .empty-tab-screen").exists()).toBe(true);
+  });
+});
+
+describe("PaneGrid preview of a pane move", () => {
+  afterEach(() => {
+    PaneMoveDrag.state.previewBox = null;
+  });
+
+  it("shows no preview while no pane is dragged", () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    expect(wrapper.find(".move-preview").exists()).toBe(false);
+  });
+
+  it("shows the half of the destination pane where the dragged pane goes, in the pixels of the grid", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    PaneMoveDrag.state.previewBox = { left: 100, top: 40, right: 400, bottom: 240 };
+    await wrapper.vm.$nextTick();
+    const style = (wrapper.get(".move-preview").element as HTMLElement).style;
+    expect({ left: style.left, top: style.top, width: style.width, height: style.height }).toEqual({
+      left: "100px",
+      top: "40px",
+      width: "300px",
+      height: "200px",
+    });
+  });
+
+  it("lets the pointer through the preview, so the pane under it keeps receiving the pointer", () => {
+    expect(paneGridSource).toMatch(/\.move-preview \{[^}]*pointer-events: none/);
+  });
+
+  it("removes the preview when the pointer leaves every pane", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    PaneMoveDrag.state.previewBox = { left: 100, top: 40, right: 400, bottom: 240 };
+    await wrapper.vm.$nextTick();
+    PaneMoveDrag.state.previewBox = null;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".move-preview").exists()).toBe(false);
   });
 });

@@ -1,7 +1,5 @@
 {
+  "pressAgainToClose": "⌘W encore une fois pour fermer cet onglet",
   "selectTextFirst": "Sélectionne d’abord du texte dans un terminal",
-  "pressAgainToClose": "⌘W encore une fois pour fermer ce panneau",
-  "dropNoTerminalUnderDrop": "Dépose l’image sur un terminal",
-  "dropNotAnImage": "Ce fichier n’est pas une image",
-  "dropFailed": "L’image n’a pas pu être collée"
+  "dropNotAnImage": "Ce fichier n’est pas une image"
 }

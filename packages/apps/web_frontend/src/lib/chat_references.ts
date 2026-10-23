@@ -55,7 +55,7 @@ export type ChatReferenceState = {
   text: string;
   /** The icon of the state. */
   icon: string;
-  /** The class of the color of the pill: "bg-success", "bg-danger", "state-done", or "state-other". */
+  /** The class of the color of the pill: "state-open", "state-closed", "state-done", or "state-other". */
   look: string;
 };
 
@@ -68,7 +68,7 @@ export type ChatReferenceState = {
  */
 export function chatReferenceState(kind: ChatReferenceKind, rawState: string): ChatReferenceState {
   if (rawState === "open") {
-    return { text: t("chatsPanel.stateOpen"), icon: kind === "issue" ? "record-circle" : "git", look: "bg-success" };
+    return { text: t("chatsPanel.stateOpen"), icon: kind === "issue" ? "record-circle" : "git", look: "state-open" };
   }
   if (rawState === "merged") {
     return { text: t("chatsPanel.stateMerged"), icon: "sign-merge-right", look: "state-done" };
@@ -78,7 +78,7 @@ export function chatReferenceState(kind: ChatReferenceKind, rawState: string): C
     return {
       text: t("chatsPanel.stateClosed"),
       icon: isIssue ? "check-circle" : "x-circle",
-      look: isIssue ? "state-done" : "bg-danger",
+      look: isIssue ? "state-done" : "state-closed",
     };
   }
   return { text: rawState, icon: "circle-half", look: "state-other" };
@@ -144,4 +144,25 @@ export function referenceLabelStyle(color: string | null): Record<string, string
  */
 export function referenceDay(createdAt: number | null): string {
   return createdAt === null ? "" : dayText(new Date(createdAt), new Date());
+}
+
+/**
+ * The time of a date in the text that a forge gives.
+ * @param text - the date, an ISO 8601 text, or nothing
+ * @returns the time in milliseconds since 1970, or null when there is no valid date
+ */
+export function chatReferenceTimeOf(text: string | undefined | null): number | null {
+  return text === undefined || text === null ? null : Date.parse(text) || null;
+}
+
+/**
+ * The address of the picture of a person on GitHub. GitHub gives the picture of a person at `https://github.com/<login>.png`.
+ * @param login - the login of the person, or nothing
+ * @returns the address, or null when there is no login or the login is not a login of a person (for example "app/name")
+ */
+export function githubAvatarUrl(login: string | undefined): string | null {
+  if (login === undefined || /^[A-Za-z0-9][A-Za-z0-9-]*$/.test(login) === false) {
+    return null;
+  }
+  return `https://github.com/${login}.png?size=48`;
 }

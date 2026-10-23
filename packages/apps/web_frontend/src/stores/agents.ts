@@ -1,36 +1,35 @@
+import { allowCommand } from './guards';
+import { CompositionBar } from './composition_bar';
+import { settings } from './settings';
+import { WorkspaceFolders } from './workspace_folders';
 // "Nouvel agent": a tab named after the agent, Claude (or Codex) launched in it,
 // and the starting consigne sent once the agent is ready.
-import { reactive } from "vue";
-import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, sendPrompt, toast } from "./session";
 import { resolveMacroVariables } from "./macros";
 import { t } from "../i18n/index";
-import { withBackground } from "../lib/terminal_background";
 import { chatResumeCommand } from "../lib/chat_links";
+import { shellQuote } from "../lib/launcher_agent_command";
 import type { PaneInfo } from "../lib/types";
-
-export interface AgentDef {
-  name: string;
-  description: string;
-  model: string | null;
-  source: "projet" | "perso";
-}
-
-export const newAgent = reactive({ open: false });
-
-export function listAgents(cwd: string | null): Promise<AgentDef[]> {
-  return invoke<AgentDef[]>("claude_agents", { cwd }).catch(() => []);
-}
 
 // Only plain names reach the shell command line, and quoted ("sonnet[1m]" is a glob for zsh).
 const SAFE = /^[A-Za-z0-9._\-[\]]+$/;
 const q = (v: string) => `'${v}'`;
 
-export function agentCommand(tool: "claude" | "codex", agent: string | null, model: string | null): string {
+export function agentCommand(
+  tool: "claude" | "codex" | "agy",
+  agent: string | null,
+  model: string | null,
+  prompt = "",
+): string {
   if (agent && !SAFE.test(agent)) throw new Error(t("agentsStore.invalidAgentName", { name: agent }));
   if (model && !SAFE.test(model)) throw new Error(t("agentsStore.invalidModel", { name: model }));
   if (tool === "codex") return ["codex", model ? `-m ${q(model)}` : ""].filter(Boolean).join(" ");
+  if (tool === "agy") {
+    return ["agy", model ? `--model ${q(model)}` : "", prompt.trim() ? `-i ${shellQuote(prompt.trim())}` : ""]
+      .filter(Boolean)
+      .join(" ");
+  }
   return ["claude", agent ? `--agent ${q(agent)}` : "", model ? `--model ${q(model)}` : ""].filter(Boolean).join(" ");
 }
 
@@ -58,7 +57,7 @@ async function whenReady(paneId: string): Promise<"ready" | "closed" | "timeout"
 export async function launchAgent(o: {
   workspaceId: string;
   cwd: string | null;
-  tool: "claude" | "codex";
+  tool: "claude" | "codex" | "agy";
   agent: string | null;
   model: string | null;
   label: string;
@@ -68,37 +67,46 @@ export async function launchAgent(o: {
   /** A pane that already exists, for example the first pane of a new workspace: the command runs in it, and no new tab is created. */
   existingPane?: PaneInfo | null;
 }): Promise<"ok" | "failed" | "closed"> {
+	const isCompositionBarShown = settings.isCompositionBarShownOnAgentStart;
   let command: string;
   try {
     if (o.resumeId !== undefined && o.resumeId !== null) {
+      if (o.tool === "agy") {
+        throw new Error(t("agentsStore.invalidSessionId", { name: o.resumeId }));
+      }
       const resumeCommand = chatResumeCommand(o.tool, o.resumeId);
       if (resumeCommand === null) {
         throw new Error(t("agentsStore.invalidSessionId", { name: o.resumeId }));
       }
       command = resumeCommand;
     } else {
-      command = agentCommand(o.tool, o.agent, o.model);
+      command = agentCommand(o.tool, o.agent, o.model, o.prompt);
     }
-    // Codex colours its input area from the background that Herdr reports: see terminal_background.ts.
-    if (o.tool === "codex") command = withBackground(command, getComputedStyle(document.documentElement).getPropertyValue("--bg"));
   } catch (e) {
     toast(String((e as Error).message ?? e));
     return "failed";
   }
   let pane: PaneInfo;
   try {
+    const cwd = o.existingPane === undefined || o.existingPane === null
+      ? WorkspaceFolders.require(o.workspaceId)
+      : o.existingPane.foreground_cwd || o.existingPane.cwd || null;
+    if ((await allowCommand(command, cwd, o.label)) === false) {
+      return 'failed';
+    }
     if (o.existingPane !== undefined && o.existingPane !== null) {
       pane = o.existingPane;
       if (o.label !== "") {
         await api.renameTab(pane.tab_id, o.label);
       }
     } else {
-      pane = await api.newTab(o.workspaceId, o.cwd, o.label || undefined);
+      pane = await api.newTab(o.workspaceId, cwd, o.label || undefined);
     }
   } catch (e) {
     toast(t("agentsStore.tabNotCreated", { error: String(e) }));
     return "failed";
   }
+	CompositionBar.forPane(pane.pane_id).isOpen = isCompositionBarShown;
   await refresh();
   selectPane(pane);
   // Let the shell print its prompt before typing into it.
@@ -110,7 +118,7 @@ export async function launchAgent(o: {
     return "failed";
   }
   const text = o.prompt.trim();
-  if (!text) return "ok";
+  if (!text || o.tool === "agy") return "ok";
   const ready = await whenReady(pane.pane_id);
   if (ready === "closed") {
     toast(t("agentsStore.tabClosedBeforeReady"));

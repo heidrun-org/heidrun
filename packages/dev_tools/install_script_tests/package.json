@@ -2,10 +2,10 @@
   "name": "install_script_tests",
   "private": true,
   "license": "MIT",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run --minWorkers=1 --maxWorkers=2"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

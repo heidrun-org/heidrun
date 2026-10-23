@@ -2,26 +2,132 @@
 
 This file lists every step of a release of Heidrun, in order, so that no step is forgotten. The file `README_DEV.md` describes each command in detail. The steps come from the release 0.2.5, where several steps were forgotten. The source of this list is the issue [#245](https://github.com/heidrun-org/heidrun/issues/245).
 
+Replace `<version>` with the new version in every command and file name, for example `0.3.0`.
+
+## Where the release happens
+
+A release is made on the branch `main`. No other branch carries a release.
+
+- `main` holds the released versions. Every commit on `main` is a version that users can install.
+- `dev` collects the finished changes of all the developers, without releasing them, as [CONTRIBUTING.md](CONTRIBUTING.md) says.
+- A personal development branch, for example `dev_jerome` or `dev_eric`, holds the work of one developer before the work goes to `dev`. A personal development branch has no special role in a release.
+
+The command `pnpm release:dmg` creates the git tag `v<version>` on the current commit of the branch that is checked out, and it does not check the name of the branch. For this reason, you check out `main` yourself before you run the command, as Step 6 says.
+
 ## What the command `pnpm release:dmg` does for you
 
 The command builds the disk image, creates the git tag `v<version>` on the current commit, and creates the GitHub release with the disk image attached. Do not create the git tag by hand.
 
-## Checklist
+## Part 1: Prepare the release
 
-Replace `<version>` with the new version, for example `0.2.5`.
+Part 1 changes files. The changes reach `main` through `dev`, in Step 5.
 
-1. Run `pnpm test`. The repository has no workflow files in the folder `.github`, so nothing on GitHub runs the tests.
-2. Set the new version in the four files that `README_DEV.md` lists: the root `package.json`, `packages/apps/desktop_tauri/package.json`, `packages/apps/desktop_tauri/tauri.conf.json`, and `packages/apps/desktop_tauri/Cargo.toml`.
-3. Set the new version in the other `package.json` files too: `packages/apps/web_frontend`, `packages/auxiliary/website_public`, `packages/auxiliary/raw_coding_agent_cli`, `packages/data_layers/data_layer_code_hosting`, `packages/data_layers/data_layer_chat_sessions`, `packages/data_layers/data_layer_source_control`, `packages/data_layers/data_layer_user_activity`, `packages/dev_tools/change_log_generator`, and `packages/dev_tools/worktree_tools`. The packages `packages/auxiliary/raw_coding_agent_cli`, `packages/data_layers/data_layer_code_hosting`, `packages/data_layers/data_layer_chat_sessions`, `packages/data_layers/data_layer_source_control`, and `packages/data_layers/data_layer_user_activity` also have a file `Cargo.toml` with the version: set it too. The file `README_DEV.md` does not list them. The package `packages/dev_tools/video_recorder` still has the version `0.1.0`: decide if it follows the release version. Commit the files `Cargo.lock` of `packages/apps/desktop_tauri`, of `packages/auxiliary/raw_coding_agent_cli`, of `packages/data_layers/data_layer_code_hosting`, of `packages/data_layers/data_layer_chat_sessions`, of `packages/data_layers/data_layer_source_control`, and of `packages/data_layers/data_layer_user_activity` too, because they change on the next build.
-4. Write the file `docs/release_notes/v<version>.md`, and give it to the command with `--notes-file`. Add one line that says that the disk image is not signed, not notarized, and built only for the architecture of the machine that builds it.
-5. Commit and push. The command stops when the branch is not pushed.
-6. Run `pnpm release:dmg --notes-file docs/release_notes/v<version>.md`. The command always exits with code 0, because the script `release:dmg` in `package.json` ends with `|| true`. Read the output and look for red text.
-7. Run `pnpm release:change_log --ai --to v<version>` after step 6, because the command needs the git tag. Always use `--ai` for a release, so that a coding agent sorts the pull requests into the categories of Keep a Changelog. Read the new section of `CHANGELOG.md`, then commit and push. For the release 0.2.5, the section `[Unreleased]` was out of date: it stopped at [pull request 119](https://github.com/heidrun-org/heidrun/pull/119), while the last merged pull request was [pull request 244](https://github.com/heidrun-org/heidrun/pull/244).
-8. Know that the text of the GitHub release page does not come from `CHANGELOG.md`. It is the file `docs/release_notes/prefix.md`, then the notes file of step 4, then the list of pull requests that GitHub generates. To publish the change log, push `CHANGELOG.md`.
-9. Open the release page on GitHub. Check that the disk image is attached and that the release is marked Latest. Download the disk image with a web browser, drag Heidrun to the Applications folder, and open it once. macOS shows the message "“Heidrun” is damaged and can't be opened", because the disk image is not notarized. Run `xattr -dr com.apple.quarantine /Applications/Heidrun.app` in a terminal, then open Heidrun again. The file `docs/release_notes/prefix.md` gives the same command to the people who download the disk image.
-10. Open a pull request from `dev_jerome` to `dev`, and merge it. Then open a pull request from `dev` to `main`, and merge it. The branch `dev` collects the finished changes before they go to `main`, as `CONTRIBUTING.md` says. The git tag stays on its commit, and `main` then contains that commit. Never delete the branch `dev_jerome`.
+### Step 1: Run the tests
+
+Run `pnpm test`. The repository has no workflow files in the folder `.github`, so nothing on GitHub runs the tests.
+
+### Step 2: Set the version in the four main files
+
+Set the new version in the four files that `README_DEV.md` lists:
+
+- the root `package.json`
+- `packages/apps/desktop_tauri/package.json`
+- `packages/apps/desktop_tauri/tauri.conf.json`
+- `packages/apps/desktop_tauri/Cargo.toml`
+
+### Step 3: Set the version in every other package
+
+The file `README_DEV.md` does not list these files, and the number of packages grows. Find the files with the previous version, for example `0.2.7`:
+
+```bash
+git grep -l '"version": "<previous version>"' -- '*package.json'
+git grep -l '^version = "<previous version>"' -- '*Cargo.toml'
+```
+
+Set the new version in every file that the two commands print. Do not change a package that the commands do not print: a package can keep its own version, as `packages/dev_tools/agents_rules_checker` and `packages/dev_tools/data_layer_boundary_checker` keep `0.2.0`.
+
+The files `Cargo.lock` hold the version of their own package. Update them without a build, then commit them:
+
+```bash
+for lockFile in $(git ls-files '*Cargo.lock' ':!tmp'); do (cd "$(dirname "$lockFile")" && cargo update --workspace --offline); done
+```
+
+Run `git diff` on the files `Cargo.lock`. The only changed lines must be lines `version`.
+
+### Step 4: Write the release notes
+
+Write the file `docs/release_notes/v<version>.md`. Add one line that says that the disk image is not signed, not notarized, and built only for the architecture of the machine that builds it. Step 7 gives this file to the command with `--notes-file`.
+
+### Step 5: Move the work to `main`
+
+Commit and push the work of Step 1 to Step 4. Then make the work reach `main`, with two pull requests:
+
+1. Open a pull request from the branch that holds the work to `dev`, and merge it.
+2. Open a pull request from `dev` to `main`, and merge it.
+
+Before the second pull request, check that `dev` holds every finished change that must be in the release, from every personal development branch.
+
+## Part 2: Release on `main`
+
+### Step 6: Check out `main`
+
+Run these commands in the main checkout:
+
+```bash
+git switch main
+git pull
+git status
+```
+
+The command `git status` must say that the branch `main` is up to date with `origin/main` and that the working tree is clean. The last commit must be the merge of the pull request of Step 5.
+
+### Step 7: Build the disk image and publish the release
+
+Run this command on `main`:
+
+```bash
+pnpm release:dmg --notes-file docs/release_notes/v<version>.md
+```
+
+The command always exits with code 0, because the script `release:dmg` in `package.json` ends with `|| true`. Read the output and look for red text.
+
+### Step 8: Write the change log
+
+Run this command after Step 7, because the command needs the git tag:
+
+```bash
+pnpm release:change_log --ai --to v<version>
+```
+
+Always use `--ai` for a release, so that a coding agent sorts the pull requests into the categories of Keep a Changelog. Read the new section of `CHANGELOG.md`, then commit it on `main` and push. The git tag stays on the release commit, and the change log commit comes after the git tag.
+
+For the release 0.2.5, the section `[Unreleased]` was out of date: it stopped at [pull request 119](https://github.com/heidrun-org/heidrun/pull/119), while the last merged pull request was [pull request 244](https://github.com/heidrun-org/heidrun/pull/244).
+
+### Step 9: Know where the text of the release page comes from
+
+The text of the GitHub release page does not come from `CHANGELOG.md`. The text is the file `docs/release_notes/prefix.md`, then the notes file of Step 4, then the list of pull requests that GitHub generates. To publish the change log, push `CHANGELOG.md`.
+
+## Part 3: Check the release
+
+### Step 10: Open the release page and the disk image
+
+1. Open the release page on GitHub. Check that the disk image is attached and that the release is marked Latest.
+2. Download the disk image with a web browser, drag Heidrun to the Applications folder, and open it once.
+3. macOS shows the message "“Heidrun” is damaged and can't be opened", because the disk image is not notarized. Run this command in a terminal, then open Heidrun again:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Heidrun.app
+```
+
+The file `docs/release_notes/prefix.md` gives the same command to the people who download the disk image.
+
+## Part 4: Bring `main` back into `dev`
+
+### Step 11: Merge `main` into `dev`
+
+Open a pull request from `main` to `dev`, and merge it. Then `dev` holds the change log commit of Step 8, and the next work does not start from a state that lacks it. Never delete the branches `dev`, `dev_jerome`, or `dev_eric`.
 
 ## Open points
 
-- The command `pnpm release:dmg` tags the current commit of the branch that is checked out, and it does not check the branch name.
-- The list of files in step 2 and step 3 can be replaced by one command that sets the version everywhere. Create a separate issue if this is wanted.
+- The command `pnpm release:dmg` does not check the name of the branch. A test that stops the command when the branch is not `main` can be added. Create a separate issue if this is wanted.
+- The list of files in Step 2 and Step 3 can be replaced by one command that sets the version everywhere. Create a separate issue if this is wanted.

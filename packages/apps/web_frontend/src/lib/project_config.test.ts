@@ -90,6 +90,58 @@ describe("parseReferences", () => {
   });
 });
 
+describe("the key guards", () => {
+  it("accepts the list disabled, with the keys of the built-in guards", () => {
+    const config = parseProjectConfig({ version: 1, guards: { disabled: ["guards.why.gitClean"] } });
+    expect(config.guards).toEqual({ disabled: ["guards.why.gitClean"] });
+  });
+
+  it("rejects a list disabled that is not a list of strings", () => {
+    expect(() => parseProjectConfig({ version: 1, guards: { disabled: "guards.why.gitClean" } })).toThrow(/guards\.disabled/);
+    expect(() => parseProjectConfig({ version: 1, guards: { disabled: [3] } })).toThrow(/guards\.disabled/);
+  });
+
+  it("accepts the list projectGuards, with a name, a description, an action, and lines", () => {
+    const projectGuards = [
+      {
+        name: "Publish",
+        description: "Publishing cannot be undone.",
+        action: "block",
+        matches: [
+          { type: "startsWith", text: "npm publish" },
+          { type: "regex", text: "yarn\\s+publish" },
+        ],
+      },
+    ];
+    expect(parseProjectConfig({ version: 1, guards: { projectGuards } }).guards).toEqual({ projectGuards });
+  });
+
+  it("accepts a project guard with no description", () => {
+    const projectGuards = [{ name: "Make", action: "confirm", matches: [{ type: "contains", text: "make deploy" }] }];
+    expect(parseProjectConfig({ version: 1, guards: { projectGuards } }).guards).toEqual({ projectGuards });
+  });
+
+  it("still accepts the old lists confirm and block", () => {
+    const config = parseProjectConfig({ version: 1, guards: { confirm: ["^make"], block: ["publish"] } });
+    expect(config.guards).toEqual({ confirm: ["^make"], block: ["publish"] });
+  });
+
+  it("rejects a project guard with no line, an empty name, an empty line, an unknown action, or an unknown type", () => {
+    const base = { name: "A", action: "confirm", matches: [{ type: "contains", text: "x" }] };
+    const bad = [
+      { ...base, matches: [] },
+      { ...base, name: "" },
+      { ...base, matches: [{ type: "contains", text: "" }] },
+      { ...base, action: "ask" },
+      { ...base, matches: [{ type: "like", text: "x" }] },
+      { ...base, oops: 1 },
+    ];
+    for (const guard of bad) {
+      expect(() => parseProjectConfig({ version: 1, guards: { projectGuards: [guard] } })).toThrow(/guards\.projectGuards\.0/);
+    }
+  });
+});
+
 describe("projectConfigSchema", () => {
   it("is strict at every level", () => {
     expect(projectConfigSchema.safeParse({ version: 1, guards: { confirm: [], oops: [] } }).success).toBe(false);

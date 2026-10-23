@@ -590,11 +590,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <span class="root mono" :title="files.root">{{ shortPath(files.root) }}</span>
         <div class="tabs" role="tablist">
           <div v-for="tab in files.tabs" :key="tab" class="tab" :class="{ on: tab === files.active }" role="tab" :title="tab">
-            <button :title="t('filesModal.openFileTitle')" class="tab-name" @click="openTab(tab)">
+            <button :title="t('filesModal.openFileTitle')" class="list-action tab-name" @click="openTab(tab)">
               <span v-if="files.status[tab]" class="st" :class="'s-' + files.status[tab]"><Icon name="circle-fill" /></span>{{ tab.split("/").pop() }}
             </button>
             <button
-              class="tab-x"
+              class="btn icon small tab-x"
               :class="{ dirty: isDirty(tab), arm: closingTab === tab }"
               :aria-label="t('filesModal.closeTabLabel', { path: tab })"
               :title="closingTab === tab ? t('filesModal.closeTabArmed') : isDirty(tab) ? t('filesModal.closeTabDirty') : t('filesModal.closeTab')"
@@ -602,33 +602,33 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             ><template v-if="closingTab === tab">?</template><Icon v-else-if="isDirty(tab)" name="circle-fill" /><Icon v-else name="x-lg" /></button>
           </div>
         </div>
-        <button :title="t('filesModal.closeTitle')" class="close" :aria-label="t('filesModal.closeLabel')" @click="close()"><Icon name="x-lg" /></button>
+        <button :title="t('filesModal.closeTitle')" class="btn icon close" :aria-label="t('filesModal.closeLabel')" @click="close()"><Icon name="x-lg" /></button>
       </header>
       <div v-if="files.quitting && dirtyTabs().length" class="banner warn">
         <span>{{ t("filesModal.quitUnsaved", { count: dirtyTabs().length, names: dirtyTabs().map((tab) => tab.split("/").pop()).join(", ") }) }}</span>
-        <button :title="t('filesModal.saveAllAndQuitTitle')" class="tb accent" @click="saveAllAndQuit">{{ t("filesModal.saveAllAndQuit") }}</button>
-        <button :title="t('filesModal.quitWithoutSavingTitle')" class="tb danger" @click="quitNow">{{ t("filesModal.quitWithoutSaving") }}</button>
-        <button :title="t('filesModal.cancelTitle')" class="tb" @click="files.quitting = false">{{ t("filesModal.cancel") }}</button>
+        <button :title="t('filesModal.saveAllAndQuitTitle')" class="btn small primary tb accent" @click="saveAllAndQuit">{{ t("filesModal.saveAllAndQuit") }}</button>
+        <button :title="t('filesModal.quitWithoutSavingTitle')" class="btn small tb danger" @click="quitNow">{{ t("filesModal.quitWithoutSaving") }}</button>
+        <button :title="t('filesModal.cancelTitle')" class="btn small tb" @click="files.quitting = false">{{ t("filesModal.cancel") }}</button>
       </div>
       <div v-else-if="closingAll" class="banner warn">
         <span>{{ t("filesModal.closeUnsaved", { count: dirtyTabs().length }) }}</span>
-        <button :title="t('filesModal.saveAllAndCloseTitle')" class="tb accent" @click="saveAllAndClose">{{ t("filesModal.saveAllAndClose") }}</button>
-        <button :title="t('filesModal.discardTitle')" class="tb danger" @click="abandonAndClose">{{ t("filesModal.discard") }}</button>
-        <button :title="t('filesModal.cancelTitle')" class="tb" @click="closingAll = false">{{ t("filesModal.cancel") }}</button>
+        <button :title="t('filesModal.saveAllAndCloseTitle')" class="btn small primary tb accent" @click="saveAllAndClose">{{ t("filesModal.saveAllAndClose") }}</button>
+        <button :title="t('filesModal.discardTitle')" class="btn small tb danger" @click="abandonAndClose">{{ t("filesModal.discard") }}</button>
+        <button :title="t('filesModal.cancelTitle')" class="btn small tb" @click="closingAll = false">{{ t("filesModal.cancel") }}</button>
       </div>
 
       <div class="body" :style="{ gridTemplateColumns: `${settings.filesListWidth}px 5px 1fr` }">
         <aside class="side" @click="menu = null">
           <div class="side-tabs" role="tablist">
-            <button :title="t('filesModal.treeTabTitle')" :class="{ on: settings.filesSideMode === 'tree' }" @click="settings.filesSideMode = 'tree'">{{ t("filesModal.treeTab") }}</button>
-            <button :class="{ on: settings.filesSideMode === 'grep' }" :title="t('filesModal.grepTabTitle')" @click="openSearch">{{ t("filesModal.grepTab") }}</button>
+            <button class="btn small" :title="t('filesModal.treeTabTitle')" :class="{ on: settings.filesSideMode === 'tree' }" @click="settings.filesSideMode = 'tree'">{{ t("filesModal.treeTab") }}</button>
+            <button class="btn small" :class="{ on: settings.filesSideMode === 'grep' }" :title="t('filesModal.grepTabTitle')" @click="openSearch">{{ t("filesModal.grepTab") }}</button>
           </div>
 
           <template v-if="settings.filesSideMode === 'grep'">
             <div class="search grep">
-              <input ref="grepEl" v-model="gq" :placeholder="t('filesModal.grep.placeholder')" spellcheck="false" @keydown.enter.prevent="runGrep" />
-              <button class="tg" :class="{ on: settings.filesGrepCase }" :title="t('filesModal.grep.matchCase')" @click="settings.filesGrepCase = !settings.filesGrepCase">Aa</button>
-              <button class="tg mono" :class="{ on: settings.filesGrepRegex }" :title="t('filesModal.grep.regex')" @click="settings.filesGrepRegex = !settings.filesGrepRegex">.*</button>
+              <input class="form-control" ref="grepEl" v-model="gq" :placeholder="t('filesModal.grep.placeholder')" spellcheck="false" @keydown.enter.prevent="runGrep" />
+              <button class="btn small tg" :class="{ on: settings.filesGrepCase }" :title="t('filesModal.grep.matchCase')" @click="settings.filesGrepCase = !settings.filesGrepCase">Aa</button>
+              <button class="btn small tg mono" :class="{ on: settings.filesGrepRegex }" :title="t('filesModal.grep.regex')" @click="settings.filesGrepRegex = !settings.filesGrepRegex">.*</button>
             </div>
             <div class="opts">
               <span>{{ gBusy ? t("filesModal.grep.searching") : gq.trim().length >= 2 ? gSummary : "" }}</span>
@@ -636,14 +636,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <div class="list">
               <div v-if="gError" class="empty err">{{ gError }}</div>
               <template v-for="[p, hits] in gGroups" :key="p">
-                <button :title="t('filesModal.grep.foldTitle')" class="g-file" @click="toggleGroup(p)">
+                <button :title="t('filesModal.grep.foldTitle')" class="list-action g-file" @click="toggleGroup(p)">
                   <span class="chev">{{ gFolded.has(p) ? "▸" : "▾" }}</span>
                   <span class="nm">{{ p.split("/").pop() }}</span>
                   <span class="r-dir mono">{{ p.split("/").slice(0, -1).join("/") }}</span>
                   <span class="g-n">{{ hits.length }}</span>
                 </button>
                 <template v-if="!gFolded.has(p)">
-                  <button :title="t('filesModal.grep.openAtLine')" v-for="h in hits" :key="p + h.line" class="g-hit mono" :class="{ on: files.active === p && files.line === h.line }" @click="openTab(p, h.line)">
+                  <button :title="t('filesModal.grep.openAtLine')" v-for="h in hits" :key="p + h.line" class="list-action g-hit mono" :class="{ on: files.active === p && files.line === h.line }" @click="openTab(p, h.line)">
                     <span class="g-line">{{ h.line }}</span>
                     <span class="g-text">{{ hitParts(h.text).pre }}<mark>{{ hitParts(h.text).hit }}</mark>{{ hitParts(h.text).post }}</span>
                   </button>
@@ -655,29 +655,29 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
           <template v-else>
           <div class="search">
-            <input ref="searchEl" v-model="q" :placeholder="t('filesModal.searchPlaceholder')" spellcheck="false" @keydown="onSearchKey" />
+            <input class="form-control" ref="searchEl" v-model="q" :placeholder="t('filesModal.searchPlaceholder')" spellcheck="false" @keydown="onSearchKey" />
           </div>
           <div class="opts">
             <label><input v-model="settings.filesShowIgnored" type="checkbox" />{{ t("filesModal.showIgnored") }}</label>
             <span class="opt-tools">
-              <button class="link" :title="t('filesModal.newFile')" @click.stop="startNaming('file')">{{ t("filesModal.newFileButton") }}</button>
-              <button class="link" :title="t('filesModal.newFolder')" @click.stop="startNaming('dir')">{{ t("filesModal.newFolderButton") }}</button>
-              <button class="link" :title="t('filesModal.reloadList')" @click="reloadFiles()">↻</button>
+              <button class="btn text small link" :title="t('filesModal.newFile')" @click.stop="startNaming('file')">{{ t("filesModal.newFileButton") }}</button>
+              <button class="btn text small link" :title="t('filesModal.newFolder')" @click.stop="startNaming('dir')">{{ t("filesModal.newFolderButton") }}</button>
+              <button class="btn text small link" :title="t('filesModal.reloadList')" @click="reloadFiles()">↻</button>
             </span>
           </div>
           <form v-if="naming" class="naming" @submit.prevent="submitNaming" @click.stop>
             <span class="muted">{{ naming.kind === "rename" ? t("filesModal.renameMove") : naming.kind === "dir" ? t("filesModal.newFolder") : t("filesModal.newFile") }}</span>
-            <input ref="nameEl" v-model="naming.value" class="mono" spellcheck="false" />
+            <input ref="nameEl" v-model="naming.value" class="form-control mono" spellcheck="false" />
             <span class="n-tools">
-              <button :title="t('filesModal.confirm')" type="submit" class="tb accent">{{ naming.kind === "rename" ? t("filesModal.rename") : t("filesModal.create") }} ↵</button>
-              <button :title="t('filesModal.cancel')" type="button" class="tb" @click="naming = null">{{ t("filesModal.cancel") }}</button>
+              <button :title="t('filesModal.confirm')" type="submit" class="btn small primary tb accent">{{ naming.kind === "rename" ? t("filesModal.rename") : t("filesModal.create") }} ↵</button>
+              <button :title="t('filesModal.cancel')" type="button" class="btn small tb" @click="naming = null">{{ t("filesModal.cancel") }}</button>
             </span>
           </form>
           <div class="list">
             <div v-if="files.loading && !files.list.length" class="empty">{{ t("filesModal.reading") }}</div>
             <div v-else-if="files.error" class="empty err">{{ files.error }}</div>
             <template v-else-if="q.trim()">
-              <button :title="t('filesModal.openFileTitle')" v-for="(p, i) in results" :key="p" class="res" :class="{ on: i === qIndex }" @mouseenter="qIndex = i" @click="openResult(i)">
+              <button :title="t('filesModal.openFileTitle')" v-for="(p, i) in results" :key="p" class="list-action res" :class="{ on: i === qIndex }" @mouseenter="qIndex = i" @click="openResult(i)">
                 <span class="r-name">{{ p.split("/").pop() }}</span>
                 <span class="r-dir mono">{{ p.split("/").slice(0, -1).join("/") }}</span>
               </button>
@@ -687,7 +687,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               <button
                 v-for="r in rows"
                 :key="r.path + (r.dir ? '/' : '')"
-                class="row"
+                class="list-action row"
                 :class="{ on: r.path === files.active, ignored: r.ignored, dir: r.dir, ctx: menu?.row?.path === r.path }"
                 :style="{ paddingLeft: `${8 + r.depth * 14}px` }"
                 :title="r.status ? `${r.path} · ${statusLabel(r.status)}` : r.path"
@@ -705,13 +705,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           </div>
           </template>
 
-          <div v-if="menu?.row" class="ctxmenu" :style="{ left: `${Math.min(menu.x, settings.filesListWidth - 200)}px`, top: `${menu.y}px` }" @click.stop>
+          <div v-if="menu?.row" class="menu show ctxmenu" :style="{ left: `${Math.min(menu.x, settings.filesListWidth - 200)}px`, top: `${menu.y}px` }" @click.stop>
             <div class="cm-title mono">{{ menu.row.name }}</div>
-            <button :title="t('filesModal.menu.newFileHereTitle')" @click="startNaming('file', menu.row)">{{ t("filesModal.menu.newFileHere") }}</button>
-            <button :title="t('filesModal.menu.newFolderHereTitle')" @click="startNaming('dir', menu.row)">{{ t("filesModal.menu.newFolderHere") }}</button>
-            <button :title="t('filesModal.menu.renameTitle')" @click="startNaming('rename', menu.row)">{{ t("filesModal.menu.rename") }}</button>
-            <button :title="t('filesModal.menu.copyPathTitle')" @click="menuCopy">{{ t("filesModal.menu.copyPath") }}</button>
-            <button :title="t('filesModal.menu.trashTitle')" class="danger" @click="menuTrash">{{ menu.armTrash ? t("filesModal.menu.trashConfirm") : menu.row.dir ? t("filesModal.menu.trashFolder") : t("filesModal.menu.trash") }}</button>
+            <button class="menu-item" :title="t('filesModal.menu.newFileHereTitle')" @click="startNaming('file', menu.row)">{{ t("filesModal.menu.newFileHere") }}</button>
+            <button class="menu-item" :title="t('filesModal.menu.newFolderHereTitle')" @click="startNaming('dir', menu.row)">{{ t("filesModal.menu.newFolderHere") }}</button>
+            <button class="menu-item" :title="t('filesModal.menu.renameTitle')" @click="startNaming('rename', menu.row)">{{ t("filesModal.menu.rename") }}</button>
+            <button class="menu-item" :title="t('filesModal.menu.copyPathTitle')" @click="menuCopy">{{ t("filesModal.menu.copyPath") }}</button>
+            <button :title="t('filesModal.menu.trashTitle')" class="menu-item danger" @click="menuTrash">{{ menu.armTrash ? t("filesModal.menu.trashConfirm") : menu.row.dir ? t("filesModal.menu.trashFolder") : t("filesModal.menu.trash") }}</button>
           </div>
         </aside>
         <div class="drag" :title="t('filesModal.resize')" @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="endDrag" @dblclick="settings.filesListWidth = 300"></div>
@@ -721,33 +721,33 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <nav class="crumbs mono" :aria-label="t('filesModal.breadcrumbLabel')">
               <template v-for="(c, i) in crumbs" :key="i">
                 <span v-if="i" class="sep">/</span>
-                <button :title="t('filesModal.goToFolder')" :class="{ last: i === crumbs.length - 1 }" @click="crumbOpen(i)">{{ c }}</button>
+                <button class="btn small" :title="t('filesModal.goToFolder')" :class="{ last: i === crumbs.length - 1 }" @click="crumbOpen(i)">{{ c }}</button>
               </template>
             </nav>
             <div class="tools">
               <template v-if="edit">
-                <button class="tb accent" :disabled="!dirty || edit.saving" :title="t('filesModal.saveTitle')" @click="save()">{{ edit.saving ? t("filesModal.saving") : t("filesModal.saveButton") }}</button>
-                <button class="tb" :class="{ on: showDiff === 'mine' }" :disabled="!dirty" :title="t('filesModal.myChangesTitle')" @click="showDiff = showDiff === 'mine' ? null : 'mine'">{{ t("filesModal.diffButton") }}</button>
+                <button class="btn small primary tb accent" :disabled="!dirty || edit.saving" :title="t('filesModal.saveTitle')" @click="save()">{{ edit.saving ? t("filesModal.saving") : t("filesModal.saveButton") }}</button>
+                <button class="btn small tb" :class="{ on: showDiff === 'mine' }" :disabled="!dirty" :title="t('filesModal.myChangesTitle')" @click="showDiff = showDiff === 'mine' ? null : 'mine'">{{ t("filesModal.diffButton") }}</button>
                 <label class="wrap-t" :title="t('filesModal.diffBeforeSaveTitle')"><input v-model="settings.filesDiffBeforeSave" type="checkbox" />{{ t("filesModal.diffBeforeSave") }}</label>
-                <button class="tb" :class="{ arm: leaving }" :title="leaving ? t('filesModal.leaveArmedTitle') : t('filesModal.backToPreview')" @click="finishEdit">{{ leaving ? t("filesModal.leaveArmed") : t("filesModal.finish") }}</button>
+                <button class="btn small tb" :class="{ arm: leaving }" :title="leaving ? t('filesModal.leaveArmedTitle') : t('filesModal.backToPreview')" @click="finishEdit">{{ leaving ? t("filesModal.leaveArmed") : t("filesModal.finish") }}</button>
               </template>
-              <button v-else-if="canEdit" class="tb edit" :title="t('filesModal.editTitle')" @click="beginEdit"><Icon name="pencil" /> {{ t("filesModal.edit") }}</button>
-              <button v-if="files.git && files.active && files.status[files.active] && files.status[files.active] !== 'D'" class="tb" :class="{ on: gitDiff }" :title="t('filesModal.gitDiffTitle')" @click="toggleGitDiff">{{ t("filesModal.gitDiff") }}</button>
+              <button v-else-if="canEdit" class="btn small tb edit" :title="t('filesModal.editTitle')" @click="beginEdit"><Icon name="pencil" /> {{ t("filesModal.edit") }}</button>
+              <button v-if="files.git && files.active && files.status[files.active] && files.status[files.active] !== 'D'" class="btn small tb" :class="{ on: gitDiff }" :title="t('filesModal.gitDiffTitle')" @click="toggleGitDiff">{{ t("filesModal.gitDiff") }}</button>
               <div v-if="md && !edit" class="seg" role="radiogroup" :aria-label="t('filesModal.markdownLabel')">
-                <button :title="t('filesModal.renderedTitle')" :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">{{ t("filesModal.rendered") }}</button>
-                <button :title="t('filesModal.sourceTitle')" :class="{ on: !settings.filesMdRead }" @click="settings.filesMdRead = false">{{ t("filesModal.source") }}</button>
+                <button class="btn small" :title="t('filesModal.renderedTitle')" :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">{{ t("filesModal.rendered") }}</button>
+                <button class="btn small" :title="t('filesModal.sourceTitle')" :class="{ on: !settings.filesMdRead }" @click="settings.filesMdRead = false">{{ t("filesModal.source") }}</button>
               </div>
               <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />{{ t("filesModal.wrap") }}</label>
-              <button class="tb" :title="t('filesModal.copyPathTitle')" @click="(e) => copyPath(e.altKey)">{{ t("filesModal.copyPath") }}</button>
-              <button class="tb" :title="t('filesModal.finderTitle')" @click="finder">Finder</button>
-              <button class="tb" :title="t('filesModal.vscodeTitle')" @click="vscode">VS Code</button>
-              <button class="tb accent" :title="t('filesModal.sendToAgentTitle')" @click="sendToAgent">{{ t("filesModal.sendToAgent") }}</button>
+              <button class="btn small tb" :title="t('filesModal.copyPathTitle')" @click="(e) => copyPath(e.altKey)">{{ t("filesModal.copyPath") }}</button>
+              <button class="btn small tb" :title="t('filesModal.finderTitle')" @click="finder">Finder</button>
+              <button class="btn small tb" :title="t('filesModal.vscodeTitle')" @click="vscode">VS Code</button>
+              <button class="btn small primary tb accent" :title="t('filesModal.sendToAgentTitle')" @click="sendToAgent">{{ t("filesModal.sendToAgent") }}</button>
             </div>
           </div>
           <div v-if="gitDiff" class="diff code" :class="codeThemeClass">
             <div class="diff-head">
               <span>{{ t("filesModal.gitDiffHead") }}</span>
-              <button :title="t('filesModal.closeDiffTitle')" class="tb" @click="gitDiff = null">{{ t("filesModal.close") }}</button>
+              <button :title="t('filesModal.closeDiffTitle')" class="btn small tb" @click="gitDiff = null">{{ t("filesModal.close") }}</button>
             </div>
             <div v-for="(l, i) in gitDiff" :key="i" class="d-row" :class="l.kind === 'hunk' ? 'gap' : l.kind">
               <span class="d-sign">{{ l.kind === "add" ? "+" : l.kind === "del" ? "−" : "" }}</span>{{ l.text || " " }}
@@ -758,14 +758,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <div v-if="edit.conflict" class="banner warn">
               <template v-if="edit.diskHash === null && edit.disk === null">
                 <span>{{ t("filesModal.conflict.deleted") }}</span>
-                <button :title="t('filesModal.conflict.recreateTitle')" class="tb danger" @click="save(true)">{{ t("filesModal.conflict.recreate") }}</button>
-                <button :title="t('filesModal.conflict.leaveDeletedTitle')" class="tb" @click="finishEdit">{{ t("filesModal.conflict.leaveDeleted") }}</button>
+                <button :title="t('filesModal.conflict.recreateTitle')" class="btn small tb danger" @click="save(true)">{{ t("filesModal.conflict.recreate") }}</button>
+                <button :title="t('filesModal.conflict.leaveDeletedTitle')" class="btn small tb" @click="finishEdit">{{ t("filesModal.conflict.leaveDeleted") }}</button>
               </template>
               <template v-else>
                 <span>{{ t("filesModal.conflict.modified") }}</span>
-                <button :title="t('filesModal.conflict.showDiffTitle')" class="tb" :class="{ on: showDiff === 'conflict' }" @click="showDiff = showDiff === 'conflict' ? null : 'conflict'">{{ t("filesModal.conflict.showDiff") }}</button>
-                <button :title="t('filesModal.conflict.reloadTitle')" class="tb" @click="reloadEdit(files.active!)">{{ t("filesModal.conflict.reload") }}</button>
-                <button :title="t('filesModal.conflict.overwriteTitle')" class="tb danger" @click="save(true)">{{ t("filesModal.conflict.overwrite") }}</button>
+                <button :title="t('filesModal.conflict.showDiffTitle')" class="btn small tb" :class="{ on: showDiff === 'conflict' }" @click="showDiff = showDiff === 'conflict' ? null : 'conflict'">{{ t("filesModal.conflict.showDiff") }}</button>
+                <button :title="t('filesModal.conflict.reloadTitle')" class="btn small tb" @click="reloadEdit(files.active!)">{{ t("filesModal.conflict.reload") }}</button>
+                <button :title="t('filesModal.conflict.overwriteTitle')" class="btn small tb danger" @click="save(true)">{{ t("filesModal.conflict.overwrite") }}</button>
               </template>
             </div>
             <div v-else-if="agentBusy" class="banner info">{{ t("filesModal.agentBusy") }}</div>
@@ -773,10 +773,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               <div class="diff-head">
                 <span>{{ showDiff === "conflict" ? t("filesModal.diffDisk") : t("filesModal.diffOpened") }}</span>
                 <template v-if="showDiff === 'beforeSave'">
-                  <button :title="t('filesModal.saveFileTitle')" class="tb accent" @click="save(false)">{{ t("filesModal.save") }}</button>
-                  <button :title="t('filesModal.backToEditTitle')" class="tb" @click="showDiff = null">{{ t("filesModal.cancel") }}</button>
+                  <button :title="t('filesModal.saveFileTitle')" class="btn small primary tb accent" @click="save(false)">{{ t("filesModal.save") }}</button>
+                  <button :title="t('filesModal.backToEditTitle')" class="btn small tb" @click="showDiff = null">{{ t("filesModal.cancel") }}</button>
                 </template>
-                <button :title="t('filesModal.closeDiffTitle')" v-else class="tb" @click="showDiff = null">{{ t("filesModal.close") }}</button>
+                <button :title="t('filesModal.closeDiffTitle')" v-else class="btn small tb" @click="showDiff = null">{{ t("filesModal.close") }}</button>
               </div>
               <div v-for="(r, i) in diffRows" :key="i" class="d-row" :class="r.kind"><span class="d-sign">{{ r.kind === "add" ? "+" : r.kind === "del" ? "−" : "" }}</span>{{ r.text || " " }}</div>
               <div v-if="!diffRows.some((r) => r.kind !== 'ctx' && r.kind !== 'gap')" class="empty">{{ t("filesModal.noDifference") }}</div>
@@ -802,8 +802,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <div v-if="truncated" class="empty">{{ t("filesModal.linesTruncated", { max: MAX_ROWS }) }}</div>
             <div v-if="sel" class="selbar" :style="{ left: `${Math.max(8, sel.x)}px`, top: `${sel.y}px` }" @mousedown.stop.prevent>
               <span class="muted">{{ sel.from === sel.to ? t("filesModal.selection.line", { line: sel.from }) : t("filesModal.selection.lines", { from: sel.from, to: sel.to }) }}</span>
-              <button :title="t('filesModal.explainTitle')" class="tb" @click="askAgent('explain')">{{ t("filesModal.explain") }}</button>
-              <button :title="t('filesModal.fixTitle')" class="tb" @click="askAgent('fix')">{{ t("filesModal.fix") }}</button>
+              <button :title="t('filesModal.explainTitle')" class="btn small tb" @click="askAgent('explain')">{{ t("filesModal.explain") }}</button>
+              <button :title="t('filesModal.fixTitle')" class="btn small tb" @click="askAgent('fix')">{{ t("filesModal.fix") }}</button>
             </div>
           </div>
           <div v-if="files.active" class="foot muted">
@@ -817,9 +817,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </template>
 
 <style scoped>
-:where(button) { background: transparent; border: 0; color: inherit; font: inherit; }
-.overlay { position: fixed; inset: 0; z-index: 56; background: rgba(0, 0, 0, 0.55); display: flex; padding: 24px; }
-.window-box { flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); }
+:where(button:not(.btn)) { background: transparent; border: 0; color: inherit; font: inherit; }
+.overlay { position: fixed; inset: 0; z-index: 56; background: var(--overlay); display: flex; padding: 24px; }
+.window-box { flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow); }
 .top { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--line); min-width: 0; }
 .title { font-weight: 600; font-size: var(--font-size); }
 .root { font-size: var(--font-size); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
@@ -828,17 +828,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .tab.on { background: var(--field); }
 .tab-name { height: 28px; padding: 0 4px 0 10px; font-size: var(--font-size); color: var(--text-2); display: flex; align-items: center; gap: 5px; }
 .tab.on .tab-name { color: var(--text); }
-.tab-x { width: 22px; height: 22px; border-radius: 5px; color: var(--muted); }
-.tab-x:hover { background: var(--hover); color: var(--text); }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); flex-shrink: 0; }
-.close:hover { background: var(--hover); color: var(--text); }
+.close { flex-shrink: 0; }
 .body { flex: 1; min-height: 0; display: grid; }
 .side { min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
 .search { padding: 8px; }
-.search input { width: 100%; height: 30px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); padding: 0 9px; font-size: var(--font-size); }
+.search input { width: 100%; height: 30px; }
 .opts { display: flex; justify-content: space-between; align-items: center; padding: 0 10px 6px; font-size: var(--font-size); color: var(--muted); }
 .opts label { display: flex; gap: 5px; align-items: center; }
-.opts .link { color: var(--muted); font-size: var(--font-size); }
 .list { flex: 1; min-height: 0; overflow: auto; padding-bottom: 12px; }
 .row, .res { width: 100%; display: flex; align-items: center; gap: 4px; height: 24px; padding-right: 8px; text-align: left; font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
 .row:hover, .res:hover, .res.on { background: var(--hover); }
@@ -848,49 +844,37 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .chev { width: 12px; flex-shrink: 0; color: var(--muted); font-size: var(--font-size); }
 .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .st { font-size: var(--font-size); font-weight: 700; flex-shrink: 0; }
-.s-M { color: var(--accent); } .s-A, .s-\? { color: var(--ok); } .s-D { color: var(--blocked); } .s-R { color: var(--done); } .s-dir { color: var(--accent); }
+.s-M { color: var(--accent); } .s-A, .s-\? { color: var(--ok); } .s-D { color: var(--blocked-text); } .s-R { color: var(--done-text); } .s-dir { color: var(--accent); }
 .nm.s-D { text-decoration: line-through; }
 .res { height: auto; padding: 5px 10px; flex-direction: column; align-items: flex-start; gap: 1px; }
 .r-name { font-size: var(--font-size); color: var(--text); }
 .r-dir { font-size: var(--font-size); color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .drag { cursor: col-resize; background: transparent; }
-.drag:hover { background: rgba(110, 168, 254, 0.35); }
+.drag:hover { background: var(--resize-hover); }
 .view { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .bar { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .crumbs { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; font-size: var(--font-size); overflow: hidden; white-space: nowrap; }
-.crumbs button { color: var(--text-2); padding: 2px 3px; border-radius: 4px; }
-.crumbs button:hover { background: var(--hover); color: var(--text); }
-.crumbs button.last { color: var(--text); font-weight: 600; }
 .crumbs .sep { color: var(--muted); }
 .tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; }
-.seg button { color: var(--muted); font-size: var(--font-size); padding: 3px 9px; border-radius: 6px; }
-.seg button.on { background: var(--hover); color: var(--text); }
 .wrap-t { display: flex; align-items: center; gap: 5px; font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
-.tb { height: 26px; padding: 0 9px; border-radius: 7px; border: 1px solid var(--line-strong); font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
-.tb:hover { background: var(--hover); color: var(--text); }
-.tb.accent { color: var(--done); border-color: color-mix(in srgb, var(--done) 40%, var(--line-strong)); }
+.tb { white-space: nowrap; }
 .code { position: relative; flex: 1; min-height: 0; overflow: auto; font-family: var(--mono); line-height: 1.55; }
 .tbl { border-collapse: collapse; width: 100%; }
 .tbl td { padding: 0 10px; vertical-align: top; }
 .no { width: 1%; min-width: 44px; text-align: right; color: var(--c-gutter); user-select: none; white-space: nowrap; }
 .src { white-space: pre; user-select: text; }
 .code.wrap .src { white-space: pre-wrap; word-break: break-all; }
-tr.hit > td { background: rgba(242, 169, 59, 0.16); }
-.img { padding: 24px; display: flex; justify-content: center; background: repeating-conic-gradient(#1a1d21 0% 25%, #121417 0% 50%) 50% / 20px 20px; min-height: 100%; }
+tr.hit > td { background: var(--search-match); }
+.img { padding: 24px; display: flex; justify-content: center; background: repeating-conic-gradient(var(--image-checker-light) 0% 25%, var(--image-checker-dark) 0% 50%) 50% / 20px 20px; min-height: 100%; }
 .img img { max-width: 100%; height: auto; image-rendering: auto; }
 .md-doc { padding: 24px 36px 60px; }
 .empty { padding: 24px; color: var(--muted); font-family: var(--sans); font-size: var(--font-size); }
 .err { color: var(--fail); }
-.selbar { position: absolute; z-index: 3; display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px; border-radius: 9px; background: var(--raised); border: 1px solid var(--line-strong); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); font-family: var(--sans); font-size: var(--font-size); }
-.tb:disabled { opacity: 0.45; cursor: default; }
-.tb.on { border-color: var(--done); color: var(--text); }
-.tb.edit { color: var(--text); }
-.tb.arm, .tab-x.arm { color: var(--accent); border-color: var(--accent); }
-.tb.danger { color: var(--blocked); }
-.tab-x.dirty { color: var(--text); font-size: var(--font-size); }
+.selbar { position: absolute; z-index: 3; display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px; border-radius: 9px; background: var(--raised); border: 1px solid var(--line-strong); box-shadow: 0 10px 28px var(--shadow); font-family: var(--sans); font-size: var(--font-size); }
+.tb:disabled { cursor: default; }
 .banner { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; font-size: var(--font-size); border-bottom: 1px solid var(--line); }
-.banner.warn { background: var(--tint-warn); color: #f6c06a; }
+.banner.warn { background: var(--tint-warn); color: var(--level-warn); }
 .banner.info { background: var(--tint-done); color: var(--text-2); }
 .code.editing { overflow: hidden; }
 .diff { flex: 0 0 auto; max-height: 45%; overflow: auto; border-bottom: 1px solid var(--line); white-space: pre; font-family: var(--mono); }
@@ -903,14 +887,11 @@ tr.hit > td { background: rgba(242, 169, 59, 0.16); }
 .d-sign { display: inline-block; width: 16px; color: var(--c-gutter); user-select: none; }
 .side { position: relative; }
 .side-tabs { display: flex; gap: 2px; padding: 8px 8px 0; }
-.side-tabs button { flex: 1; height: 26px; border-radius: 7px; font-size: var(--font-size); color: var(--muted); }
-.side-tabs button.on { background: var(--field); color: var(--text); font-weight: 600; }
+.side-tabs button { flex: 1; }
 .search.grep { display: flex; gap: 4px; }
 .search.grep input { flex: 1; }
-.tg { width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--line-strong); color: var(--muted); font-size: var(--font-size); flex-shrink: 0; }
-.tg.on { color: var(--text); border-color: var(--done); background: color-mix(in srgb, var(--done) 15%, transparent); }
+.tg { width: 30px; flex-shrink: 0; }
 .opt-tools { display: flex; gap: 10px; align-items: center; }
-.opt-tools .link { font-size: var(--font-size); color: var(--done); }
 .g-file { width: 100%; display: flex; align-items: baseline; gap: 6px; padding: 5px 8px 3px; text-align: left; font-size: var(--font-size); color: var(--text); }
 .g-file:hover { background: var(--hover); }
 .g-file .r-dir { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -919,17 +900,15 @@ tr.hit > td { background: rgba(242, 169, 59, 0.16); }
 .g-hit:hover, .g-hit.on { background: var(--hover); }
 .g-line { color: var(--muted); min-width: 28px; text-align: right; flex-shrink: 0; }
 .g-text { overflow: hidden; text-overflow: ellipsis; }
-.g-text mark { background: rgba(242, 169, 59, 0.35); color: var(--text); border-radius: 2px; }
+.g-text mark { background: var(--search-match-selected); color: var(--text); border-radius: 2px; }
 .naming { display: flex; flex-direction: column; gap: 6px; margin: 0 8px 8px; padding: 8px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--bg); font-size: var(--font-size); }
-.naming input { height: 28px; border-radius: 6px; border: 1px solid var(--done); background: var(--field); color: var(--text); padding: 0 8px; font-size: var(--font-size); }
+.naming input { height: 28px; }
 .n-tools { display: flex; gap: 6px; }
 .row.ctx { background: var(--hover); }
 .hint-row { padding: 10px 12px; font-size: var(--font-size); }
-.ctxmenu { position: absolute; z-index: 5; min-width: 200px; padding: 4px; border-radius: 9px; background: var(--raised); border: 1px solid var(--line-strong); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column; }
+.ctxmenu { position: absolute; z-index: 5; min-width: 200px; padding: 4px; border-radius: 9px; background: var(--raised); border: 1px solid var(--line-strong); box-shadow: 0 12px 32px var(--shadow); display: flex; flex-direction: column; }
 .ctxmenu .cm-title { padding: 4px 8px 6px; font-size: var(--font-size); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 1px solid var(--line); margin-bottom: 3px; }
-.ctxmenu button { text-align: left; padding: 6px 8px; border-radius: 6px; font-size: var(--font-size); color: var(--text); }
-.ctxmenu button:hover { background: var(--hover); }
-.ctxmenu button.danger { color: var(--blocked); }
+.ctxmenu button { text-align: left; }
 .foot { padding: 5px 12px; border-top: 1px solid var(--line); font-size: var(--font-size); }
 .muted { color: var(--muted); }
 </style>

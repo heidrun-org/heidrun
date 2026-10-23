@@ -37,8 +37,6 @@
   "discardManyQuestion_one": "Discard the changes of {count} file? The changes cannot come back.",
   "discardManyQuestion_other": "Discard the changes of {count} files? The changes cannot come back.",
   "discardConfirm": "Discard",
-  "stageAllQuestion": "No change is staged. Stage all the changes and commit them?",
-  "stageAllConfirm": "Stage and commit",
   "emptyMessage": "Write a commit message first.",
   "nothingToCommit": "There is nothing to commit.",
   "stashed": "The changes are stashed.",

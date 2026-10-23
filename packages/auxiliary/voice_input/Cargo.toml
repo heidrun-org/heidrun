@@ -1,0 +1,37 @@
+[package]
+name = "voice_input"
+version = "0.3.0"
+description = "Records the microphone, downloads a Whisper model, and changes the speech into text on the computer"
+license = "MIT"
+edition = "2021"
+publish = false
+
+[lib]
+name = "voice_input"
+path = "src/lib.rs"
+
+[dependencies]
+# Records the microphone
+cpal = "0.18.2"
+# Changes the speech into text: a Rust binding of the C++ engine whisper.cpp (it needs cmake to build)
+# The feature raw-api gives the functions that send the logs of whisper.cpp to a file (src/whisper_log.rs)
+whisper-rs = { version = "0.16.0", features = ["raw-api"] }
+# Downloads the model files
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+# Writes the model file while it downloads
+tokio = { version = "1", features = ["fs", "io-util"] }
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+# The fake server of the download tests
+tokio = { version = "1", features = ["fs", "io-util", "net", "rt", "macros", "time", "sync"] }
+
+# The C++ engine of Whisper runs at full speed in a development build too: a debug build of it is about 30 times slower
+[profile.dev.package.whisper-rs-sys]
+opt-level = 3
+
+[profile.dev.package.whisper-rs]
+opt-level = 3
+
+[profile.dev.package.voice_input]
+opt-level = 3

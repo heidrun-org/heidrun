@@ -8,35 +8,38 @@ function record(workspaceFolder: string): { workspaceFolder: string } {
 }
 
 describe("UserActivityWorkspaces.choices", () => {
-	it("gives one choice for each folder of the records, even when a folder has many records", () => {
-		const records = [record("/work/alpha"), record("/work/beta"), record("/work/alpha")];
-		expect(UserActivityWorkspaces.choices(records, null, [])).toEqual([
-			{ folder: "/work/alpha", name: "alpha" },
-			{ folder: "/work/beta", name: "beta" },
-		]);
-	});
-
-	it("gives the label of a workspace that is open, and the last part of the folder of a workspace that is closed", () => {
-		const records = [record("/work/alpha"), record("/work/beta")];
-		const openWorkspaces = [{ folder: "/work/alpha", label: "Alpha app" }];
-		expect(UserActivityWorkspaces.choices(records, null, openWorkspaces)).toEqual([
+	it("lists open workspaces even when they have no activity record", () => {
+		expect(UserActivityWorkspaces.choices([
+			{ folder: "/work/alpha", label: "Alpha app" },
+			{ folder: "/work/beta", label: "Beta app" },
+		])).toEqual([
 			{ folder: "/work/alpha", name: "Alpha app" },
-			{ folder: "/work/beta", name: "beta" },
+			{ folder: "/work/beta", name: "Beta app" },
 		]);
 	});
 
-	it("adds the workspace of the running period, even when it has no record", () => {
-		const choices = UserActivityWorkspaces.choices([record("/work/alpha")], "/work/gamma", []);
-		expect(choices.map((choice) => choice.folder)).toEqual(["/work/alpha", "/work/gamma"]);
+	it("does not include historical records in the workspace choices", () => {
+		const historicalRecords = [record("/work/closed")];
+		const choices = UserActivityWorkspaces.choices([{ folder: "/work/open", label: "Open app" }]);
+		expect(choices).toEqual([{ folder: "/work/open", name: "Open app" }]);
+		expect(choices.some((choice) => choice.folder === historicalRecords[0].workspaceFolder)).toBe(false);
 	});
 
-	it("does not add the workspace of the running period twice", () => {
-		expect(UserActivityWorkspaces.choices([record("/work/alpha")], "/work/alpha", [])).toHaveLength(1);
+	it("keeps one choice for each open folder", () => {
+		const choices = UserActivityWorkspaces.choices([
+			{ folder: "/work/alpha", label: "Alpha" },
+			{ folder: "/work/alpha", label: "Alpha duplicate" },
+		]);
+		expect(choices).toEqual([{ folder: "/work/alpha", name: "Alpha" }]);
 	});
 
 	it("writes the folder after the name when two workspaces have the same name", () => {
-		const records = [record("/one/app"), record("/two/app"), record("/work/beta")];
-		expect(UserActivityWorkspaces.choices(records, null, [])).toEqual([
+		const openWorkspaces = [
+			{ folder: "/one/app", label: "app" },
+			{ folder: "/two/app", label: "app" },
+			{ folder: "/work/beta", label: "beta" },
+		];
+		expect(UserActivityWorkspaces.choices(openWorkspaces)).toEqual([
 			{ folder: "/one/app", name: "app (/one/app)" },
 			{ folder: "/two/app", name: "app (/two/app)" },
 			{ folder: "/work/beta", name: "beta" },
@@ -44,16 +47,19 @@ describe("UserActivityWorkspaces.choices", () => {
 	});
 
 	it("reads the last part of a folder with a slash at the end or with backslashes", () => {
-		const choices = UserActivityWorkspaces.choices([record("/work/alpha/"), record("C:\\work\\beta")], null, []);
+		const choices = UserActivityWorkspaces.choices([
+			{ folder: "/work/alpha/", label: "" },
+			{ folder: "C:\\work\\beta", label: "" },
+		]);
 		expect(choices.map((choice) => choice.name)).toEqual(["alpha", "beta"]);
 	});
 
-	it("gives no choice when there is no record and no running period", () => {
-		expect(UserActivityWorkspaces.choices([], null, [])).toEqual([]);
+	it("gives no choice when no workspace is open", () => {
+		expect(UserActivityWorkspaces.choices([])).toEqual([]);
 	});
 
 	it("ignores a workspace that is open with an empty label", () => {
-		const choices = UserActivityWorkspaces.choices([record("/work/alpha")], null, [{ folder: "/work/alpha", label: "" }]);
+		const choices = UserActivityWorkspaces.choices([{ folder: "/work/alpha", label: "" }]);
 		expect(choices[0].name).toBe("alpha");
 	});
 });
@@ -115,7 +121,7 @@ describe("UserActivityWorkspaces.slotsByWorkspace", () => {
 		{ folder: GAMMA, name: "gamma" },
 	];
 
-	/** The current time of the tests: 10:07:30. The last slot of five minutes is 10:05 to 10:10, and it has index 11. */
+	/** The current time of the tests: 10:07:30. The last slot of one hour is 10:00 to 11:00, and it has index 23. */
 	const now = new Date(2026, 9, 15, 10, 7, 30).getTime();
 
 	/** A record of an active period that starts at a time of the clock, and lasts a number of seconds. */
@@ -138,9 +144,9 @@ describe("UserActivityWorkspaces.slotsByWorkspace", () => {
 		const result = UserActivityWorkspaces.slotsByWorkspace(choices, [BETA, ALPHA], records, null, null, now);
 		expect(result.map((workspace) => workspace.folder)).toEqual([ALPHA, BETA]);
 		expect(result.map((workspace) => workspace.name)).toEqual(["alpha", "beta"]);
-		expect(result[0].slots).toHaveLength(12);
-		expect(result[0].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 0]);
-		expect(result[1].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 60, 0]);
+		expect(result[0].slots).toHaveLength(24);
+		expect(result[0].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([...new Array(23).fill(0), 60]);
+		expect(result[1].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([...new Array(22).fill(0), 60, 60]);
 	});
 
 	it("keeps the color of a workspace when another workspace is hidden", () => {
@@ -153,10 +159,10 @@ describe("UserActivityWorkspaces.slotsByWorkspace", () => {
 	});
 
 	it("gives the same colors in every time range", () => {
-		const colors = (rangeId: "hour" | "day" | "week") =>
+		const colors = (rangeId: "day" | "week" | "month") =>
 			UserActivityWorkspaces.slotsByWorkspace(choices, [ALPHA, BETA], records, null, null, now, rangeId).map((workspace) => workspace.colorToken);
-		expect(colors("day")).toEqual(colors("hour"));
-		expect(colors("week")).toEqual(colors("hour"));
+		expect(colors("week")).toEqual(colors("day"));
+		expect(colors("month")).toEqual(colors("day"));
 	});
 
 	it("adds up, slot by slot, to the user activity time of all the chosen workspaces together", () => {
@@ -169,8 +175,8 @@ describe("UserActivityWorkspaces.slotsByWorkspace", () => {
 	it("counts the running active period only in the slots of its own workspace", () => {
 		const runningPeriodStartedAt = new Date(2026, 9, 15, 10, 6, 30).getTime();
 		const result = UserActivityWorkspaces.slotsByWorkspace(choices, [ALPHA, BETA], records, runningPeriodStartedAt, ALPHA, now);
-		expect(result[0].slots[11].activeTimeMs / 1000).toBe(60);
-		expect(result[1].slots[11].activeTimeMs).toBe(0);
+		expect(result[0].slots[23].activeTimeMs / 1000).toBe(120);
+		expect(result[1].slots[23].activeTimeMs / 1000).toBe(60);
 	});
 
 	it("gives a workspace with no user activity time in the range a part of height 0", () => {

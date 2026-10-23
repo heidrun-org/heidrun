@@ -18,6 +18,7 @@ import { dynamicTopicBarTopics, dynamicTopicChatCounts } from "../lib/dynamic_to
 import { chatSummaryLines } from "../lib/chat_summary";
 import { EMPTY_CONTEXT, refContext, type RefContext } from "../lib/refs";
 import { clusteredTopicsByChat } from "../lib/topic_clusters";
+import { prepareChatReferences } from "../stores/chat_references";
 import { keywordTopicsOf, prepareKeywordTopics } from "../stores/dynamic_topics";
 import { languageModelTopicsOf, prepareLanguageModelTopics } from "../stores/language_model_topics";
 import { prepareTopicClusters, topicClusterTable } from "../stores/topic_clusters";
@@ -53,6 +54,9 @@ watch(
     const context = await refContext(value);
     if (folder.value === value) {
       repository.value = context;
+      if (context.forge === "github") {
+        prepareChatReferences(value);
+      }
     }
   },
   { immediate: true },
@@ -402,16 +406,6 @@ const VIEWS = [
 .chat-topics .badge.is-selected { --badge-color: var(--bg-body); background-color: var(--fg-body); }
 .chat-actions .btn { height: 26px; --btn-padding-x: 8px; }
 .chat-summary { margin-top: 6px; gap: 4px; }
-.btn-check:has(input:checked) {
-  --btn-color: var(--text);
-  --btn-hover-color: var(--text);
-  --btn-active-color: var(--text);
-  --btn-hover-bg: var(--bg-2);
-  --btn-active-bg: var(--bg-2);
-}
-.btn-check:has(input:focus-visible) { outline: 2px solid var(--done); outline-offset: 1px; }
-.btn-check:has(input:disabled) { opacity: 0.45; }
 .chat-summary { margin-top: 2px; font-size: 0.85em; width: fit-content; max-width: 100%; }
-.btn:disabled:not([aria-busy="true"]) { opacity: 0.45; }
 .busy-spinner { --spinner-width: 0.75rem; --spinner-height: 0.75rem; --spinner-border-width: 0.15em; }
 </style>

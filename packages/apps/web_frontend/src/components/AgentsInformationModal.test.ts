@@ -91,6 +91,8 @@ describe("AgentsInformationModal", () => {
     const { wrapper } = await mountAgentsInformationModal();
     expect(wrapper.text()).not.toContain("Codex account");
     const { state } = await import("../stores/session");
+    const { settings } = await import("../stores/settings");
+    settings.ownedAgents = ["codex"];
     state.codex = {
       plan: "prolite",
       primary: { used_percent: 9, window_minutes: 300, resets_at: Math.floor(Date.now() / 1000) + 3600 },

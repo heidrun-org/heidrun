@@ -5,11 +5,11 @@
 //! checks the answer. This file does only the two things that the web frontend cannot do: it reads and writes the file,
 //! and it runs `codex` or `claude` on this computer.
 //!
-//! The call is the function `ask` of the package `raw_coding_agent_cli`, which holds the rules of the two commands. The call
+//! The call is the function `ask` of the package `coding_agent_cli`, which holds the rules of the two commands. The call
 //! goes through the login shell, so the commands that the developer installed are found, and Heidrun never reads or stores
 //! the login.
 
-use raw_coding_agent_cli::{ask, AgentShell};
+use coding_agent_cli::{ask, AgentShell};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -42,12 +42,12 @@ pub struct CodingAgentAnswer {
 
 /// The file of the translation table.
 fn table_path() -> PathBuf {
-    crate::chats::data_dir().join(TABLE_FILE)
+    crate::app_data::data_dir().join(TABLE_FILE)
 }
 
 /// The folder where the coding agent runs.
 fn agent_folder() -> PathBuf {
-    crate::chats::data_dir().join("topic_clusters_agent")
+    crate::app_data::data_dir().join("topic_clusters_agent")
 }
 
 /// Reads the rows of the file `path`. A missing file, a file that is not valid, and a file with another version give no

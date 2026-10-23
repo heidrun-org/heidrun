@@ -22,7 +22,7 @@ A full npm package that writes a section of `CHANGELOG.md`, in the Keep a Change
 - The heading is `## [Unreleased]` when the range ends at the current commit. Otherwise it is `## [<version>] - <date of the commit of the tag>`.
 - The renderer keeps the sections in this order: `Unreleased`, then the releases from the highest version to the lowest. It replaces a section with the same version and never changes another section.
 - The default mode never chooses a category. Only a coding agent chooses the categories.
-- Only `src/generation` runs the executable of the package `raw_coding_agent_cli`, with `cargo run`, and only when the option `--ai` is used. The mode without the option `--ai` needs no Rust tool.
+- Only `src/generation` runs the executable of the package `coding_agent_cli`, with `cargo run`, and only when the option `--ai` is used. The mode without the option `--ai` needs no Rust tool.
 
 ## Background
 - The package was created by [issue #114](https://github.com/heidrun-org/heidrun/issues/114). The options `--from` and `--to` and the move into a package come from [issue #118](https://github.com/heidrun-org/heidrun/issues/118). The coding agent comes from [issue #113](https://github.com/heidrun-org/heidrun/issues/113). The executable of the coding agent is written in Rust since [issue #394](https://github.com/heidrun-org/heidrun/issues/394).

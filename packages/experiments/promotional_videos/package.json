@@ -1,0 +1,27 @@
+{
+  "name": "promotional_videos",
+  "private": true,
+  "license": "MIT",
+  "version": "0.3.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "record:dino_run": "tsx src/record_dino_run_cli.ts",
+    "record:video_game_first": "tsx src/record_dino_run_cli.ts --intro-music outputs/music/echoes_of_lumen-epic-background-music-595722.mp3 --outro-music outputs/music/vadim_makes_sound-podcast-outro-music-551266.mp3",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "parallax_dino_runner": "workspace:*",
+    "playwright-core": "1.58.2",
+    "vite": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.9"
+  }
+}

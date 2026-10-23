@@ -3,6 +3,11 @@
   "title": "Macros. Click: insert. Shift+click: insert and send.",
   "project": "Project",
   "personal": "My macros",
-  "edit": "Edit macros…",
-  "hint": "Click: insert. Shift+click: insert and send."
+  "edit": "Edit",
+  "hardCoded": "Hard-coded",
+  "create": "Create",
+  "delete": "Delete",
+  "editMacro": "Edit {label}",
+  "deleteMacro": "Delete {label}",
+  "deleteConfirm": "Do you really want to delete the macro “{label}”?"
 }

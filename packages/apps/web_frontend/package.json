@@ -2,13 +2,13 @@
   "name": "web_frontend",
   "private": true,
   "license": "MIT",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run --minWorkers=1 --maxWorkers=2",
     "check:translations": "node scripts/check-translations.mjs"
   },
   "dependencies": {

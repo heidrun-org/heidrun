@@ -1,3 +1,7 @@
+---
+description: "Heiðrún is the goat of Norse mythology whose mead feeds the warriors of Valhalla. Read why the application has her name."
+---
+
 # About Heidrun
 
 ## Who is Heiðrún?

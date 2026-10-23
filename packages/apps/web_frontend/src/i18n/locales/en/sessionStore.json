@@ -2,12 +2,15 @@
   "tabNumber": "tab {number}",
   "window.session": "5-hour limit",
   "window.week": "Weekly limit",
+  "antigravity.geminiWeekly": "Gemini weekly limit",
+  "antigravity.thirdPartyWeekly": "Third-party models weekly limit",
   "notify.question": "{name} is asking you a question",
   "notify.done": "{name} has finished",
   "notify.blocked": "{name} is waiting for a decision",
   "notify.patternFound": "{name}: pattern found",
   "error.agentBlocked": "The agent is waiting for a decision: answer it first.",
   "error.herdrUnreachable": "Herdr does not answer. Run \"herdr\" in a terminal.",
+  "error.paneMove": "The pane did not move: {reason}",
   "error.lastTab": "You cannot close the last tab of a workspace.",
   "outputSent": "Output sent to {name}"
 }

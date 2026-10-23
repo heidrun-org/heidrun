@@ -68,6 +68,22 @@ describe('the scroll bars', () => {
 		}
 	});
 
+	it('reserve no free strip at the right edge of the window: the root element has scrollbar-gutter auto (issue #645)', () => {
+		const stylesText = Fs.readFileSync(Path.resolve(__dirname, 'styles.css'), 'utf8');
+		expect(stylesText).toMatch(/^:root \{ scrollbar-gutter: auto; \}$/m);
+	});
+
+	it('are never given scrollbar-gutter stable, which keeps a free strip of 8 pixels at the right edge of the window (issue #645)', () => {
+		for (const filePath of ScrollbarRulesTestHelper.listStyleFilePaths()) {
+			const sourceText = Fs.readFileSync(filePath, 'utf8');
+			const propertyList = [...sourceText.matchAll(/scrollbar-gutter\s*:\s*([^;}\n]+)/g)].map((match) => match[1].trim());
+			expect({ filePath, propertyList: propertyList.filter((value) => value !== 'auto') }).toEqual({
+				filePath,
+				propertyList: [],
+			});
+		}
+	});
+
 	it('are never given scrollbar-width or scrollbar-color, which replace the pseudo-elements in Chrome, except the value none', () => {
 		for (const filePath of ScrollbarRulesTestHelper.listStyleFilePaths()) {
 			const sourceText = Fs.readFileSync(filePath, 'utf8');

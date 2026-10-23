@@ -9,11 +9,11 @@ import { isPinned, togglePinnedPane } from "../stores/pinned_panes";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
-/** The Bootstrap theme color of the card and of the badge of an agent: red when blocked, indigo for a question, blue when done. */
+/** The Bootstrap theme color of the card and badge: red when blocked, indigo for a question, green when done. */
 function themeClass(p: AgentInfo): string {
   if (p.agent_status === "blocked") return "theme-danger";
   if (state.questions[p.pane_id]) return "theme-accent";
-  return "theme-primary";
+  return 'theme-success';
 }
 
 /** The line under the name of the agent: its question, the reason it is blocked, or what it finished. */
@@ -33,7 +33,7 @@ function summary(p: AgentInfo): string {
     <section class="to-handle" :aria-label="t('toHandlePanel.label')">
       <p v-if="attention.length === 0" class="empty">{{ t("toHandlePanel.empty") }}</p>
       <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, themeClass(p), { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
-        <button :title="t('toHandlePanel.showPane')" class="card-main" @click="selectPane(p)">
+        <button :title="t('toHandlePanel.showPane')" class="list-action card-main" @click="selectPane(p)">
           <span class="row">
             <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
             <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge badge-outline">{{ t("toHandlePanel.question") }}</span>
@@ -49,7 +49,7 @@ function summary(p: AgentInfo): string {
           <button
             v-for="o in state.choices[p.pane_id].options"
             :key="o.n"
-            class="choice"
+            class="list-action choice"
             :title="o.label"
             @click="answerChoice(p.pane_id, o.n)"
           >
@@ -57,13 +57,13 @@ function summary(p: AgentInfo): string {
           </button>
         </div>
         <button
-          class="card-pin"
+          class="btn icon small card-pin"
           :class="{ on: isPinned(p.pane_id) }"
           :aria-label="isPinned(p.pane_id) ? t('toHandlePanel.unpinLabel', { name: paneName(p) }) : t('toHandlePanel.pinLabel', { name: paneName(p) })"
           :title="isPinned(p.pane_id) ? t('toHandlePanel.unpinTitle') : t('toHandlePanel.pinTitle')"
           @click="togglePinnedPane(p.pane_id)"
         ><Icon :name="isPinned(p.pane_id) ? 'pin-fill' : 'pin'" /></button>
-        <button class="card-x" :aria-label="t('toHandlePanel.hideLabel', { name: paneName(p) })" :title="t('toHandlePanel.hideTitle')" @click="dismiss(p)">
+        <button class="btn icon small card-x" :aria-label="t('toHandlePanel.hideLabel', { name: paneName(p) })" :title="t('toHandlePanel.hideTitle')" @click="dismiss(p)">
           <Icon name="x-lg" />
         </button>
       </div>
@@ -82,16 +82,8 @@ function summary(p: AgentInfo): string {
   width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px 34px 12px 12px;
   border: none; background: transparent; border-radius: 10px;
 }
-.card-x {
-  position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px;
-  background: transparent; color: var(--theme-fg); display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.card-x:hover, .card-pin:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
-.card-pin {
-  position: absolute; top: 34px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px; font-size: var(--font-size);
-  background: transparent; color: var(--theme-fg); display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.card-pin.on { color: var(--accent); }
+.card-x { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; justify-content: center; }
+.card-pin { position: absolute; top: 34px; right: 8px; display: inline-flex; align-items: center; justify-content: center; }
 .card.blocked { border-color: var(--pane-ring-blocked); background: var(--tint-err); }
 .choices { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 10px; }
 .choice-d {
@@ -105,7 +97,7 @@ function summary(p: AgentInfo): string {
   font-size: var(--font-size);
 }
 .choice:hover { background: var(--choice-hover-bg); border-color: var(--pane-ring-blocked-selected); }
-.choice-n { flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px; background: var(--choice-number-bg); color: var(--blocked);
+.choice-n { flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px; background: var(--choice-number-bg); color: var(--blocked-text);
   font: 600 var(--font-size) var(--mono); display: inline-flex; align-items: center; justify-content: center; }
 .choice-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }

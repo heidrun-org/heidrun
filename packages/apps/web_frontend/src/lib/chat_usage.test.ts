@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { chatUsageRows, costText, tokenCountText } from "./chat_usage";
+import { chatUsageRows, costText, tokenCountText, tokenUnitFor } from "./chat_usage";
 import { settings } from "../stores/settings";
 
 beforeEach(() => {
@@ -40,6 +40,21 @@ describe("tokenCountText", () => {
     const count = tokenCountText(1_500_000);
     expect(count.text).toBe("1,50 MT");
     expect(count.full?.replace(/\s/g, " ")).toBe("1 500 000 jetons");
+  });
+});
+
+describe("tokenUnitFor", () => {
+  it("gives a unit of one token, with no suffix, for a number under one thousand", () => {
+    expect(tokenUnitFor(1)).toEqual({ size: 1, suffix: "" });
+    expect(tokenUnitFor(999)).toEqual({ size: 1, suffix: "" });
+  });
+
+  it("gives the biggest unit that does not go over the number", () => {
+    expect(tokenUnitFor(1_000)).toEqual({ size: 1_000, suffix: "KT" });
+    expect(tokenUnitFor(999_999)).toEqual({ size: 1_000, suffix: "KT" });
+    expect(tokenUnitFor(3_103_109)).toEqual({ size: 1_000_000, suffix: "MT" });
+    expect(tokenUnitFor(30_748_060_082)).toEqual({ size: 1_000_000_000, suffix: "BT" });
+    expect(tokenUnitFor(2_500_000_000_000)).toEqual({ size: 1_000_000_000_000, suffix: "TT" });
   });
 });
 

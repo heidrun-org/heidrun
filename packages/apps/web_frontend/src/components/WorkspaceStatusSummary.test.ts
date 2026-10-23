@@ -4,12 +4,16 @@ import Fs from "node:fs";
 import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
 import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
+vi.mock("@tauri-apps/plugin-clipboard-manager", () => ({ writeText: vi.fn(async () => {}) }));
+vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -29,8 +33,8 @@ vi.mock("../lib/api", async (importOriginal) => {
 function makeSnapshot(panes: Record<string, unknown>[] = []): SessionSnapshot {
   return {
     workspaces: [
-      { workspace_id: "w1", number: 1, label: "heidrun", agent_status: "idle", tab_count: 2 },
-      { workspace_id: "w2", number: 2, label: "teamwright", agent_status: "idle", tab_count: 1 },
+      { workspace_id: "w1", workspace_folder: "/work/heidrun", number: 1, label: "heidrun", agent_status: "idle", tab_count: 2 },
+      { workspace_id: "w2", workspace_folder: "/work/teamwright", number: 2, label: "teamwright", agent_status: "idle", tab_count: 1 },
       { workspace_id: "w3", number: 3, label: "scratch", agent_status: "idle", tab_count: 1 },
     ],
     tabs: [],
@@ -269,6 +273,20 @@ describe("WorkspaceStatusSummary card", () => {
 });
 
 describe("WorkspaceStatusSummary details of the selected workspace", () => {
+  it("titles the card Workspace and copies the folder path and Git branch", async () => {
+    const { wrapper, git } = await mountSection();
+    git.status = { w1: { root: "/work/heidrun", branch: "dev_jerome" } as never };
+    await wrapper.get(".workspace-status").trigger("click");
+
+    expect(wrapper.get(".workspace-card-title").text()).toBe("Workspace");
+    await wrapper.get('[aria-label="Copy folder path"]').trigger("click");
+    expect(writeText).toHaveBeenCalledWith("/work/heidrun");
+    expect(wrapper.find('[aria-label="Copied"] .bi-clipboard-check').exists()).toBe(true);
+
+    await wrapper.get('[aria-label="Copy Git branch"]').trigger("click");
+    expect(writeText).toHaveBeenCalledWith("dev_jerome");
+  });
+
   it("shows the folder, the Git branch, the number of tabs, and the number of agents", async () => {
     const snapshot = makeSnapshot([{ pane_id: "p9", workspace_id: "w1", tab_id: "t1", agent: "codex", agent_status: "idle" }]);
     const { wrapper, git } = await mountSection(snapshot);
@@ -278,6 +296,45 @@ describe("WorkspaceStatusSummary details of the selected workspace", () => {
     expect(wrapper.get("[data-field=branch]").text()).toBe("dev_jerome");
     expect(wrapper.get("[data-field=tabs]").text()).toBe("2");
     expect(wrapper.get("[data-field=agents]").text()).toBe("2");
+  });
+
+  it("shows the repository as a link, after the Git branch, that opens in the web browser", async () => {
+    const { wrapper, git } = await mountSection();
+    git.status = {
+      w1: { root: "/work/heidrun", branch: "dev_jerome", remote: "git@github.com:heidrun-org/heidrun.git" } as never,
+    };
+    await wrapper.get(".workspace-status").trigger("click");
+
+    const fields = wrapper.findAll(".detail-row [data-field]").map((element) => element.attributes("data-field"));
+    expect(fields).toEqual(["folder", "branch", "repository", "tabs", "agents"]);
+    const link = wrapper.get("a[data-field=repository]");
+    expect(link.text()).toBe("https://github.com/heidrun-org/heidrun");
+    expect(link.attributes("href")).toBe("https://github.com/heidrun-org/heidrun");
+    expect(wrapper.find('[aria-label="Copy repository"]').exists()).toBe(false);
+
+    const clickEvent = new MouseEvent("click", { bubbles: true, cancelable: true });
+    link.element.dispatchEvent(clickEvent);
+    await flushPromises();
+    expect(clickEvent.defaultPrevented).toBe(true);
+    expect(openUrl).toHaveBeenCalledWith("https://github.com/heidrun-org/heidrun");
+    expect(wrapper.find(".popover").exists()).toBe(true);
+  });
+
+  it("shows the address of a repository on GitLab from a remote with a port", async () => {
+    const { wrapper, git } = await mountSection();
+    git.status = {
+      w1: { root: "/work/heidrun", branch: "main", remote: "ssh://git@gitlab.example.com:2222/team/app.git" } as never,
+    };
+    await wrapper.get(".workspace-status").trigger("click");
+    expect(wrapper.get("a[data-field=repository]").attributes("href")).toBe("https://gitlab.example.com/team/app");
+  });
+
+  it("says that the workspace has no repository, without a link, when it has no Git remote", async () => {
+    const { wrapper, git } = await mountSection();
+    git.status = { w1: { root: "/work/heidrun", branch: "dev_jerome", remote: null } as never };
+    await wrapper.get(".workspace-status").trigger("click");
+    expect(wrapper.get("[data-field=repository]").text()).toBe("No repository");
+    expect(wrapper.find("a[data-field=repository]").exists()).toBe(false);
   });
 
   it("says that the workspace has no folder and no Git branch when Herdr does not know them", async () => {
@@ -303,6 +360,12 @@ describe("WorkspaceStatusSummary details of the selected workspace", () => {
     session.state.selectedWorkspaceId = null;
     await wrapper.get(".workspace-status").trigger("click");
     expect(wrapper.find("[data-field=details]").exists()).toBe(false);
+    const worktreeButton = wrapper.get(".popover-body > button:last-child");
+    expect(worktreeButton.attributes("disabled")).toBeDefined();
+    expect(worktreeButton.attributes("title")).toBeUndefined();
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "WorkspaceStatusSummary.vue"), "utf8");
+    expect(sourceText).toContain(".workspace-status > .popover { cursor: default; }");
+    expect(sourceText).toContain(".workspace-status > .popover .btn:not(:disabled) { cursor: pointer; }");
   });
 });
 
@@ -313,12 +376,12 @@ describe("WorkspaceStatusSummary card width and folder path", () => {
     Object.defineProperty(line, "clientWidth", { configurable: true, value: clientWidth });
   }
 
-  it("is 408 pixels wide, 20 percent more than the 340 pixels of the other cards, so the folder path fits", async () => {
+  it("is 432 pixels wide so the folder path and branch names have more room", async () => {
     const { wrapper } = await mountSection();
     await wrapper.get(".workspace-status").trigger("click");
     const card = wrapper.get(".popover").element as HTMLElement;
-    expect(card.style.width).toBe("408px");
-    expect(card.style.getPropertyValue("--popover-max-width")).toBe("408px");
+    expect(card.style.width).toBe("432px");
+    expect(card.style.getPropertyValue("--popover-max-width")).toBe("432px");
   });
 
   it("has no minimum width that is smaller than its width", async () => {
@@ -377,6 +440,47 @@ describe("WorkspaceStatusSummary list", () => {
     expect(rows.map((row) => row.get(".workspace-main").attributes("aria-current"))).toEqual(["true", "false", "false"]);
   });
 
+  it("shows the current Git branch to the right of the workspace name", async () => {
+    const { wrapper, git } = await mountSection();
+    git.status = { w1: { branch: "dev_jerome" } } as unknown as typeof git.status;
+    await wrapper.vm.$nextTick();
+    await wrapper.get(".workspace-status").trigger("click");
+    const row = wrapper.findAll(".workspace-row")[0];
+    expect(row.get(".name").text()).toBe("heidrun");
+    expect(row.get(".workspace-branch").text()).toBe("dev_jerome");
+    expect(row.find(".workspace-branch-icon").exists()).toBe(false);
+    const children = Array.from(row.get(".workspace-main").element.children);
+    expect(children.map((child) => child.className.split(" ")[0])).toEqual(["dot", "name", "workspace-branch"]);
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "WorkspaceStatusSummary.vue"), "utf8");
+    expect(sourceText).toMatch(/\.workspace-branch \{[^}]*max-width: 50%;[^}]*margin-left: auto;/);
+    expect(sourceText).toMatch(/\.row-actions \{[^}]*position: absolute;/);
+  });
+
+  it("shows an HTML tooltip to the side with the workspace name, branch, and full folder path", async () => {
+    vi.useFakeTimers();
+    try {
+      const { wrapper, git } = await mountSection();
+      git.status = { w1: { branch: "dev_jerome" } } as unknown as typeof git.status;
+      await wrapper.vm.$nextTick();
+      await wrapper.get(".workspace-status").trigger("click");
+      const row = wrapper.findAll(".workspace-row")[0];
+      await row.trigger("pointerenter");
+      await vi.advanceTimersByTimeAsync(1500);
+      await flushPromises();
+      const tooltip = document.querySelector('[role="tooltip"]');
+      expect(tooltip?.textContent).toContain("heidrun");
+      expect(tooltip?.classList.contains("side-placement")).toBe(true);
+      expect(tooltip?.classList.contains("bs-popover-end")).toBe(true);
+      expect((tooltip?.querySelector(".popover-arrow") as HTMLElement).style.bottom).toBe("12px");
+      expect(tooltip?.textContent).toContain("Git branch");
+      expect(tooltip?.textContent).toContain("dev_jerome");
+      expect(tooltip?.textContent).toContain("Folder");
+      expect(tooltip?.textContent).toContain("/work/heidrun");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("puts no separator line between the workspaces", async () => {
     const { wrapper } = await mountSection();
     await wrapper.get(".workspace-status").trigger("click");
@@ -416,7 +520,7 @@ describe("WorkspaceStatusSummary list", () => {
       expect(actions.classes()).not.toContain("d-flex");
     }
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "WorkspaceStatusSummary.vue"), "utf8");
-    expect(sourceText).toMatch(/\.row-actions \{ display: none;/);
+    expect(sourceText).toMatch(/\.row-actions \{[^}]*display: none;/);
     expect(sourceText).toContain(".workspace-row:hover .row-actions, .workspace-row:focus-within .row-actions { display: flex; }");
   });
 
@@ -431,16 +535,20 @@ describe("WorkspaceStatusSummary list", () => {
 });
 
 describe("WorkspaceStatusSummary new workspace", () => {
-  it("has the entry New workspace at the end of the card, after one separator line", async () => {
+  it("has the folder and Git worktree entries at the end of the card, after one separator line", async () => {
     const { wrapper } = await mountSection();
     await wrapper.get(".workspace-status").trigger("click");
     const body = wrapper.get(".popover-body").element;
     const separators = wrapper.findAll(".popover-body > [role=separator]");
     expect(separators).toHaveLength(1);
-    expect(separators[0].element.nextElementSibling).toBe(body.lastElementChild);
-    const entry = wrapper.get(".popover-body > button");
-    expect(entry.text()).toBe("New workspace…");
-    expect(entry.attributes("title")).toBe("Create a new workspace");
+    expect(separators[0].element.nextElementSibling).toBe(body.children[body.children.length - 2]);
+    const entries = wrapper.findAll(".popover-body > button");
+    expect(entries.map((entry) => entry.text())).toEqual([
+      "Open workspace from folder",
+      "Open workspace from this repo worktree",
+    ]);
+    expect(entries.every((entry) => !entry.text().includes("…"))).toBe(true);
+    expect(entries[0].attributes("title")).toBe("Open a folder as a workspace");
   });
 
   it("asks for the folder of the new workspace, and closes the card", async () => {
@@ -521,12 +629,12 @@ describe("WorkspaceStatusSummary new workspace", () => {
     expect(api.newWorkspace).not.toHaveBeenCalled();
   });
 
-  it("offers the entry New workspace, without a separator line, when Herdr has no workspace", async () => {
+  it("offers both workspace entries without a separator line when Herdr has no workspace", async () => {
     const snapshot = { ...makeSnapshot(), workspaces: [], panes: [] } as unknown as SessionSnapshot;
     const { wrapper } = await mountSection(snapshot);
     await wrapper.get(".workspace-status").trigger("click");
     expect(wrapper.findAll(".workspace-row")).toHaveLength(0);
-    expect(wrapper.findAll(".popover-body > button")).toHaveLength(1);
+    expect(wrapper.findAll(".popover-body > button")).toHaveLength(2);
     expect(wrapper.findAll("[role=separator]")).toHaveLength(0);
   });
 });

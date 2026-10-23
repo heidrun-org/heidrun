@@ -4,12 +4,12 @@ import Fs from "node:fs";
 import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
-import { onNewPaneClick } from "../stores/newPane";
+import { NewPane } from "../stores/new_pane";
 import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
-vi.mock("../stores/newPane", () => ({ onNewPaneClick: vi.fn() }));
+vi.mock("../stores/new_pane", () => ({ NewPane: { onNewPaneClick: vi.fn() } }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -66,6 +66,11 @@ beforeEach(() => {
 });
 
 describe("TabBar entries", () => {
+  it("marks each tab with its identifier, so that a pane dragged over a tab selects it", async () => {
+    const { wrapper } = await mountTabBar();
+    expect(wrapper.findAll("[data-tab-id]").map((entry) => entry.attributes("data-tab-id"))).toEqual(["t1", "t2", "t3"]);
+  });
+
   it("shows one entry for each tab of the selected workspace, and no tab of another workspace", async () => {
     const { wrapper } = await mountTabBar();
     const tabs = wrapper.findAll("[role=tab]");
@@ -207,7 +212,7 @@ describe("TabBar plus button", () => {
   it("starts the creation of a tab when the user clicks it", async () => {
     const { wrapper } = await mountTabBar();
     await wrapper.get("button.add").trigger("click");
-    expect(onNewPaneClick).toHaveBeenCalledTimes(1);
+    expect(NewPane.onNewPaneClick).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -529,8 +534,8 @@ describe("TabBar without the workspace selector", () => {
 describe("TabBar place in the window", () => {
   it("sits on top of the viewport: the file App.vue shows the tab bar before the viewport", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "../App.vue"), "utf8");
-    const tabBarIndex = sourceText.indexOf("<TabBar />");
+    const tabBarIndex = sourceText.indexOf("<TabBar ");
     expect(tabBarIndex).toBeGreaterThan(-1);
-    expect(tabBarIndex).toBeLessThan(sourceText.indexOf('<div class="stage">'));
+    expect(tabBarIndex).toBeLessThan(sourceText.indexOf('<div class="stage"'));
   });
 });

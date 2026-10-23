@@ -2,7 +2,7 @@ import type { UserActivityRecord } from "./user_activity";
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	UserActivitySlots — cuts the user activity time of the last hour, day, and week into slots of a chosen length
+//	UserActivitySlots — cuts the user activity time of the last day, week, and month into slots of a chosen length
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -12,14 +12,11 @@ import type { UserActivityRecord } from "./user_activity";
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-/** The three time ranges of the histograms: the last hour, the last day, and the last week. */
-export type UserActivityRangeId = "hour" | "day" | "week";
+/** The three time ranges of the histograms: the last day, the last week, and the last month. */
+export type UserActivityRangeId = "day" | "week" | "month";
 
-/** The length of one slot: one of eight lengths, from one minute to one day. */
+/** The length of one slot: one of five lengths, from fifteen minutes to one day. */
 export type UserActivitySlotLengthId =
-	| "one_minute"
-	| "five_minutes"
-	| "ten_minutes"
 	| "fifteen_minutes"
 	| "thirty_minutes"
 	| "one_hour"
@@ -57,7 +54,7 @@ export type UserActivitySlot = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /** The ranges, from the shortest to the longest. */
-export const USER_ACTIVITY_RANGE_IDS: readonly UserActivityRangeId[] = ["hour", "day", "week"];
+export const USER_ACTIVITY_RANGE_IDS: readonly UserActivityRangeId[] = ["day", "week", "month"];
 
 /** The length of a range, and the slot lengths that the developer can choose in it. */
 export type UserActivityRangeChoices = {
@@ -71,9 +68,6 @@ export type UserActivityRangeChoices = {
 
 /** The length of each slot length. */
 export const USER_ACTIVITY_SLOT_LENGTHS: Record<UserActivitySlotLengthId, UserActivitySlotLength> = {
-	one_minute: { amount: 1, unit: "minute" },
-	five_minutes: { amount: 5, unit: "minute" },
-	ten_minutes: { amount: 10, unit: "minute" },
 	fifteen_minutes: { amount: 15, unit: "minute" },
 	thirty_minutes: { amount: 30, unit: "minute" },
 	one_hour: { amount: 1, unit: "hour" },
@@ -83,15 +77,10 @@ export const USER_ACTIVITY_SLOT_LENGTHS: Record<UserActivitySlotLengthId, UserAc
 
 /**
  * The slot lengths that the developer can choose in each range, from the shortest to the longest, and the one that the
- * range starts with. A range has as many slots as its length holds slots of the chosen length, so the last hour with
- * slots of five minutes has twelve slots. In each range, the last slot is the slot of the current time.
+ * range starts with. A range has as many slots as its length holds slots of the chosen length, so the last day with
+ * slots of one hour has 24 slots. In each range, the last slot is the slot of the current time.
  */
 export const USER_ACTIVITY_RANGES: Record<UserActivityRangeId, UserActivityRangeChoices> = {
-	hour: {
-		lengthInMinutes: 60,
-		slotLengthIds: ["one_minute", "five_minutes", "ten_minutes"],
-		defaultSlotLengthId: "five_minutes",
-	},
 	day: {
 		lengthInMinutes: 24 * 60,
 		slotLengthIds: ["fifteen_minutes", "thirty_minutes", "one_hour"],
@@ -102,13 +91,18 @@ export const USER_ACTIVITY_RANGES: Record<UserActivityRangeId, UserActivityRange
 		slotLengthIds: ["one_hour", "six_hours", "one_day"],
 		defaultSlotLengthId: "one_day",
 	},
+	month: {
+		lengthInMinutes: 30 * 24 * 60,
+		slotLengthIds: ["six_hours", "one_day"],
+		defaultSlotLengthId: "one_day",
+	},
 };
 
 /** The most labels that the horizontal axis of the histogram shows, so that the labels never touch each other. */
 const MAX_LABEL_COUNT = 13;
 
 /** The times between two labels that the horizontal axis can use, in minutes, from the shortest to the longest. */
-const LABEL_STEPS_IN_MINUTES: readonly number[] = [1, 5, 10, 15, 30, 60, 120, 180, 360, 720, 1440];
+const LABEL_STEPS_IN_MINUTES: readonly number[] = [1, 5, 10, 15, 30, 60, 120, 180, 360, 720, 1440, 4320];
 
 /** The length of one minute, in milliseconds. */
 const MINUTE_MS = 60_000;
@@ -121,6 +115,9 @@ const MINUTES_PER_HOUR = 60;
 
 /** The number of minutes in one day. */
 const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR;
+
+/** The length of one day, in milliseconds. */
+const DAY_MS = MINUTES_PER_DAY * MINUTE_MS;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -151,7 +148,8 @@ export class UserActivitySlots {
 	/**
 	 * The time between two labels of the horizontal axis: the shortest step that is a whole number of slots, and that
 	 * gives no more than thirteen labels. A label sits on a slot that starts at a multiple of this time since midnight, on
-	 * the clock of the computer. A step of one day, which is 1440 minutes, puts a label on each midnight.
+	 * the clock of the computer. A step of one day, which is 1440 minutes, puts a label on each midnight. A step of three
+	 * days, which is 4320 minutes, puts a label on every third midnight, counted back from the midnight of the last slot.
 	 *
 	 * @param rangeId - The range.
 	 * @param slotLengthId - The slot length. The default is the slot length that the range starts with.
@@ -159,7 +157,18 @@ export class UserActivitySlots {
 	 */
 	static labelStepInMinutes(rangeId: UserActivityRangeId, slotLengthId?: UserActivitySlotLengthId): number {
 		const { lengthInMinutes } = USER_ACTIVITY_RANGES[rangeId];
-		const slotInMinutes = lengthInMinutes / UserActivitySlots.slotCount(rangeId, slotLengthId);
+		return UserActivitySlots.labelStepFor(lengthInMinutes, lengthInMinutes / UserActivitySlots.slotCount(rangeId, slotLengthId));
+	}
+
+	/**
+	 * The time between two labels of the horizontal axis for any time range and any slot length: the shortest step that is a
+	 * whole number of slots, and that gives no more than thirteen labels. See `labelStepInMinutes` for the meaning of a step.
+	 *
+	 * @param lengthInMinutes - The length of the time range, in minutes.
+	 * @param slotInMinutes - The length of a slot, in minutes.
+	 * @returns The time between two labels, in minutes.
+	 */
+	static labelStepFor(lengthInMinutes: number, slotInMinutes: number): number {
 		for (const step of LABEL_STEPS_IN_MINUTES) {
 			if (step % slotInMinutes === 0 && lengthInMinutes / step <= MAX_LABEL_COUNT) {
 				return step;
@@ -169,17 +178,42 @@ export class UserActivitySlots {
 	}
 
 	/**
+	 * Tells if the slot has a label on the horizontal axis. With a step of one day or less, a slot has a label when it
+	 * starts at a multiple of the step since midnight. With a step of more than one day, a slot has a label when it starts
+	 * at midnight, and the number of days between this midnight and the midnight of the last slot is a multiple of the
+	 * step in days.
+	 *
+	 * @param slotStartedAt - The start of the slot, in milliseconds.
+	 * @param lastSlotStartedAt - The start of the last slot, which is the slot of the current time, in milliseconds.
+	 * @param stepInMinutes - The time between two labels, from `labelStepInMinutes`.
+	 * @returns `true` when the slot has a label.
+	 */
+	static hasLabel(slotStartedAt: number, lastSlotStartedAt: number, stepInMinutes: number): boolean {
+		const slotDate = new Date(slotStartedAt);
+		const minutesSinceMidnight = slotDate.getHours() * MINUTES_PER_HOUR + slotDate.getMinutes();
+		if (stepInMinutes <= MINUTES_PER_DAY) {
+			return minutesSinceMidnight % stepInMinutes === 0;
+		}
+		if (minutesSinceMidnight !== 0) {
+			return false;
+		}
+		const lastMidnight = new Date(lastSlotStartedAt).setHours(0, 0, 0, 0);
+		const daysBefore = Math.round((lastMidnight - slotStartedAt) / DAY_MS);
+		return daysBefore % (stepInMinutes / MINUTES_PER_DAY) === 0;
+	}
+
+	/**
 	 * The start of the first slot of a range: the slots before the slot of the current time. It is the start of the time
 	 * range of the histogram.
 	 *
 	 * @param now - The current time, in milliseconds.
-	 * @param rangeId - The range. The default is the last hour.
+	 * @param rangeId - The range. The default is the last day.
 	 * @param slotLengthId - The slot length. The default is the slot length that the range starts with.
 	 * @returns The start of the first slot, in milliseconds.
 	 */
 	static firstSlotStartedAt(
 		now: number,
-		rangeId: UserActivityRangeId = "hour",
+		rangeId: UserActivityRangeId = "day",
 		slotLengthId?: UserActivitySlotLengthId,
 	): number {
 		const length = USER_ACTIVITY_SLOT_LENGTHS[slotLengthId ?? USER_ACTIVITY_RANGES[rangeId].defaultSlotLengthId];
@@ -214,7 +248,7 @@ export class UserActivitySlots {
 	 * @param runningPeriodStartedAt - The start of the active period that runs now, or `null` when no period runs. This
 	 * period has no record yet, so it counts from its start up to the current time.
 	 * @param now - The current time, in milliseconds.
-	 * @param rangeId - The range. The default is the last hour.
+	 * @param rangeId - The range. The default is the last day.
 	 * @param slotLengthId - The slot length. The default is the slot length that the range starts with.
 	 * @returns The slots, the oldest first.
 	 */
@@ -222,7 +256,7 @@ export class UserActivitySlots {
 		records: readonly UserActivityPeriodTimes[],
 		runningPeriodStartedAt: number | null,
 		now: number,
-		rangeId: UserActivityRangeId = "hour",
+		rangeId: UserActivityRangeId = "day",
 		slotLengthId?: UserActivitySlotLengthId,
 	): UserActivitySlot[] {
 		const length = USER_ACTIVITY_SLOT_LENGTHS[slotLengthId ?? USER_ACTIVITY_RANGES[rangeId].defaultSlotLengthId];

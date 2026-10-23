@@ -9,6 +9,8 @@
 use crate::model::types::{SynchronizationMode, SynchronizationReport, UserActivityRecord};
 use crate::storage::database::UserActivityDatabase;
 use crate::user_activity_file::user_activity_file_reader::UserActivityFileReader;
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// Reads the records of the file, and writes them in the database. `log` receives the progress of the reading, one line for
 /// the number of records to write, and one line for the write.
@@ -16,6 +18,24 @@ use crate::user_activity_file::user_activity_file_reader::UserActivityFileReader
 /// # Errors
 /// An error when the file cannot be read, or when the database cannot be read or written.
 pub fn run(
+    mode: SynchronizationMode,
+    reader: &UserActivityFileReader,
+    database: &mut UserActivityDatabase,
+    log: &dyn Fn(&str),
+) -> Result<SynchronizationReport, String> {
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "synchronize", OperationKind::Synchronization)
+        .choice("mode", mode.name())
+        .parameter("file", reader.file_path().display().to_string())
+        .database(database.database_path());
+    record(spec, || run_inside(mode, reader, database, log), |report| {
+        Summary::count(report.record_count)
+            .detail("alreadyReadRecordCount", report.already_read_record_count)
+            .detail("skippedLineCount", report.skipped_line_count)
+    })
+}
+
+/// The work of `run`, between the start event and the completion event of its operation.
+fn run_inside(
     mode: SynchronizationMode,
     reader: &UserActivityFileReader,
     database: &mut UserActivityDatabase,
@@ -294,5 +314,45 @@ mod tests {
     /// Replaces the content of a file by lines, each one ended by a new line.
     fn write_file_again(file_path: &Path, lines: &[String]) {
         std::fs::write(file_path, lines.iter().map(|line| format!("{line}\n")).collect::<String>()).unwrap();
+    }
+
+    #[test]
+    fn a_synchronization_records_one_operation_with_the_read_of_the_file_and_the_write_inside_it() {
+        let file_path = file_of_three_records("data_layer_operation_log");
+        let mut database = new_database("operation_log_database");
+        let (report, events) = data_layer_operation_log::testing::capture(|| {
+            synchronize(SynchronizationMode::Initialize, &file_path, &mut database)
+        });
+        assert_eq!(report.record_count, 3);
+        assert_eq!(
+            data_layer_operation_log::testing::tree(&events),
+            vec![
+                "user_activity.synchronize",
+                "  user_activity.read_file",
+                "  user_activity.upsert_records",
+            ]
+        );
+        let starts = data_layer_operation_log::testing::starts(&events);
+        assert_eq!(starts[0].parameters["mode"], "initialize");
+        assert_eq!(starts[0].parameters["file"], file_path.display().to_string());
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
+        assert_eq!(complete.result_count, Some(3));
+        assert_eq!(complete.details["skippedLineCount"], 0);
+    }
+
+    #[test]
+    fn a_query_is_recorded_with_its_statement_and_its_row_count() {
+        let file_path = file_of_three_records("operation_log_query");
+        let path = temp_folder("operation_log_query_database").join("data_layer.sqlite");
+        let mut database = UserActivityDatabase::open(&path).unwrap();
+        synchronize(SynchronizationMode::Initialize, &file_path, &mut database);
+        drop(database);
+        let database = UserActivityDatabase::open_read_only(&path).unwrap();
+        let (rows, events) = data_layer_operation_log::testing::capture(|| database.query("SELECT workspaceFolder FROM user_activity_records").unwrap());
+        assert_eq!(rows.len(), 3);
+        let starts = data_layer_operation_log::testing::starts(&events);
+        assert_eq!(starts[0].operation_name, "query");
+        assert_eq!(starts[0].parameters["sql"], "SELECT workspaceFolder FROM user_activity_records");
+        assert_eq!(data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap().result_count, Some(3));
     }
 }

@@ -86,6 +86,9 @@ export class InstallScriptRunner {
 	/** The folder that receives Heidrun.app, in place of /Applications. */
 	readonly applicationsFolder: string;
 
+	/** The home folder that receives the command links, in place of the user's home folder. */
+	readonly homeFolder: string;
+
 	/** The folder that the script uses in place of /tmp. The script must leave it empty. */
 	readonly temporaryFolder: string;
 
@@ -99,9 +102,11 @@ export class InstallScriptRunner {
 	constructor(version = '1.2.3') {
 		this.rootFolder = Fs.mkdtempSync(Path.join(Os.tmpdir(), 'install_script_tests_'));
 		this.applicationsFolder = Path.join(this.rootFolder, 'Applications');
+		this.homeFolder = Path.join(this.rootFolder, 'home');
 		this.temporaryFolder = Path.join(this.rootFolder, 'tmp');
 		this.logPath = Path.join(this.rootFolder, 'log.txt');
 		Fs.mkdirSync(this.applicationsFolder);
+		Fs.mkdirSync(this.homeFolder);
 		Fs.mkdirSync(this.temporaryFolder);
 		Fs.writeFileSync(this.logPath, '');
 
@@ -124,6 +129,15 @@ export class InstallScriptRunner {
 				+ `\t<key>CFBundleShortVersionString</key>\n\t<string>${version}</string>\n`
 				+ `</dict>\n</plist>\n`,
 		);
+		const binariesFolder = Path.join(contentsFolder, 'Resources', 'binaries');
+		Fs.mkdirSync(binariesFolder, {
+			recursive: true,
+		});
+		for (const commandName of ['heidrun_ctrl', 'heidrun_data']) {
+			Fs.writeFileSync(Path.join(binariesFolder, commandName), '#!/bin/sh\n', {
+				mode: 0o755,
+			});
+		}
 	}
 
 	/**
@@ -139,6 +153,7 @@ export class InstallScriptRunner {
 				PATH: `${Path.join(this.rootFolder, 'bin')}:/usr/bin:/bin`,
 				TMPDIR: this.temporaryFolder,
 				HEIDRUN_APPLICATIONS_FOLDER: this.applicationsFolder,
+				HOME: this.homeFolder,
 				FAKE_LOG: this.logPath,
 				FAKE_FIXTURE_FOLDER: Path.join(this.rootFolder, 'fixture'),
 				...environment,

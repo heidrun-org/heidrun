@@ -135,7 +135,7 @@ ORDER BY committedAt"
 
 ## Library
 
-The desktop application can use the library as a path dependency, as it does for `raw_coding_agent_cli`:
+The desktop application can use the library as a path dependency, as it does for `coding_agent_cli`:
 
 ```toml
 data_layer_source_control = { path = "../../data_layers/data_layer_source_control" }
@@ -170,3 +170,7 @@ Run these commands from the root of the repository.
 pnpm --silent data_layer:source_control --help      # show the help
 pnpm --filter data_layer_source_control test        # run the Rust tests (cargo test)
 ```
+
+## Operation log
+
+Every public function of this package writes a start line and an end line in the operation log of the data layer, with the library [data_layer_operation_log](../data_layer_operation_log/README.md): the package `source_control`, the operation, the parameters that decide the workload, the duration, and the outcome. A synchronization, its collection, its writes, and its lock appear as nested operations. The command `heidrun_data operations summary` shows the usage patterns and the durations, and `heidrun_data operations replay` runs a recorded operation again. The log never changes a result and never holds a secret. The description is in [data_layer_operation_log.md](../../../docs/statistics/data_layer_operation_log.md).

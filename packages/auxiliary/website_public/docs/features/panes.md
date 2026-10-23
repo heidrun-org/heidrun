@@ -1,3 +1,7 @@
+---
+description: "Each pane of Heidrun shows a real terminal, so Claude Code, Codex, and Antigravity look and work exactly as you know them."
+---
+
 # The panes
 
 A coding agent is a program that runs in a terminal. Many tools put the coding agent inside their own window, and then the coding agent no longer looks or works as you know it.

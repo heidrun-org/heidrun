@@ -11,7 +11,7 @@ static CALL_COUNTER: AtomicU64 = AtomicU64::new(0);
 /// File extensions that Heidrun accepts as images. `sips` converts all of them to PNG.
 const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "heic", "tif", "tiff", "bmp"];
 
-fn is_image_path(path: &str) -> bool {
+pub(crate) fn is_image_path(path: &str) -> bool {
     match Path::new(path).extension().and_then(|e| e.to_str()) {
         Some(ext) => IMAGE_EXTENSIONS.contains(&ext.to_ascii_lowercase().as_str()),
         None => false,

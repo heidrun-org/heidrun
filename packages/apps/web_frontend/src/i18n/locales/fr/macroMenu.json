@@ -3,6 +3,11 @@
   "title": "Macros. Clic : insérer. Maj+clic : insérer et envoyer.",
   "project": "Projet",
   "personal": "Mes macros",
-  "edit": "Modifier les macros…",
-  "hint": "Clic : insérer. Maj+clic : insérer et envoyer."
+  "edit": "Modifier",
+  "hardCoded": "Intégrées",
+  "create": "Créer",
+  "delete": "Supprimer",
+  "editMacro": "Modifier {label}",
+  "deleteMacro": "Supprimer {label}",
+  "deleteConfirm": "Voulez-vous vraiment supprimer la macro « {label} » ?"
 }

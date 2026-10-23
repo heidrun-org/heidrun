@@ -10,6 +10,8 @@ use crate::model::types::UserActivityRecord;
 use crate::model::utc_time::to_utc_text;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// The name of the file of the user activity records.
 pub const USER_ACTIVITY_FILE_NAME: &str = "user_activity.jsonl";
@@ -49,6 +51,15 @@ impl UserActivityFileReader {
     /// An error when the file exists and cannot be read, for example when the path is a folder. A file that does not exist
     /// is not an error: the web frontend writes the file only when the first active period ends.
     pub fn read(&self, log: &dyn Fn(&str)) -> Result<UserActivityFileReading, String> {
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "read_file", OperationKind::Collection)
+            .parameter("file", self.file_path.display().to_string());
+        record(spec, || self.read_inside(log), |reading| {
+            Summary::count(reading.records.len()).detail("skippedLineCount", reading.skipped_line_count)
+        })
+    }
+
+    /// The work of `read`, between the start event and the completion event of its operation.
+    fn read_inside(&self, log: &dyn Fn(&str)) -> Result<UserActivityFileReading, String> {
         let bytes = match std::fs::read(&self.file_path) {
             Ok(bytes) => bytes,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -79,7 +90,7 @@ impl UserActivityFileReader {
 /// The path of the file of the user activity records. The folder `heidrun_dir`, which is the value of the variable
 /// `HEIDRUN_DIR`, replaces the folder `~/.config/heidrun` when it is given. The web frontend writes the same path.
 pub fn user_activity_file_path(heidrun_dir: Option<&str>, home_folder: &Path) -> PathBuf {
-    match heidrun_dir {
+    match heidrun_dir.filter(|value| value.is_empty() == false) {
         Some(folder) => PathBuf::from(folder),
         None => home_folder.join(".config").join("heidrun"),
     }
