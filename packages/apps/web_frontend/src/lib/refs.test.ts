@@ -313,13 +313,13 @@ describe("findFileRefs", () => {
   });
 
   it("keeps a path whose last piece is longer than ten characters (issue #793)", () => {
-    const text = "~/Library/WebKit/dev.heidrun-org.heidrun_code.development";
+    const text = "~/Library/WebKit/dev.heidrun-org.heidrun-code.development";
     expect(findFileRefs(text)).toEqual([{ start: 0, end: text.length, path: text, line: null }]);
   });
 
   it("finds both paths of the screenshot of issue #793, each as one whole path", () => {
     const first = "~/.config/heidrun_code_development/local_storage.json";
-    const second = "~/Library/WebKit/dev.heidrun-org.heidrun_code.development";
+    const second = "~/Library/WebKit/dev.heidrun-org.heidrun-code.development";
     expect(findFileRefs(`- ${first}`).map((hit) => hit.path)).toEqual([first]);
     expect(findFileRefs(`- ${second}`).map((hit) => hit.path)).toEqual([second]);
   });

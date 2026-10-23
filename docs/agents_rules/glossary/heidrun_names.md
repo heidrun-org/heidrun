@@ -27,7 +27,7 @@ The name of an application in a text for people. It is written with a space, for
 
 ### Identifier
 
-The name of an application in a repository name, a package name, or a folder name. It is written in lowercase with an underscore, for example `heidrun_code`.
+The name of an application in a repository name, a package name, or a folder name. It is written in lowercase with an underscore, for example `heidrun_code`. The macOS bundle identifier of an application is the exception: it allows only letters, digits, hyphens, and periods, so Heidrun Code has the bundle identifier `dev.heidrun-org.heidrun-code` ([issue 845](https://github.com/heidrun-org/heidrun_code/issues/845)).
 
 ### Former name
 
@@ -40,7 +40,7 @@ A name that the project used before the rebrand ([issue 837](https://github.com/
 - `heidrun_data` became `heidrun_code_data`.
 - The environment variables `HEIDRUN_*` became `HEIDRUN_CODE_*`. The former variable `HEIDRUN_DIR` still works when `HEIDRUN_CODE_DIR` is not set.
 - The data folder `~/.config/heidrun` became `~/.config/heidrun_code`. The former folder is used while the new folder does not exist, so no data moves. The development folder `~/.config/heidrun-development` became `~/.config/heidrun_code_development` in the same way.
-- The installed application `Heidrun.app` became `Heidrun Code.app`, with the identifier `dev.heidrun-org.heidrun_code`. The former identifier was `dev.heidrun-org.heidrun`.
+- The installed application `Heidrun.app` became `Heidrun Code.app`, with the identifier `dev.heidrun-org.heidrun-code`. The former identifier was `dev.heidrun-org.heidrun`.
 
 ### Persisted name
 
