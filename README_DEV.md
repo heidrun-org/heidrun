@@ -124,7 +124,7 @@ When someone downloads the disk image with a web browser, the web browser puts a
 xattr -dr com.apple.quarantine /Applications/Heidrun.app
 ```
 
-The file `docs/release_notes/prefix.md` gives the same explanation and the same command in the text of every GitHub release.
+The text of a GitHub release does not mention this message, because the command `curl` of the next section does not put the quarantine mark.
 
 ## Install the application with one command
 
