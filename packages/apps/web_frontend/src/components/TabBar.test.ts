@@ -66,6 +66,11 @@ beforeEach(() => {
 });
 
 describe("TabBar entries", () => {
+  it("marks each tab with its identifier, so that a pane dragged over a tab selects it", async () => {
+    const { wrapper } = await mountTabBar();
+    expect(wrapper.findAll("[data-tab-id]").map((entry) => entry.attributes("data-tab-id"))).toEqual(["t1", "t2", "t3"]);
+  });
+
   it("shows one entry for each tab of the selected workspace, and no tab of another workspace", async () => {
     const { wrapper } = await mountTabBar();
     const tabs = wrapper.findAll("[role=tab]");

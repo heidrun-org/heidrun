@@ -11,6 +11,7 @@ import CompositionBar from "./CompositionBar.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, startRename, state } from "../stores/session";
 import { allPinnedPanes, gridPanes, isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
 import { NewPane } from "../stores/new_pane";
+import { PaneMoveDrag } from "../stores/pane_move";
 import { git } from "../stores/git";
 import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
@@ -40,6 +41,14 @@ const selected = computed(() => {
 // grid draws, and the pinned panes of the column of pinned panes.
 const hasSeveralPanes = computed(() => gridPanes.value.length + allPinnedPanes.value.length > 1);
 const pinned = computed(() => isPinned(props.pane.pane_id));
+// A press on the header, away from its buttons, followed by a move of the pointer, moves the pane. A pinned pane of the column
+// of pinned panes stays where it is: it has no grid to drop on, and it cannot receive a drop.
+function onHeaderPointerDown(event: PointerEvent) {
+  if (props.isInColumnOfPinnedPanes) {
+    return;
+  }
+  PaneMoveDrag.onPointerDown(event, props.pane.pane_id);
+}
 const compositionBar = computed(() => CompositionBarStore.forPane(props.pane.pane_id));
 // A click in a pinned pane gives it the keyboard without leaving the current tab.
 function onDown() {
@@ -84,10 +93,11 @@ const subtitle = computed(() => {
     ref="paneElement"
     class="pane"
     :class="[status, { selected, 'several-panes': hasSeveralPanes, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
+    :data-pane-move-destination="isInColumnOfPinnedPanes ? undefined : pane.pane_id"
     @mousedown="onDown"
   >
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
-    <header class="head">
+    <header class="head" @pointerdown="onHeaderPointerDown">
       <span class="dot" :class="status"></span>
       <InlineRename
         v-if="state.renaming === `pane:${pane.pane_id}`"

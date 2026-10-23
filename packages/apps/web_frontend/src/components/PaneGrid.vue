@@ -5,6 +5,7 @@ import PaneCard from "./PaneCard.vue";
 import { t } from "../i18n/index";
 import { PaneSeparators, type PaneOuterEdge, type PaneOuterEdges, type PaneSeparator } from "../lib/pane_separators";
 import { setSplitRatios } from "../stores/session";
+import { PaneMoveDrag } from "../stores/pane_move";
 import { gridLayout, keptTabs } from "../stores/pinned_panes";
 import type { AgentInfo, PaneLayoutSnapshot } from "../lib/types";
 
@@ -183,6 +184,22 @@ type Drag = {
 
 const gridEl = ref<HTMLElement | null>(null);
 const drag = ref<Drag | null>(null);
+
+// While the developer drags a pane header over another pane, the grid shows the half of that pane where the dragged pane goes.
+const movePreviewStyle = computed(() => {
+  const box = PaneMoveDrag.state.previewBox;
+  const grid = gridEl.value;
+  if (box === null || grid === null) {
+    return null;
+  }
+  const gridBox = grid.getBoundingClientRect();
+  return {
+    left: `${box.left - gridBox.left}px`,
+    top: `${box.top - gridBox.top}px`,
+    width: `${box.right - box.left}px`,
+    height: `${box.bottom - box.top}px`,
+  };
+});
 const hoveredCornerKey = ref<string | null>(null);
 
 // Like Visual Studio Code: a line is drawn in colour under the pointer, and a corner under the pointer or in a drag
@@ -305,6 +322,7 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
       <PaneCard :pane="item.pane" />
     </div>
     <div v-if="isGridEmpty" class="empty"><EmptyTabScreen /></div>
+    <div v-if="movePreviewStyle !== null" class="move-preview" :style="movePreviewStyle" aria-hidden="true"></div>
     <div
       v-for="item in separatorItems"
       :key="item.separator.splitId"
@@ -358,6 +376,12 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
 .separator.right { width: var(--pane-gap); cursor: col-resize; }
 .separator:hover, .separator.lit, .separator:focus-visible { background: var(--done); }
 .separator:focus-visible { outline: none; }
+/* The half of the destination pane where the dragged pane goes. It has the look of the layer of a drop of images, and it lets the pointer
+   through, so that the pane under it keeps receiving the pointer. */
+.move-preview {
+  position: absolute; z-index: 8; pointer-events: none; box-sizing: border-box;
+  border: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
 /* The corner has no drawing: the lines that meet there show it. */
 .corner { position: absolute; z-index: 7; width: var(--corner-size); height: var(--corner-size); cursor: move; touch-action: none; }
 </style>

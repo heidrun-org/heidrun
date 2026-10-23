@@ -30,7 +30,7 @@ function isRemoteControlled(tabId: string): boolean {
 <template>
   <div class="tab-bar d-flex gap-2">
     <ul class="nav nav-tabs" role="tablist" :aria-label="t('tabBar.label')">
-      <li v-for="(tab, tabIndex) in tabs" :key="tab.tab_id" class="nav-item position-relative" role="presentation" :data-reorder-id="tab.tab_id">
+      <li v-for="(tab, tabIndex) in tabs" :key="tab.tab_id" class="nav-item position-relative" role="presentation" :data-reorder-id="tab.tab_id" :data-tab-id="tab.tab_id">
         <div v-if="state.renaming === `tab:${tab.tab_id}`" class="nav-link active d-flex align-items-center gap-2">
           <span class="dot" :class="tab.agent_status === 'idle' ? '' : tab.agent_status"></span>
           <Icon :name="iconOf(tab.tab_id)" class="tab-icon" />

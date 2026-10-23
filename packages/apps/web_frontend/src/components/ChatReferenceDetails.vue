@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import Icon from "./Icon.vue";
 import {
@@ -18,12 +19,13 @@ import { toast } from "../stores/session";
 import { t } from "../i18n/index";
 
 // What the forge says about one issue or one pull request, with the layout of the card that GitHub shows: the repository
-// (a link to its web page) and the date, with two buttons at the right of the same line that open the description and the
-// comments in Heidrun, or the web page on GitHub or GitLab; the whole title with its number, when the row above does not
-// show them; the state; a separator; the beginning of the description, and the labels (or the two branches of a pull
-// request); a separator; and the person who opened it. In the Code hosting sidebar section, a label is a button that adds the
-// label to the search of its list, or removes it.
+// (a link to its web page) and the date, with three buttons at the right of the same line that open the description and the
+// comments in Heidrun, open the web page on GitHub or GitLab, or copy the address of this web page into the clipboard; the
+// whole title with its number, when the row above does not show them; the state; a separator; the beginning of the
+// description, and the labels (or the two branches of a pull request); a separator; and the person who opened it. In the
+// Code hosting sidebar section, a label is a button that adds the label to the search of its list, or removes it.
 // - issue #607
+// - issue #808
 
 const props = withDefaults(defineProps<{
   /** The issue or the pull request. */
@@ -66,8 +68,50 @@ watch(
   },
 );
 
+/** How long the copy button shows that the copy worked or failed, in milliseconds. */
+const COPY_FEEDBACK_DURATION = 2000;
+
+/** What the copy button shows: its clipboard icon, a check mark after a copy, or a cross after a refused copy. */
+const copyState = ref<"idle" | "copied" | "failed">("idle");
+
+/** The timer that gives the copy button its clipboard icon again, or undefined when no feedback shows. */
+let copyStateTimer: ReturnType<typeof setTimeout> | undefined;
+
+watch(
+  () => props.reference.url,
+  () => {
+    showCopyState("idle");
+  },
+);
+
+onBeforeUnmount(() => {
+  clearTimeout(copyStateTimer);
+});
+
 /** The name of the forge on the button. The names of the products are not translated. */
 const forgeName = computed(() => (props.forge === "gitlab" ? "GitLab" : "GitHub"));
+
+/** The icon of the copy button. */
+const copyIcon = computed(() => {
+  if (copyState.value === "copied") {
+    return "clipboard-check";
+  }
+  if (copyState.value === "failed") {
+    return "clipboard-x";
+  }
+  return "clipboard";
+});
+
+/** The title of the copy button, which is also its label for a screen reader. */
+const copyTitle = computed(() => {
+  if (copyState.value === "copied") {
+    return t("chatsPanel.webAddressCopied");
+  }
+  if (copyState.value === "failed") {
+    return t("chatsPanel.webAddressCopyFailed");
+  }
+  return t("chatsPanel.copyWebAddressTitle", { forge: forgeName.value });
+});
 
 /** The name of the repository on the first line, for example "heidrun-org/heidrun", or null when it is not known. */
 const repository = computed(() => repositoryName(props.webBase));
@@ -112,6 +156,50 @@ async function openOnForge() {
     toast(String(reason), "error");
   }
 }
+
+/**
+ * Writes the address of the web page that the button "Open in GitHub" opens into the clipboard, then shows for a short time
+ * whether the clipboard took it.
+ */
+async function copyWebAddress() {
+  if (props.reference.url === null) {
+    return;
+  }
+  const isCopied = await writeToClipboard(props.reference.url);
+  showCopyState(isCopied ? "copied" : "failed");
+  copyStateTimer = setTimeout(() => {
+    copyState.value = "idle";
+  }, COPY_FEEDBACK_DURATION);
+}
+
+/**
+ * Writes a text into the clipboard of the computer, with the clipboard of the browser when the clipboard of Tauri refuses it.
+ * @param text - The text to write.
+ * @returns True when one of the two clipboards took the text.
+ */
+async function writeToClipboard(text: string): Promise<boolean> {
+  try {
+    await writeText(text);
+    return true;
+  } catch {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+/**
+ * Shows a state on the copy button, and stops the timer of the feedback that showed before.
+ * @param state - The state to show.
+ */
+function showCopyState(state: "idle" | "copied" | "failed") {
+  clearTimeout(copyStateTimer);
+  copyStateTimer = undefined;
+  copyState.value = state;
+}
 </script>
 
 <template>
@@ -139,6 +227,17 @@ async function openOnForge() {
           @click="openOnForge"
         >
           <Icon :name="forge" />
+        </button>
+        <button
+          type="button"
+          class="btn"
+          data-reference-copy
+          :disabled="reference.url === null"
+          :title="copyTitle"
+          :aria-label="copyTitle"
+          @click="copyWebAddress"
+        >
+          <Icon :name="copyIcon" />
         </button>
       </div>
     </div>

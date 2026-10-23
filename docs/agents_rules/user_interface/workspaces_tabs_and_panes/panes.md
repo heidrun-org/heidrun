@@ -1,11 +1,11 @@
 # User interface of Heidrun: panes
 
 - Created: 13 October 2026
-- Last updated: 22 October 2026
+- Last updated: 23 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 698](https://github.com/heidrun-org/heidrun/issues/698), [issue 803](https://github.com/heidrun-org/heidrun/issues/803), [issue 805](https://github.com/heidrun-org/heidrun/issues/805), [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767), [issue 791](https://github.com/heidrun-org/heidrun/issues/791)
+- Related issue: [issue 698](https://github.com/heidrun-org/heidrun/issues/698), [issue 803](https://github.com/heidrun-org/heidrun/issues/803), [issue 805](https://github.com/heidrun-org/heidrun/issues/805), [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767), [issue 791](https://github.com/heidrun-org/heidrun/issues/791), [issue 810](https://github.com/heidrun-org/heidrun/issues/810)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -18,6 +18,7 @@ The rules of the pane header are in [pane_headers.md](pane_headers.md).
 - The panes are not cards. How the panes meet the frame of the viewport, and their corners, are in [panes_appearance.md](../../web_styling/panes_appearance.md).
 - Two panes that touch have one line between them. The developer grabs the line to change the size of the panes. The place to grab is as wide as the gap between the viewport and a sidebar (`--pane-gap`). The look of the line is in [panes_appearance.md](../../web_styling/panes_appearance.md).
 - The selected pane and a blocked pane have a ring. The color and the place of the ring, and the border of the panes, are in [panes_appearance.md](../../web_styling/panes_appearance.md).
+- The developer moves a pane by pressing its header and dropping it on another pane, in the same tab or in another tab. The rules are in [pane_move.md](pane_move.md).
 - A click on a pane gives the focus to that pane. Heidrun remembers the panes that had the focus: see [pane_focus_history.md](pane_focus_history.md).
 - The header of a pane has two split buttons, "Split right" and "Split down". A plain click on a split button splits the pane and starts the default command of a new tab, the option `newTabCommand` of the settings, in the new pane. With a coding agent, the new pane starts a free coding agent, the same as the plus button of the tab bar, and the tab keeps its name. A shift click on a split button splits the pane and starts a terminal in the new pane. The shortcuts Command+D and Shift+Command+D, and the entries "Split to the right" and "Split to the bottom" of the command palette, do the same as a plain click ([issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 688](https://github.com/heidrun-org/heidrun/issues/688)).
 - Every pane has a toggle button in its header that shows and hides that pane's composition bar: see [composition_bar.md](composition_bar.md).

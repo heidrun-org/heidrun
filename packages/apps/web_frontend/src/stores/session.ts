@@ -541,7 +541,35 @@ export function scheduleRefresh(delay = 60) {
   refreshTimer = window.setTimeout(refresh, delay);
 }
 
+let refreshHoldCount = 0;
+
+/**
+ * Stops the refresh of the snapshot until the returned function runs. A refresh that comes in the meantime is dropped. When
+ * the last hold ends, the snapshot is read once. A move of a pane holds the refresh, so that the window never shows the state
+ * between two calls to Herdr.
+ *
+ * @returns The function that ends this hold and, when it is the last hold, reads the snapshot. Calling it a second time does
+ * nothing. It resolves after the snapshot is applied.
+ */
+export function holdRefresh(): () => Promise<void> {
+  refreshHoldCount += 1;
+  let isReleased = false;
+  return async () => {
+    if (isReleased) {
+      return;
+    }
+    isReleased = true;
+    refreshHoldCount -= 1;
+    if (refreshHoldCount === 0) {
+      await refresh();
+    }
+  };
+}
+
 export async function refresh() {
+  if (refreshHoldCount > 0) {
+    return;
+  }
   if (inflight) {
     again = true;
     return;
