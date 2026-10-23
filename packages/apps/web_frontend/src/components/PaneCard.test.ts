@@ -373,7 +373,13 @@ describe("PaneCard usage wheel", () => {
   });
 
   it("puts the pane that holds the open card above the next panes, so that no pane hides the card", () => {
-    expect(styleRule(".pane:has(.information-card-part.is-open)")).toContain("z-index: 3");
+    expect(styleRule(".pane:has(.information-card-part.is-open)")).toContain("z-index: 8");
+  });
+
+  it("puts the pane that holds the open card above the lines between the panes, the line of the right sidebar, and the corners (issue #586)", () => {
+    const level = Number(/z-index: (\d+)/.exec(styleRule(".pane:has(.information-card-part.is-open)"))?.[1]);
+    // The highest of them is the corner of the viewport, at the level 7 (PaneGrid.vue).
+    expect(level).toBeGreaterThan(7);
   });
 });
 
