@@ -88,19 +88,29 @@ impl UserActivityFileReader {
 }
 
 /// The path of the file of the user activity records. The folder `heidrun_dir`, which is the value of the variable
-/// `HEIDRUN_DIR`, replaces the folder `~/.config/heidrun` when it is given. The web frontend writes the same path.
+/// `HEIDRUN_CODE_DIR`, replaces the folder `~/.config/heidrun_code` when it is given. The web frontend writes the same path.
 pub fn user_activity_file_path(heidrun_dir: Option<&str>, home_folder: &Path) -> PathBuf {
     match heidrun_dir.filter(|value| value.is_empty() == false) {
         Some(folder) => PathBuf::from(folder),
-        None => home_folder.join(".config").join("heidrun"),
+        None => default_data_folder(home_folder),
     }
     .join(USER_ACTIVITY_FILE_NAME)
 }
 
-/// The path of the file when nobody gives another path: in the folder of the variable `HEIDRUN_DIR`, or else in
-/// `~/.config/heidrun`.
+/// `~/.config/heidrun_code`, or the former folder `~/.config/heidrun` when it exists and the new folder does not.
+fn default_data_folder(home_folder: &Path) -> PathBuf {
+    let current = home_folder.join(".config").join("heidrun_code");
+    let former = home_folder.join(".config").join("heidrun");
+    if current.is_dir() == false && former.is_dir() {
+        return former;
+    }
+    current
+}
+
+/// The path of the file when nobody gives another path: in the folder of the variable `HEIDRUN_CODE_DIR`, or else in
+/// `~/.config/heidrun_code`.
 pub fn default_user_activity_file_path() -> PathBuf {
-    let heidrun_dir = std::env::var("HEIDRUN_DIR").ok();
+    let heidrun_dir = std::env::var("HEIDRUN_CODE_DIR").ok().or_else(|| std::env::var("HEIDRUN_DIR").ok());
     user_activity_file_path(heidrun_dir.as_deref(), &dirs::home_dir().unwrap_or_default())
 }
 
@@ -294,9 +304,9 @@ mod tests {
     fn puts_the_file_in_the_folder_of_the_variable_heidrun_dir_when_it_is_given() {
         let home = Path::new("/home/ada");
         assert_eq!(
-            user_activity_file_path(Some("/tmp/heidrun_data"), home),
-            Path::new("/tmp/heidrun_data/user_activity.jsonl")
+            user_activity_file_path(Some("/tmp/heidrun_code_data"), home),
+            Path::new("/tmp/heidrun_code_data/user_activity.jsonl")
         );
-        assert_eq!(user_activity_file_path(None, home), Path::new("/home/ada/.config/heidrun/user_activity.jsonl"));
+        assert_eq!(user_activity_file_path(None, home), Path::new("/home/ada/.config/heidrun_code/user_activity.jsonl"));
     }
 }

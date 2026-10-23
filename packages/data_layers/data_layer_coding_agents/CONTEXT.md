@@ -19,7 +19,7 @@ Reads Claude Code and Codex chat sessions and coding agent configuration into SQ
 - Command to test this folder: `pnpm --filter data_layer_coding_agents test`
 
 ## Rules
-- The default SQLite file is `data_layer.sqlite` in `HEIDRUN_DIR`, or `~/.config/heidrun/data_layer.sqlite` when the variable is unset or empty.
+- The default SQLite file is `data_layer.sqlite` in `HEIDRUN_CODE_DIR`, or `~/.config/heidrun_code/data_layer.sqlite` when the variable is unset or empty.
 - `chat_sessions` has exactly the columns `repository`, `id`, `updatedAt`, and `data`, with four link tables. A relation is never copied into `data`. The tables `memory_files`, `subagents`, and `skills` have the same four columns, and a row whose file is gone stays, with the date in `removedAt`.
 - Every row with a column `data` is checked against its JSON schema before it is written. The program holds the schema files inside with `include_str!`.
 - `initialize` reads every file. `update` reads the files that changed at the date of the last read or later. Each mode can run again and again, and never writes a row two times.

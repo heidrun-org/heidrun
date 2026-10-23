@@ -1,12 +1,12 @@
 [package]
-name = "heidrun"
+name = "heidrun_code"
 version = "0.3.0"
 description = "Interface graphique pour Herdr"
 license = "MIT"
 edition = "2021"
 
 [lib]
-name = "heidrun_lib"
+name = "heidrun_code_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -30,12 +30,12 @@ data_layer_user_activity = { path = "../../data_layers/data_layer_user_activity"
 data_layer_source_control = { path = "../../data_layers/data_layer_source_control" }
 # Reads the pull requests and the issues of a repository into the SQLite file of the data layer, for the Statistics window
 data_layer_code_hosting = { path = "../../data_layers/data_layer_code_hosting" }
-# The one lock of the SQLite file of the data layer, which the command line heidrun_data takes too
-heidrun_data = { path = "../../data_layers/heidrun_data" }
+# The one lock of the SQLite file of the data layer, which the command line heidrun_code_data takes too
+heidrun_code_data = { path = "../../data_layers/heidrun_code_data" }
 # The log of the operations that the data layer packages receive: the application gives its name as the caller
 data_layer_operation_log = { path = "../../data_layers/data_layer_operation_log" }
-# The format of the macro files, which the command line heidrun_ctrl changes too: the hard-coded macros and the personal macros
-heidrun_ctrl = { path = "../../auxiliary/heidrun_ctrl" }
+# The format of the macro files, which the command line heidrun_code_ctrl changes too: the hard-coded macros and the personal macros
+heidrun_code_ctrl = { path = "../../auxiliary/heidrun_code_ctrl" }
 # The voice input: it records the microphone, downloads a Whisper model, and changes the speech into text on the computer
 voice_input = { path = "../../auxiliary/voice_input" }
 portable-pty = "0.9"

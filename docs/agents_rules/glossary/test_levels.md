@@ -1,13 +1,13 @@
-# Glossary of Heidrun: test levels
+# Glossary of Heidrun Code: test levels
 
 - Created: 23 October 2026
 - Last updated: 23 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](index.md), [Rule: fast tests, slow tests, and full tests](../test_levels.md)
+- Related rules: [Glossary of Heidrun Code](index.md), [Rule: fast tests, slow tests, and full tests](../test_levels.md)
 - Related issue: [issue 826](https://github.com/heidrun-org/heidrun/issues/826)
 
-This document gives one short definition for each word of the test levels. The other words of Heidrun are in [index.md](index.md).
+This document gives one short definition for each word of the test levels. The other words of Heidrun Code are in [index.md](index.md).
 
 ## Words
 

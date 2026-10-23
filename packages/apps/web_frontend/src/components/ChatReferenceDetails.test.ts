@@ -76,7 +76,7 @@ describe("ChatReferenceDetails, the repository line", () => {
     const line = wrapper.get("[data-reference-repository-line]").element.parentElement as HTMLElement;
     expect(line.querySelector(".btn-group")).not.toBeNull();
     expect(Array.from(line.querySelectorAll(".btn-group button")).map((button) => button.getAttribute("title"))).toEqual([
-      "Open in Heidrun",
+      "Open in Heidrun Code",
       "Open in GitHub",
       "Copy the GitHub web address",
     ]);

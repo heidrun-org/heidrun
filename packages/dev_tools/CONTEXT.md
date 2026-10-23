@@ -1,7 +1,7 @@
 # Directory Context: `/packages/dev_tools`
 
 ## Purpose
-The packages that are only tools for the developers of Heidrun. None of them is part of the application, and the application does not need any of them to run.
+The packages that are only tools for the developers of Heidrun Code. None of them is part of the application, and the application does not need any of them to run.
 
 ## Key Exports & Entry Points
 - `agents_rules_checker/`: a package with the test of the maximum size of a file of the agent rules in the folder `docs/agents_rules`. Command: `pnpm --filter agents_rules_checker test`. See its own CONTEXT.md.
@@ -9,11 +9,11 @@ The packages that are only tools for the developers of Heidrun. None of them is 
 - `change_log_generator/`: a command line tool that writes `CHANGELOG.md` from the merged pull requests. Command: `pnpm release:change_log`. See its own CONTEXT.md.
 - `documentation_by_ai/`: one documentation writing call followed by one website build, with the learned prompt and opt-in learning references. Command: `pnpm docs:generate-and-build`. See its own CONTEXT.md.
 - `install_script_tests/`: a package with the tests of the script `scripts/install.sh`. Command: `pnpm --filter install_script_tests test`. See its own CONTEXT.md.
-- `video_recorder/`: two command line tools that record a video of the Heidrun window and cut it around its mouse clicks. Commands: `pnpm --filter video_recorder video:record` and `pnpm --filter video_recorder video:cut`. See its own CONTEXT.md.
+- `video_recorder/`: two command line tools that record a video of the Heidrun Code window and cut it around its mouse clicks. Commands: `pnpm --filter video_recorder video:record` and `pnpm --filter video_recorder video:cut`. See its own CONTEXT.md.
 - `worktree_tools/`: two command line tools: one creates a Git worktree and clones the compiled Rust files into it, the other deletes the old Cargo target folders of the worktrees. Commands: `pnpm worktree:create` and `pnpm --filter desktop_tauri target:clean`. See its own CONTEXT.md.
 
 ## Rules
-- A package that is only a tool for the developers of Heidrun goes in this folder.
+- A package that is only a tool for the developers of Heidrun Code goes in this folder.
 - No package in `packages/apps` and no package in `packages/auxiliary` imports a package from this folder.
 - A package in this folder may use a package from `packages/auxiliary`. Example: `change_log_generator` runs the executable of `coding_agent_cli`.
 

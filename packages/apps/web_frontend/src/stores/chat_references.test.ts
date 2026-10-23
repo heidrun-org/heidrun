@@ -7,7 +7,7 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 const ISSUE = { kind: "issue" as const, number: 250, url: null };
 const PULL_REQUEST = { kind: "pull_request" as const, number: 249, url: null };
 
-/** The store, as a new run of Heidrun sees it: the modules are loaded again, so no synchronization is kept. */
+/** The store, as a new run of Heidrun Code sees it: the modules are loaded again, so no synchronization is kept. */
 async function startRun() {
   vi.resetModules();
   return import("./chat_references");

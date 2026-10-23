@@ -57,12 +57,12 @@ action="$1"
 if [ "$action" = "attach" ]; then
 	while [ $# -gt 0 ]; do
 		if [ "$1" = "-mountpoint" ]; then
-			cp -R "$FAKE_FIXTURE_FOLDER/Heidrun.app" "$2/Heidrun.app"
+			cp -R "$FAKE_FIXTURE_FOLDER/Heidrun Code.app" "$2/Heidrun Code.app"
 		fi
 		shift
 	done
 elif [ "$action" = "detach" ]; then
-	rm -rf "$2/Heidrun.app"
+	rm -rf "$2/Heidrun Code.app"
 fi
 `,
 	ditto: /* sh */`#!/bin/sh
@@ -86,7 +86,7 @@ export class InstallScriptRunner {
 	/** The temporary folder that holds everything of this runner. */
 	readonly rootFolder: string;
 
-	/** The folder that receives Heidrun.app, in place of /Applications. */
+	/** The folder that receives Heidrun Code.app, in place of /Applications. */
 	readonly applicationsFolder: string;
 
 	/** The home folder that receives the command links, in place of the user's home folder. */
@@ -99,8 +99,8 @@ export class InstallScriptRunner {
 	readonly logPath: string;
 
 	/**
-	 * Creates the temporary folder, the fake commands, and a fake Heidrun.app that has the given version.
-	 * @param version The version that the fake Heidrun.app has in its Info.plist.
+	 * Creates the temporary folder, the fake commands, and a fake Heidrun Code.app that has the given version.
+	 * @param version The version that the fake Heidrun Code.app has in its Info.plist.
 	 */
 	constructor(version = '1.2.3') {
 		this.rootFolder = Fs.mkdtempSync(Path.join(Os.tmpdir(), 'install_script_tests_'));
@@ -113,14 +113,14 @@ export class InstallScriptRunner {
 		Fs.mkdirSync(this.temporaryFolder);
 		Fs.writeFileSync(this.logPath, '');
 
-		const contentsFolder = Path.join(this.rootFolder, 'fixture', 'Heidrun.app', 'Contents');
+		const contentsFolder = Path.join(this.rootFolder, 'fixture', 'Heidrun Code.app', 'Contents');
 		Fs.mkdirSync(contentsFolder, {
 			recursive: true,
 		});
 		Fs.writeFileSync(
 			Path.join(contentsFolder, 'Info.plist'),
 			`<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n`
-				+ `\t<key>CFBundleName</key>\n\t<string>Heidrun</string>\n`
+				+ `\t<key>CFBundleName</key>\n\t<string>Heidrun Code</string>\n`
 				+ `\t<key>CFBundleShortVersionString</key>\n\t<string>${version}</string>\n`
 				+ `</dict>\n</plist>\n`,
 		);
@@ -128,7 +128,7 @@ export class InstallScriptRunner {
 		Fs.mkdirSync(binariesFolder, {
 			recursive: true,
 		});
-		for (const commandName of ['heidrun_ctrl', 'heidrun_data']) {
+		for (const commandName of ['heidrun_code_ctrl', 'heidrun_code_data']) {
 			Fs.writeFileSync(Path.join(binariesFolder, commandName), '#!/bin/sh\n', {
 				mode: 0o755,
 			});
@@ -147,7 +147,7 @@ export class InstallScriptRunner {
 			env: {
 				PATH: `${InstallScriptRunner._getFakeCommandsFolder()}:/usr/bin:/bin`,
 				TMPDIR: this.temporaryFolder,
-				HEIDRUN_APPLICATIONS_FOLDER: this.applicationsFolder,
+				HEIDRUN_CODE_APPLICATIONS_FOLDER: this.applicationsFolder,
 				HOME: this.homeFolder,
 				FAKE_LOG: this.logPath,
 				FAKE_FIXTURE_FOLDER: Path.join(this.rootFolder, 'fixture'),

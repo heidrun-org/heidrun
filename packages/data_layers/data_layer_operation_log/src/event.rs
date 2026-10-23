@@ -13,7 +13,7 @@ pub const FORMAT_VERSION: u32 = 2;
 /// The value of the field `origin` of an operation that a person or a program made for its own need.
 pub const ORIGIN_APPLICATION: &str = "application";
 
-/// The value of the field `origin` of an operation that the command `heidrun_data operations replay` made to measure. A summary
+/// The value of the field `origin` of an operation that the command `heidrun_code_data operations replay` made to measure. A summary
 /// leaves these operations out, so a performance exercise does not change the picture of the real usage.
 pub const ORIGIN_REPLAY: &str = "replay";
 
@@ -68,7 +68,7 @@ pub struct StartEvent {
     /// The identifier of the operation that was running on the same thread when this one started. An operation with a parent is a
     /// nested operation, and a summary does not count it as an operation of its own, unless a person asks for it.
     pub parent_operation_id: Option<String>,
-    /// The program that made the operation: `heidrun` for the desktop application, `heidrun_data` for the command line.
+    /// The program that made the operation: `heidrun` for the desktop application, `heidrun_code_data` for the command line.
     pub caller: String,
     /// Either `application` or `replay`.
     pub origin: String,

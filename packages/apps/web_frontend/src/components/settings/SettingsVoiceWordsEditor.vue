@@ -7,8 +7,8 @@ import { voiceWords, type VoiceWord } from "../../stores/voice_words";
 import { t } from "../../i18n/index";
 
 // The word replacement list of the voice input (issue 836): the developer adds, edits, and deletes the entries. Each entry has
-// two texts, the text that Whisper writes and the text that Heidrun writes instead. The list is the file `voice_words.json`,
-// which the command line `heidrun_ctrl voice_words` changes too, so the file is read again every second while this part is
+// two texts, the text that Whisper writes and the text that Heidrun Code writes instead. The list is the file `voice_words.json`,
+// which the command line `heidrun_code_ctrl voice_words` changes too, so the file is read again every second while this part is
 // open. An existing entry is saved when the developer leaves a text. A new entry is saved with its button.
 
 /** The blocks of the information card of the word replacement list, in the order of the card. */
@@ -67,7 +67,7 @@ async function onWhisperWritesChange(word: VoiceWord, event: Event): Promise<voi
   }
 }
 
-/** The developer left the text that Heidrun writes instead. */
+/** The developer left the text that Heidrun Code writes instead. */
 async function onHeidrunWritesChange(word: VoiceWord, event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   if (input.value === word.heidrun_writes) {

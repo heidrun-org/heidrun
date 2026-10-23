@@ -1,7 +1,7 @@
 # Directory Context: `/packages/auxiliary/voice_input`
 
 ## Purpose
-A Rust library for the voice input of Heidrun: it records the microphone, downloads a Whisper model, and changes the speech into text on the computer. The audio stays in memory and is never written to a file. It knows nothing about Tauri and the web page.
+A Rust library for the voice input of Heidrun Code: it records the microphone, downloads a Whisper model, and changes the speech into text on the computer. The audio stays in memory and is never written to a file. It knows nothing about Tauri and the web page.
 
 ## Key Exports & Entry Points
 - `src/lib.rs`: the only public interface. It exports `Recorder` and `Recording` (the microphone, with `Recorder::start_with_levels` for the level of the voice every 50 milliseconds), `download_model` and `DownloadProgress` (the model files), `Transcriber` (Whisper), `whisper_log::write_to_file` (the file of the Whisper logs), `list_models`, `find_model`, `model_path`, `MODELS`, `LANGUAGES`, `DEFAULT_MODEL_ID`, and `MODELS_BASE_URL` (the 12 models and the 20 languages), and `VoiceError` with its `category()`, and `replace_words` (the word replacement list).
@@ -27,5 +27,5 @@ A Rust library for the voice input of Heidrun: it records the microphone, downlo
 ## Background
 - The package comes from [issue 662](https://github.com/heidrun-org/heidrun/issues/662). The rules for agents are in [settings_voice_input.md](../../../docs/agents_rules/user_interface/window/settings_voice_input.md).
 - `replace_words` comes from [issue #836](https://github.com/heidrun-org/heidrun_code/issues/836).
-- The method comes from the project [voice_to_keyboard](https://github.com/jeromeetienne/voice_to_keyboard). Heidrun records in Rust with `cpal`, and not with SoX, so that it needs no other program.
+- The method comes from the project [voice_to_keyboard](https://github.com/jeromeetienne/voice_to_keyboard). Heidrun Code records in Rust with `cpal`, and not with SoX, so that it needs no other program.
 - On the computer of the developer, `whisper-rs` changed a sentence of 4.9 seconds into text in 0.22 second with the model `tiny`, 0.39 second with `base`, and 1.2 seconds with `small`.

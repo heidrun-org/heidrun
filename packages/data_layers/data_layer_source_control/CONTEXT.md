@@ -1,7 +1,7 @@
 # Directory Context: `/packages/data_layers/data_layer_source_control`
 
 ## Purpose
-A Rust library and a command line tool that read every commit of a Git repository, merges included, and write the facts of each one in the table `commits` of a SQLite file. It is the Source control source of the data layer of Heidrun. The desktop application uses the library through `refresh_source_control`, `find_commits`, and the status functions of `src/git/working_copy.rs`. The name `data_layer_source_control` is the name of the package and the name of the executable.
+A Rust library and a command line tool that read every commit of a Git repository, merges included, and write the facts of each one in the table `commits` of a SQLite file. It is the Source control source of the data layer of Heidrun Code. The desktop application uses the library through `refresh_source_control`, `find_commits`, and the status functions of `src/git/working_copy.rs`. The name `data_layer_source_control` is the name of the package and the name of the executable.
 
 ## Key Exports & Entry Points
 - `src/lib.rs`: the only public interface of the library. Its `pub use` lines are the list: `SourceControlDatabase`, `GitReader`, `GitRunner`, `GitCommandRunner`, `synchronize`, `refresh_source_control`, `find_commits`, `find_file_existence`, `find_existing_folders`, `find_worktree_branches`, `find_repository`, `default_database_path`, `COMMIT_SCHEMA`, and the data types.
@@ -22,7 +22,7 @@ A Rust library and a command line tool that read every commit of a Git repositor
 - A row is never deleted: a commit that no branch reaches any more stays in the table. The package stores facts only: no text of a change, no path of a file, no name of a branch, and no name of a tag.
 - Only `src/git/git_runner.rs` and `src/git/working_copy.rs` run the command `git`. The tests use a real Git repository with a fixed author and a fixed date, and a fake runner for the errors.
 - The dates are in UTC. The line counts of a merge compare it with its first parent.
-- The default SQLite file is `data_layer.sqlite` in `HEIDRUN_DIR`, or `~/.config/heidrun/data_layer.sqlite` when the variable is unset or empty, shared with the other data layer packages. Each package writes only its own tables, and a query on a file that has no table of this package gives no row.
+- The default SQLite file is `data_layer.sqlite` in `HEIDRUN_CODE_DIR`, or `~/.config/heidrun_code/data_layer.sqlite` when the variable is unset or empty, shared with the other data layer packages. Each package writes only its own tables, and a query on a file that has no table of this package gives no row.
 - `query` and `SourceControlDatabase::query` only work on a database that is open read only, so a query never changes the file and never creates it.
 - The desktop application calls only the functions `refresh_*` and `find_*` of this package, as [data_layer_access.md](../../../docs/agents_rules/data_layer_access.md) says. The test of the package `data_layer_boundary_checker` fails otherwise.
 - The folder `src/model/` imports from no other folder of `src/`. The folders `src/git/` and `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` and `src/refresh.rs` use both.

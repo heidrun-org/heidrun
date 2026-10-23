@@ -22,8 +22,8 @@ Commands:
 
 Options:
   --database <path>          The SQLite file.
-                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
-                             "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_CODE_DIR, or
+                             "~/.config/heidrun_code/data_layer.sqlite")
   --repository <owner/name>  The GitHub repository. For initialize and update.
                              (default: the repository of the current folder)
   --verbose                  Print the progress on the standard error output: each

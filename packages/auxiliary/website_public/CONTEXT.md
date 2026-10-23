@@ -1,7 +1,7 @@
 # Directory Context: `/packages/auxiliary/website_public`
 
 ## Purpose
-The public website of Heidrun: a homepage and the user documentation, built with VitePress and published on GitHub Pages with the script `ghpage:deploy`.
+The public website of Heidrun Code: a homepage and the user documentation, built with VitePress and published on GitHub Pages with the script `ghpage:deploy`.
 
 ## Key Exports & Entry Points
 - `docs/`: the Markdown source of the website. `docs/index.md` is the homepage. `docs/documentation/` holds the documentation pages.
@@ -11,7 +11,7 @@ The public website of Heidrun: a homepage and the user documentation, built with
 - `docs/public/heidrun_link_preview_card.png`: the card image of every page, 1200 by 630 pixels.
 - `docs/.vitepress/theme/home/`: the sections of the homepage under the hero, and their texts — see its own CONTEXT.md.
 - `docs/features/`: the eight feature pages of issue 517, listed in the menu "Features" of `docs/.vitepress/config.ts` and linked from the homepage.
-- `docs/public/screenshots/`: the real captures of the Heidrun window that the homepage shows, and in `features/` the captures of the feature pages.
+- `docs/public/screenshots/`: the real captures of the Heidrun Code window on the homepage, and in `features/` the captures of the feature pages.
 - `docs/.vitepress/theme/youtube_video.vue`: the component `YoutubeVideo`, registered in `docs/.vitepress/theme/index.ts`. A page shows a YouTube video with `<YoutubeVideo video-id="..." title="..." />`.
 - `docs/.vitepress/theme/home_flux_lines.vue`: the component `HomeFluxLines`, put in the slot `layout-top` of the layout by `docs/.vitepress/theme/index.ts`. It shows the Flux Lines background on the pages with the layout `home` only, in golden lines on the dark theme and in dark golden ink on the light theme.
 - `docs/.vitepress/theme/flux_lines.vue`: the component `FluxLines`, a canvas that the class `FluxLinesRenderer` (`flux_lines_renderer.ts`) draws into with WebGL2. The shaders are in `flux_lines_shaders.ts`, the types in `flux_lines_types.ts`.

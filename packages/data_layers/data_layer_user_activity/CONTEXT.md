@@ -1,7 +1,7 @@
 # Directory Context: `/packages/data_layers/data_layer_user_activity`
 
 ## Purpose
-The User activity source of Heidrun: reads `user_activity.jsonl` into the SQLite table `user_activity_records`. The library and executable are named `data_layer_user_activity`.
+The User activity source of Heidrun Code: reads `user_activity.jsonl` into the SQLite table `user_activity_records`. The library and executable are named `data_layer_user_activity`.
 
 ## Key Exports & Entry Points
 - `src/lib.rs`: the only public interface; its `pub use` lines list the readers, databases, synchronization and query functions, schemas, and data types.
@@ -21,8 +21,8 @@ The User activity source of Heidrun: reads `user_activity.jsonl` into the SQLite
 - Every record is checked against its JSON schema before it is written, and a wrong record writes nothing. A line of the file that is not a JSON object that follows the schema is skipped and counted, and never stops a run. An empty line is neither read nor counted.
 - `initialize` writes all rows; `update` writes records newer than the largest stored `endedAt`. Repeated runs never duplicate rows, and source deletion never deletes stored records.
 - Times are UTC text, with three millisecond digits and `Z`; the reader converts source offsets.
-- The package never writes the file of the records, and a file that does not exist is not an error. The file is `user_activity.jsonl` in the folder of the variable `HEIDRUN_DIR`, or else in `~/.config/heidrun`, as the desktop application writes it. The option `--file` replaces the whole path.
-- The default SQLite file is `data_layer.sqlite` in `HEIDRUN_DIR`, or `~/.config/heidrun/data_layer.sqlite` when the variable is unset or empty, shared with the other data layer packages. The package creates and writes only its own table with `CREATE ... IF NOT EXISTS`. The option `--database` changes the path.
+- The package never writes the file of the records, and a file that does not exist is not an error. The file is `user_activity.jsonl` in the folder of the variable `HEIDRUN_CODE_DIR`, or else in `~/.config/heidrun_code`, as the desktop application writes it. The option `--file` replaces the whole path.
+- The default SQLite file is `data_layer.sqlite` in `HEIDRUN_CODE_DIR`, or `~/.config/heidrun_code/data_layer.sqlite` when the variable is unset or empty, shared with the other data layer packages. The package creates and writes only its own table with `CREATE ... IF NOT EXISTS`. The option `--database` changes the path.
 - `query` only works on a database that is open read only, so a query never changes the file and never creates it. The option `--verbose` sends progress lines to a log function, and only `src/main.rs` prints them.
 - The folder `src/model/` imports from no other folder of `src/`. The folders `src/user_activity_file/` and `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` uses them together.
 - Calls are blocking; the package imports only `data_layer_operation_log` from other repository packages and knows nothing about Tauri. Every public function records its operation and tests its events ([rule](../../../docs/agents_rules/data_layer_operation_log.md)).

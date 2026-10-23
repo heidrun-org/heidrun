@@ -123,7 +123,7 @@ describe("SettingsAgentsSection, the settings that moved here from other section
     expect(option.find('input[role="switch"]').exists()).toBe(true);
     const mark = option.get(".information-card-part");
     await mark.trigger("click");
-    expect(wrapper.get(".popover").text()).toContain("Heidrun Development cannot change the shared Antigravity status line");
+    expect(wrapper.get(".popover").text()).toContain("Heidrun Code Development cannot change the shared Antigravity status line");
   });
 
   it("shows only Terminal when all coding agents are switched off", async () => {
@@ -216,7 +216,7 @@ describe("SettingsAgentsSection, the settings that moved here from other section
     await mark.trigger("click");
     const card = wrapper.get(".popover");
     expect(card.classes()).toContain("bs-popover-bottom");
-    expect(card.text()).toContain("Heidrun stops its Herdr session");
+    expect(card.text()).toContain("Heidrun Code stops its Herdr session");
     expect(settings.keepAgentsRunningAfterQuit).toBe(true);
   });
 });

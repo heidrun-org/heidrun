@@ -14,7 +14,7 @@ import type { WorktreeCreateResult } from './worktree_tools_types.ts';
 /**
  * Creates a Git worktree in the folder `.claude/worktrees` of the main checkout. Then, on macOS, it clones the `debug`
  * folder and the bundled command line tools of the Cargo target folder of the main checkout into the worktree, with
- * copy-on-write clones. The first build in the worktree then compiles only the crates of Heidrun, and not every Rust
+ * copy-on-write clones. The first build in the worktree then compiles only the crates of Heidrun Code, and not every Rust
  * dependency again. Every submodule is initialized at its recorded commit before the compiled files are cloned.
  * At the end, it installs the packages of the worktree with `pnpm install --frozen-lockfile`, so the worktree has a
  * folder `node_modules` and `pnpm dev` runs at once.

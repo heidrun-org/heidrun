@@ -30,7 +30,7 @@ use std::sync::Mutex;
 /// wait for a fetch each time it is asked.
 const PRICE_RETRY_MILLISECONDS: i64 = 3_600_000;
 
-/// The name of the file where an earlier version of Heidrun kept its prices, next to the SQLite file. The SQLite file replaces it.
+/// The name of the file where an earlier version of Heidrun Code kept its prices, next to the SQLite file. The SQLite file replaces it.
 const OLD_PRICES_FILE: &str = "model_prices.json";
 
 /// The caches of the scans of the process, by the path of their file. A cache stays in memory between two refreshes, so a chat
@@ -226,7 +226,7 @@ pub(crate) fn distinct(roots: &[String]) -> Vec<String> {
 }
 
 /// Fetches the price list from `source` when the latest version in the SQLite file at `database_path` is a day old, or when
-/// `is_forced` is true, and keeps it there. The earlier file of prices of Heidrun, `model_prices.json` next to the SQLite file, is
+/// `is_forced` is true, and keeps it there. The earlier file of prices of Heidrun Code, `model_prices.json` next to the SQLite file, is
 /// deleted when the prices are in the SQLite file.
 ///
 /// # Errors

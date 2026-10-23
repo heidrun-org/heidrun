@@ -1,6 +1,6 @@
 # voice_input
 
-`voice_input` is the Rust library behind the voice input of Heidrun. The developer holds the push-to-talk button, speaks, and releases the button, or clicks to start and clicks to stop. The library records the microphone between these two moments, tells the level of the voice 20 times a second, changes the speech into text with a Whisper model on the computer, and gives the text to the application. The sound stays in memory, is never saved, and never leaves the computer.
+`voice_input` is the Rust library behind the voice input of Heidrun Code. The developer holds the push-to-talk button, speaks, and releases the button, or clicks to start and clicks to stop. The library records the microphone between these two moments, tells the level of the voice 20 times a second, changes the speech into text with a Whisper model on the computer, and gives the text to the application. The sound stays in memory, is never saved, and never leaves the computer.
 
 The library has five parts:
 

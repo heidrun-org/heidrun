@@ -140,7 +140,7 @@ impl Logger {
 }
 
 /// Sets the name of the caller for this program, for example `heidrun`. The environment variable
-/// `HEIDRUN_OPERATION_LOG_CALLER` is stronger. The first call counts, a later one changes nothing.
+/// `HEIDRUN_CODE_OPERATION_LOG_CALLER` is stronger. The first call counts, a later one changes nothing.
 pub fn set_default_caller(name: &str) {
     let _ = DEFAULT_CALLER.set(name.to_string());
 }

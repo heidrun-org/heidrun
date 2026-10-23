@@ -1,4 +1,4 @@
-//! The user activity source of the data layer of Heidrun: reads the user activity records of the developer from the file
+//! The user activity source of the data layer of Heidrun Code: reads the user activity records of the developer from the file
 //! `user_activity.jsonl`, and writes each one in the table `user_activity_records` of a SQLite file.
 //!
 //! The library has six parts:
@@ -17,6 +17,16 @@ mod query;
 mod refresh;
 mod storage;
 mod synchronization;
+/// `~/.config/heidrun_code`, or the former folder `~/.config/heidrun` when it exists and the new folder does not.
+fn default_data_folder(home: &std::path::Path) -> PathBuf {
+    let current = home.join(".config").join("heidrun_code");
+    let former = home.join(".config").join("heidrun");
+    if current.is_dir() == false && former.is_dir() {
+        return former;
+    }
+    current
+}
+
 #[cfg(test)]
 mod test_samples;
 mod user_activity_file;
@@ -39,13 +49,14 @@ use std::path::PathBuf;
 /// The name of this package in the log of the operations of the data layer, without the prefix `data_layer_`.
 pub(crate) const OPERATION_PACKAGE: &str = "user_activity";
 
-/// The path of the SQLite file in `HEIDRUN_DIR`, or, when the variable is unset or empty, `~/.config/heidrun/data_layer.sqlite`. It is the same file as
+/// The path of the SQLite file in `HEIDRUN_CODE_DIR`, or, when the variable is unset or empty, `~/.config/heidrun_code/data_layer.sqlite`. It is the same file as
 /// the file of the other data layer packages, and each package writes its own tables in it.
 pub fn default_database_path() -> PathBuf {
-    std::env::var("HEIDRUN_DIR")
+    std::env::var("HEIDRUN_CODE_DIR")
         .ok()
         .filter(|value| value.is_empty() == false)
+        .or_else(|| std::env::var("HEIDRUN_DIR").ok().filter(|value| value.is_empty() == false))
         .map(PathBuf::from)
-        .unwrap_or_else(|| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
+        .unwrap_or_else(|| default_data_folder(&dirs::home_dir().unwrap_or_default()))
         .join("data_layer.sqlite")
 }

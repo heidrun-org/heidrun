@@ -1,6 +1,6 @@
-# How to release Heidrun
+# How to release Heidrun Code
 
-This file lists every step of a release of Heidrun, in order, so that no step is forgotten. The file `README_DEV.md` describes each command in detail. The steps come from the release 0.2.5, where several steps were forgotten. The source of this list is the issue [#245](https://github.com/heidrun-org/heidrun/issues/245).
+This file lists every step of a release of Heidrun Code, in order, so that no step is forgotten. The file `README_DEV.md` describes each command in detail. The steps come from the release 0.2.5, where several steps were forgotten. The source of this list is the issue [#245](https://github.com/heidrun-org/heidrun/issues/245).
 
 Replace `<version>` with the new version in every command and file name, for example `0.3.0`.
 
@@ -80,7 +80,7 @@ The file has this form:
 - Under each heading, each feature is one short bullet with one sentence.
 - After the topics, one line says that the complete list of changes is in the file `CHANGELOG.md`, and one line says that the disk image is not signed, not notarized, and built only for the architecture of the machine that builds it.
 
-Do not write a section about the message "Heidrun is damaged": the text of the release gives the installation command, and macOS opens Heidrun with no message after this command. The file [docs/release_notes/v0.3.0.md](docs/release_notes/v0.3.0.md) is an example. Step 7 gives this file to the command with `--notes-file`.
+Do not write a section about the message "Heidrun Code is damaged": the text of the release gives the installation command, and macOS opens Heidrun Code with no message after this command. The file [docs/release_notes/v0.3.0.md](docs/release_notes/v0.3.0.md) is an example. Step 7 gives this file to the command with `--notes-file`.
 
 ### Step 5: Move the work to `main`
 
@@ -140,11 +140,11 @@ To fix only the text of a release that exists, do not run `pnpm release:dmg` aga
 ### Step 10: Open the release page and the disk image
 
 1. Open the release page on GitHub. Check that the disk image is attached and that the release is marked Latest.
-2. Download the disk image with a web browser, drag Heidrun to the Applications folder, and open it once.
-3. macOS shows the message "“Heidrun” is damaged and can't be opened", because the disk image is not notarized. Run this command in a terminal, then open Heidrun again:
+2. Download the disk image with a web browser, drag Heidrun Code to the Applications folder, and open it once.
+3. macOS shows the message "“Heidrun Code” is damaged and can't be opened", because the disk image is not notarized. Run this command in a terminal, then open Heidrun Code again:
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/Heidrun.app
+xattr -dr com.apple.quarantine "/Applications/Heidrun Code.app"
 ```
 
 The text of the release does not give this command, because the installation command in the text avoids the message.

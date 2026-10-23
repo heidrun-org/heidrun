@@ -1,5 +1,5 @@
 {
-  "name": "heidrun",
+  "name": "heidrun_code",
   "private": true,
   "license": "MIT",
   "version": "0.3.0",
@@ -11,7 +11,7 @@
     "build:web": "pnpm --filter web_frontend build",
     "tauri": "pnpm --filter desktop_tauri tauri",
     "test": "pnpm test:fast",
-    "test:fast": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter coding_agent_cli test && pnpm --filter mobile_website test && pnpm --filter mobile_server test && pnpm --filter data_layer_operation_log test && pnpm --filter data_layer_code_hosting test && pnpm --filter data_layer_coding_agents test && pnpm --filter data_layer_source_control test && pnpm --filter data_layer_user_activity test && pnpm --filter heidrun_data test && pnpm --filter heidrun_ctrl test && pnpm --filter voice_input test:fast && pnpm --filter worktree_tools test && pnpm --filter video_recorder test && pnpm --filter agents_rules_checker test && pnpm --filter data_layer_boundary_checker test && pnpm --filter install_script_tests test && pnpm --filter multi_layer_graph test && pnpm --filter parallax_dino_runner test",
+    "test:fast": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter coding_agent_cli test && pnpm --filter mobile_website test && pnpm --filter mobile_server test && pnpm --filter data_layer_operation_log test && pnpm --filter data_layer_code_hosting test && pnpm --filter data_layer_coding_agents test && pnpm --filter data_layer_source_control test && pnpm --filter data_layer_user_activity test && pnpm --filter heidrun_code_data test && pnpm --filter heidrun_code_ctrl test && pnpm --filter voice_input test:fast && pnpm --filter worktree_tools test && pnpm --filter video_recorder test && pnpm --filter agents_rules_checker test && pnpm --filter data_layer_boundary_checker test && pnpm --filter install_script_tests test && pnpm --filter multi_layer_graph test && pnpm --filter parallax_dino_runner test",
     "test:slow": "pnpm --filter voice_input test:slow && pnpm --filter change_log_generator test",
     "test:full": "pnpm test:fast && pnpm test:slow",
     "docs:shortcuts": "node scripts/shortcuts-readme.mjs",
@@ -22,8 +22,8 @@
     "data_layer:coding_agents": "pnpm --silent --filter data_layer_coding_agents cli",
     "data_layer:source_control": "pnpm --silent --filter data_layer_source_control cli",
     "data_layer:user_activity": "pnpm --silent --filter data_layer_user_activity cli",
-    "data_layer:heidrun_data": "pnpm --silent --filter heidrun_data cli",
-    "heidrun_ctrl": "pnpm --silent --filter heidrun_ctrl cli",
+    "data_layer:heidrun_code_data": "pnpm --silent --filter heidrun_code_data cli",
+    "heidrun_code_ctrl": "pnpm --silent --filter heidrun_code_ctrl cli",
     "experiment:multi_layer_graph": "pnpm --filter multi_layer_graph dev",
     "experiment:work_by_folder_over_time": "tsx packages/experiments/work_by_folder_over_time/src/cli.ts",
     "experiment:parallax_dino_runner": "pnpm --filter parallax_dino_runner dev",
@@ -31,7 +31,7 @@
     "worktree:create": "tsx packages/dev_tools/worktree_tools/src/worktree_create_cli.ts",
     "docs:generate-and-build": "node --import tsx packages/dev_tools/documentation_by_ai/src/cli.ts generate-and-build",
     "build:development": "pnpm --filter desktop_tauri tauri build --config tauri.development.conf.json --bundles app",
-    "install:local": "pnpm tauri build --bundles app && sudo ditto \"packages/apps/desktop_tauri/target/release/bundle/macos/Heidrun.app\" \"/Applications/Heidrun.app\""
+    "install:local": "pnpm tauri build --bundles app && sudo ditto \"packages/apps/desktop_tauri/target/release/bundle/macos/Heidrun Code.app\" \"/Applications/Heidrun Code.app\""
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

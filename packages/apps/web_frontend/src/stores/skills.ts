@@ -15,7 +15,7 @@ import { parseSkillFolderAddress, type CodeHost } from "../lib/skill_folder_addr
 /** Where a skill is installed: the folder of the workspace, or the user. */
 export type SkillLevel = "workspace" | "user";
 
-/** Where an installed skill comes from, written by Heidrun at the installation. */
+/** Where an installed skill comes from, written by Heidrun Code at the installation. */
 export interface SkillOrigin {
   /** The repository, as `owner/repository` on GitHub or `group/project` on GitLab. Empty for a skill installed from a local folder. */
   source: string;
@@ -31,7 +31,7 @@ export interface InstalledSkill {
   name: string;
   description: string;
   level: SkillLevel;
-  /** `null` for a skill that Heidrun did not install. */
+  /** `null` for a skill that Heidrun Code did not install. */
   origin: SkillOrigin | null;
   /** The folder with the real files of the skill. */
   path: string;

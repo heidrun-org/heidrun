@@ -43,7 +43,7 @@
   "durationMinutesSeconds": "{minutes} min {seconds} s",
   "durationHoursMinutes": "{hours} h {minutes} min",
   "personWorkTab": "Travail d'une personne",
-  "userActivityTabWhat": "Le temps pendant lequel vous êtes actif devant Heidrun.",
+  "userActivityTabWhat": "Le temps pendant lequel vous êtes actif devant Heidrun Code.",
   "userActivityTabHow": "Une barre pour chaque tranche de temps, avec une couleur pour chaque espace de travail. Choisissez la période, la longueur de la tranche et les espaces de travail.",
   "personWorkTabWhat": "Ce que fait une personne, avec une barre pour chaque tranche de 1 heure, de 6 heures ou de 1 jour. Chaque total a sa moyenne par jour en dessous.",
   "personWorkTabGitHistory": "Les commits et les pull requests de la personne, le nombre d'issues, et les lignes que les commits ajoutent et suppriment.",

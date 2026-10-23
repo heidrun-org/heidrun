@@ -18,7 +18,7 @@ const MINIMUM_GROWTH_LIMIT: usize = 10_000;
 struct Entry<'a> {
     /// The text that Whisper writes, folded to lower case. The spaces at its ends are part of the text.
     folded: Vec<char>,
-    /// The text that Heidrun writes instead.
+    /// The text that Heidrun Code writes instead.
     replacement: &'a str,
     /// The entry starts with a letter or a digit, so it must not start inside a longer word.
     is_start_checked: bool,
@@ -45,7 +45,7 @@ struct Entry<'a> {
 ///   entry of the list wins.
 /// - An entry with no text, or with only spaces, is ignored.
 ///
-/// `pairs` is the list: the text that Whisper writes, then the text that Heidrun writes instead.
+/// `pairs` is the list: the text that Whisper writes, then the text that Heidrun Code writes instead.
 pub fn replace_words(text: &str, pairs: &[(String, String)]) -> String {
     let entries = compile_entries(pairs);
     if entries.is_empty() {

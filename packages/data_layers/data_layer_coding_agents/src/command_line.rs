@@ -36,8 +36,8 @@ Commands:
 
 Options:
   --database <path>          The SQLite file.
-                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
-                             "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_CODE_DIR, or
+                             "~/.config/heidrun_code/data_layer.sqlite")
   --folder <path>            A folder of the repository. The command finds the root
                              of the repository from it. For initialize and update.
                              (default: the current folder)

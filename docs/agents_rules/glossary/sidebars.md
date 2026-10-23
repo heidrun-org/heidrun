@@ -1,13 +1,13 @@
-# Glossary of Heidrun: sidebars
+# Glossary of Heidrun Code: sidebars
 
 - Created: 14 October 2026
-- Last updated: 21 October 2026
+- Last updated: 23 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: sidebars](../user_interface/sidebars/index.md)
+- Related rules: [Glossary of Heidrun Code](index.md), [User interface of Heidrun Code: sidebars](../user_interface/sidebars/index.md)
 - Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 425](https://github.com/heidrun-org/heidrun/issues/425), [issue 430](https://github.com/heidrun-org/heidrun/issues/430), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 446](https://github.com/heidrun-org/heidrun/issues/446), [issue 714](https://github.com/heidrun-org/heidrun/issues/714)
 
-This document gives one short definition for each word of the sidebars and their sidebar sections. The other words of Heidrun are in [index.md](index.md).
+This document gives one short definition for each word of the sidebars and their sidebar sections. The other words of Heidrun Code are in [index.md](index.md).
 
 ## The sidebars
 

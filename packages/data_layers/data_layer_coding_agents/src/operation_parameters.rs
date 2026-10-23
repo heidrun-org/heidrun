@@ -1,7 +1,7 @@
 //! The parameters of the operations of this package in the log of the operations of the data layer, written and read back here, so
 //! the format has one place.
 //!
-//! The command `heidrun_data operations replay` reads the parameters of a recorded `find_usage` and runs it again with
+//! The command `heidrun_code_data operations replay` reads the parameters of a recorded `find_usage` and runs it again with
 //! `usage_query_from_parameters`.
 
 use crate::model::chat_list_types::{SortKey, SortOrder, Sorting};

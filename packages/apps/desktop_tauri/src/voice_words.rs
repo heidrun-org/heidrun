@@ -1,12 +1,12 @@
 //! The word replacement list of the voice input, the Tauri side: the commands of the Voice input section of the Settings window,
 //! and the replacement in the text that Whisper gives.
 //!
-//! The format of the file and the four orders have one place, the package `heidrun_ctrl`, which the command line `heidrun_ctrl`
+//! The format of the file and the four orders have one place, the package `heidrun_code_ctrl`, which the command line `heidrun_code_ctrl`
 //! uses too. The web frontend reads the file again about every second while the Voice input section is open, so a change that
 //! the command line makes shows in the window. The window changes the list with the orders of the package, and never writes the
 //! whole list, so a change of the command line is never overwritten by an old list.
 
-use heidrun_ctrl::{
+use heidrun_code_ctrl::{
     add_voice_word, delete_voice_word, list_voice_words, update_voice_word, voice_words_path, NewVoiceWord, VoiceWord,
     VoiceWordChanges,
 };
@@ -47,12 +47,12 @@ fn replace_with_file(text: &str, path: &Path) -> String {
 }
 
 /// Replaces the listed texts in the text that Whisper gave, with the file `voice_words.json` of the folder of the data of
-/// Heidrun.
+/// Heidrun Code.
 pub fn replace_spoken_words(text: &str) -> String {
     replace_with_file(text, &voice_words_path())
 }
 
-/// The word replacement list: the content of the file `voice_words.json` of the folder of the data of Heidrun.
+/// The word replacement list: the content of the file `voice_words.json` of the folder of the data of Heidrun Code.
 #[tauri::command]
 pub fn voice_words_read() -> VoiceWordsFile {
     read_file(&voice_words_path())
@@ -79,7 +79,7 @@ pub fn voice_words_delete(id: String) -> Result<VoiceWord, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use heidrun_ctrl::write_voice_words;
+    use heidrun_code_ctrl::write_voice_words;
     use std::path::PathBuf;
 
     fn test_file(name: &str) -> PathBuf {

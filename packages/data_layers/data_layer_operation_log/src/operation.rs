@@ -1,13 +1,13 @@
 //! An operation in the log: `record` runs a public function of a package between a start event and a completion event.
 //!
 //! This is the one place where a package records an operation. A package calls `record` in the public function itself, so the
-//! desktop application, the command line `heidrun_data`, and the own command line of the package all write the same events,
+//! desktop application, the command line `heidrun_code_data`, and the own command line of the package all write the same events,
 //! and a new operation has no need of a timer in the caller.
 //!
 //! The duration is the time of the closure that `record` runs. It includes everything that the operation does inside: the
 //! opening of the files that the operation opens itself, and the waits for the locks that the operation takes itself. It
 //! leaves out the writing of the two events, the opening of the SQLite file by the caller before the call, and the lock of
-//! the SQLite file that the caller takes before the call (the command `heidrun_data` records that wait as the operation
+//! the SQLite file that the caller takes before the call (the command `heidrun_code_data` records that wait as the operation
 //! `lock_database`).
 
 use crate::clock::{now_milliseconds, system_time_milliseconds, utc_text};
@@ -402,7 +402,7 @@ mod tests {
     #[test]
     fn a_nested_operation_names_its_parent_and_the_parent_has_none() {
         let (_, events) = capture(|| {
-            record(OperationSpec::new("heidrun_data", "synchronize", OperationKind::Synchronization), || {
+            record(OperationSpec::new("heidrun_code_data", "synchronize", OperationKind::Synchronization), || {
                 record(OperationSpec::new("source_control", "synchronize", OperationKind::Synchronization), || Ok::<_, String>(()), |_| {
                     Summary::none()
                 })

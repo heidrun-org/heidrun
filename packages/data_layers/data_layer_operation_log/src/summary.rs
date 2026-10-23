@@ -423,7 +423,7 @@ mod tests {
         let operations = vec![
             operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({ "repository": "a/b" }), "grouping=hour", Some(1000)),
             operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({ "repository": "c/d" }), "grouping=day", Some(3000)),
-            operation("heidrun_data", "find_usage", OperationKind::Query, serde_json::json!({}), "", Some(500)),
+            operation("heidrun_code_data", "find_usage", OperationKind::Query, serde_json::json!({}), "", Some(500)),
         ];
         let references: Vec<&PairedOperation> = operations.iter().collect();
         let groups = summarize(&references, GroupBy::OperationName);
@@ -431,7 +431,7 @@ mod tests {
         assert_eq!((groups[0].caller.as_str(), groups[0].count), ("heidrun", 2));
         assert_eq!(groups[0].durations.total_microseconds, 4000);
         assert_eq!(groups[0].repositories, vec!["a/b".to_string(), "c/d".to_string()]);
-        assert_eq!((groups[1].caller.as_str(), groups[1].count), ("heidrun_data", 1));
+        assert_eq!((groups[1].caller.as_str(), groups[1].count), ("heidrun_code_data", 1));
     }
 
     #[test]
@@ -502,7 +502,7 @@ mod tests {
     fn a_summary_leaves_out_the_nested_operations_and_the_replays_unless_a_person_asks() {
         let mut nested = operation("heidrun", "read_chat_sessions", OperationKind::Collection, serde_json::json!({}), "", Some(1));
         nested.start.parent_operation_id = Some("parent".to_string());
-        let mut replay = operation("heidrun_data", "query", OperationKind::Query, serde_json::json!({}), "", Some(2));
+        let mut replay = operation("heidrun_code_data", "query", OperationKind::Query, serde_json::json!({}), "", Some(2));
         replay.start.origin = ORIGIN_REPLAY.to_string();
         let own = operation("heidrun", "query", OperationKind::Query, serde_json::json!({}), "", Some(3));
         let operations = vec![nested, replay, own];

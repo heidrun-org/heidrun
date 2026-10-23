@@ -1,6 +1,6 @@
 # data_layer_code_hosting
 
-A Rust library and a command line tool for [Heidrun](../../../README.md). Both read every issue and every pull request of a GitHub repository, and write the facts of each one in two tables of a SQLite file. It is the Code hosting source of the data layer of Heidrun. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 455](https://github.com/heidrun-org/heidrun/issues/455). The name `data_layer_code_hosting` is the name of the package and the name of the executable.
+A Rust library and a command line tool for [Heidrun Code](../../../README.md). Both read every issue and every pull request of a GitHub repository, and write the facts of each one in two tables of a SQLite file. It is the Code hosting source of the data layer of Heidrun Code. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 455](https://github.com/heidrun-org/heidrun/issues/455). The name `data_layer_code_hosting` is the name of the package and the name of the executable.
 
 ## What it contains
 
@@ -29,7 +29,7 @@ The command runs in the folder of the package, so give a database file with an a
 
 | Option | Commands | Effect |
 | --- | --- | --- |
-| `--database <path>` | all three | The SQLite file. The default is `~/.config/heidrun/data_layer.sqlite`. The commands `initialize` and `update` create the file and its folder when they do not exist. The command `query` needs the file to exist. |
+| `--database <path>` | all three | The SQLite file. The default is `~/.config/heidrun_code/data_layer.sqlite`. The commands `initialize` and `update` create the file and its folder when they do not exist. The command `query` needs the file to exist. |
 | `--repository <owner/name>` | `initialize`, `update` | The GitHub repository. The default is the repository of the current folder, which the command `gh` finds. |
 | `--verbose` | `initialize`, `update` | Prints the progress on the standard error output: each page that is read, each stop, and each write. The report stays on the standard output. |
 | `--json` | `query` | Prints the rows as a JSON list, and not as a text table. |
@@ -179,4 +179,4 @@ pnpm --filter data_layer_code_hosting test        # run the Rust tests (cargo te
 
 ## Operation log
 
-Every public function of this package writes a start line and an end line in the operation log of the data layer, with the library [data_layer_operation_log](../data_layer_operation_log/README.md): the package `code_hosting`, the operation, the parameters that decide the workload, the duration, and the outcome. A synchronization, its collection, its writes, and its lock appear as nested operations. The command `heidrun_data operations summary` shows the usage patterns and the durations, and `heidrun_data operations replay` runs a recorded operation again. The log never changes a result and never holds a secret. The description is in [data_layer_operation_log.md](../../../docs/statistics/data_layer_operation_log.md).
+Every public function of this package writes a start line and an end line in the operation log of the data layer, with the library [data_layer_operation_log](../data_layer_operation_log/README.md): the package `code_hosting`, the operation, the parameters that decide the workload, the duration, and the outcome. A synchronization, its collection, its writes, and its lock appear as nested operations. The command `heidrun_code_data operations summary` shows the usage patterns and the durations, and `heidrun_code_data operations replay` runs a recorded operation again. The log never changes a result and never holds a secret. The description is in [data_layer_operation_log.md](../../../docs/statistics/data_layer_operation_log.md).

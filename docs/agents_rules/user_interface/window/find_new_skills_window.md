@@ -1,10 +1,10 @@
-# User interface of Heidrun: Find new skills window
+# User interface of Heidrun Code: Find new skills window
 
 - Created: 16 October 2026
-- Last updated: 18 October 2026
+- Last updated: 23 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun: coding agent configuration](../../glossary/coding_agent_configuration.md), [GitHub and GitLab support](../../github_and_gitlab_support.md)
+- Related rules: [Glossary of Heidrun Code: coding agent configuration](../../glossary/coding_agent_configuration.md), [GitHub and GitLab support](../../github_and_gitlab_support.md)
 - Related issue: [issue 289](https://github.com/heidrun-org/heidrun/issues/289), [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 609](https://github.com/heidrun-org/heidrun/issues/609), [issue 646](https://github.com/heidrun-org/heidrun/issues/646)
 
 This file gives the rules of the window "Find new skills", which the item "Find new skills" of the More menu opens. The code of the window is in `packages/apps/web_frontend/src/components/skills`, and its backend is in `packages/apps/desktop_tauri/src/skills`.

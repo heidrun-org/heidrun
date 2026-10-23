@@ -50,8 +50,8 @@ fn synchronize(folder: &str, database_path: &Path) -> Result<ChatsSynchronizatio
     let root = crate::project::find_root(Path::new(folder)).display().to_string();
     let report = {
         // Two programs that write the SQLite file at the same time would fail with "database is locked". The command line
-        // heidrun_data takes the same lock.
-        let _guard = heidrun_data::lock_database(database_path)?;
+        // heidrun_code_data takes the same lock.
+        let _guard = heidrun_code_data::lock_database(database_path)?;
         refresh_chat_sessions(database_path, &root)?
     };
     refresh_prices_in_background(database_path.to_path_buf());
@@ -65,11 +65,11 @@ fn list(folder: &str, limit: usize, sorting: Sorting, database_path: &Path) -> R
 }
 
 /// Asks the package for a refresh of the prices of the models, without waiting for the answer: the package fetches the price
-/// list at most once an hour, and only when the latest version is a day old. A refresh that fails changes nothing, so Heidrun
+/// list at most once an hour, and only when the latest version is a day old. A refresh that fails changes nothing, so Heidrun Code
 /// never loses its prices.
 fn refresh_prices_in_background(database_path: std::path::PathBuf) {
     tauri::async_runtime::spawn_blocking(move || {
-        if let Ok(_guard) = heidrun_data::lock_database(&database_path) {
+        if let Ok(_guard) = heidrun_code_data::lock_database(&database_path) {
             let _ = refresh_public_model_prices_when_due(&database_path, Utc::now().timestamp_millis());
         }
     });

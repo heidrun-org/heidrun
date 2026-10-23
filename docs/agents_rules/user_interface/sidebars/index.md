@@ -4,7 +4,7 @@
 - Last updated: 23 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary/index.md)
+- Related rules: [Glossary of Heidrun Code](../../glossary/index.md)
 - Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 822](https://github.com/heidrun-org/heidrun/issues/822)
 
 This file lists the files and the subfolders of this folder, for agents and tools.

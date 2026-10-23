@@ -209,7 +209,7 @@ export function attentionKey(p: AgentInfo): string {
 }
 
 /**
- * Hides the current card and changes an acknowledged Finished completion to Idle in Heidrun.
+ * Hides the current card and changes an acknowledged Finished completion to Idle in Heidrun Code.
  * @param p - The status represented by the card being removed.
  * @returns Nothing.
  */
@@ -1428,6 +1428,6 @@ export async function start() {
   }
   // No timer reads the snapshot of Herdr: it gives the page a new list of workspaces each time, so everything that
   // watches this list runs again. A lost event is covered by the refresh after "herdr://connected" and "herdr://resync".
-  // Codex writes its usage outside Heidrun and no event announces it, so the usage of Codex keeps a timer.
+  // Codex writes its usage outside Heidrun Code and no event announces it, so the usage of Codex keeps a timer.
   window.setInterval(refreshCodex, 10_000);
 }

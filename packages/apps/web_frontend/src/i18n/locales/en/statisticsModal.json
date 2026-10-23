@@ -43,7 +43,7 @@
   "durationMinutesSeconds": "{minutes} min {seconds} s",
   "durationHoursMinutes": "{hours} h {minutes} min",
   "personWorkTab": "Work of one person",
-  "userActivityTabWhat": "How long you are active in front of Heidrun.",
+  "userActivityTabWhat": "How long you are active in front of Heidrun Code.",
   "userActivityTabHow": "One bar for each slot of time, with one color for each workspace. Choose the time range, the slot length, and the workspaces.",
   "personWorkTabWhat": "How much one person does, with one bar for each slot of 1 hour, 6 hours, or 1 day. Each total has its average per day under it.",
   "personWorkTabGitHistory": "The commits and the pull requests of the person, the number of issues, and the lines that the commits add and delete.",

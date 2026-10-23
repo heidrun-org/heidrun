@@ -42,7 +42,7 @@ pub struct VoiceOptions {
     models: Vec<ModelInfo>,
     /// The codes of the languages, without the automatic choice.
     languages: Vec<&'static str>,
-    /// The model that Heidrun proposes first.
+    /// The model that Heidrun Code proposes first.
     default_model_id: &'static str,
 }
 
@@ -58,12 +58,12 @@ struct DownloadProgressEvent {
     total_bytes: u64,
 }
 
-/// The folder of the model files: `models` in the folder of the data of Heidrun.
+/// The folder of the model files: `models` in the folder of the data of Heidrun Code.
 fn models_folder() -> PathBuf {
     app_data::data_dir().join("models")
 }
 
-/// The file where the logs of Whisper go: `logs/whisper.log` in the folder of the data of Heidrun.
+/// The file where the logs of Whisper go: `logs/whisper.log` in the folder of the data of Heidrun Code.
 fn whisper_log_path() -> PathBuf {
     app_data::data_dir().join("logs").join("whisper.log")
 }

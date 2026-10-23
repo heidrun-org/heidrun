@@ -305,7 +305,7 @@ const lastConfigTexts: Record<string, string | undefined> = {};
 const CONFIG_READ_INTERVAL = 1000;
 
 /**
- * Loads the project of the workspace in view again when another program, such as the command line heidrun_ctrl, changed its
+ * Loads the project of the workspace in view again when another program, such as the command line heidrun_code_ctrl, changed its
  * file .heidrun/config.json. The first read of a workspace only records the text.
  */
 export async function reloadProjectWhenFileChanged(): Promise<void> {

@@ -1,6 +1,6 @@
-# Heidrun: guide for developers
+# Heidrun Code: guide for developers
 
-This document is for the developers who work on Heidrun. It explains four tasks: how to build the application, how to launch the application during development, how to test the application, and how to release the application. The file `README.md` describes the application itself, and the file `AGENTS.md` gives the rules for changes to this repository.
+This document is for the developers who work on Heidrun Code. It explains four tasks: how to build the application, how to launch the application during development, how to test the application, and how to release the application. The file `README.md` describes the application itself, and the file `AGENTS.md` gives the rules for changes to this repository.
 
 All commands run in the root folder of the repository, on macOS.
 
@@ -17,14 +17,14 @@ pnpm build
 
 The command `pnpm build` builds the web frontend, then the Rust backend, then packages both into the application. The result is in `packages/apps/desktop_tauri/target/release/bundle/`:
 
-- `macos/Heidrun.app` is the application. Drag it into `/Applications`.
+- `macos/Heidrun Code.app` is the application. Drag it into `/Applications`.
 - `dmg/Heidrun_<version>_<architecture>.dmg` is the disk image.
 
 To build only the web frontend, run `pnpm build:web`.
 
 ## Install the current development version
 
-Quit Heidrun, then build the application from the current source:
+Quit Heidrun Code, then build the application from the current source:
 
 ```bash
 pnpm build
@@ -36,7 +36,7 @@ Open the folder containing the built application:
 open packages/apps/desktop_tauri/target/release/bundle/macos
 ```
 
-Drag `Heidrun.app` into `/Applications` and choose "Replace" when Finder asks. Then open Heidrun from `/Applications`.
+Drag `Heidrun Code.app` into `/Applications` and choose "Replace" when Finder asks. Then open Heidrun Code from `/Applications`.
 
 ## Launch the application during development
 
@@ -46,13 +46,13 @@ pnpm dev
 
 The command starts the web frontend with its development server on `http://localhost:1420`, then opens the application window. When you change a file of the web frontend, the window updates without a restart. When you change a Rust file, the command rebuilds the backend and restarts the window.
 
-To use the installed Heidrun for your daily work while you develop Heidrun, read [application_installations.md](docs/architecture/application_installations.md). It explains Heidrun Development, the separate application that `pnpm dev` starts, the resources that the two applications keep apart, and the commands to use both at the same time.
+To use the installed Heidrun Code for your daily work while you develop Heidrun Code, read [application_installations.md](docs/architecture/application_installations.md). It explains Heidrun Code Development, the separate application that `pnpm dev` starts, the resources that the two applications keep apart, and the commands to use both at the same time.
 
 To work on the web frontend alone, in a browser, run `pnpm dev:web`. Without the application window, the functions of the Rust backend are not available.
 
-To work on the mobile website alone, with no application window and no real computer behind it, run `pnpm --filter mobile_website dev`. The command starts a development server on `http://127.0.0.1:5183`, prints an address with a pairing key, and answers the calls of the page with four made-up coding agents. When you change a file of `packages/auxiliary/mobile_website/src`, the page reloads by itself and stays on the same screen, because the address names the screen. To use the real coding agents instead, start Heidrun once with `pnpm dev -- -- --no-splash-screen`, turn the mobile access on, copy the host name of the address that the section shows (for example `words-of-the-tunnel.ngrok-free.dev`), then run `MOBILE_API_TARGET=http://127.0.0.1:47823 MOBILE_API_HOST=<that host name> pnpm --filter mobile_website dev`. The host name changes each time that Heidrun opens the tunnel. The page then reloads when you change a file of the website, and you start Heidrun again only when the calls between the page and the application change. The development server sends no `Content-Security-Policy` header, so check the strict policy with the mobile server before you finish.
+To work on the mobile website alone, with no application window and no real computer behind it, run `pnpm --filter mobile_website dev`. The command starts a development server on `http://127.0.0.1:5183`, prints an address with a pairing key, and answers the calls of the page with four made-up coding agents. When you change a file of `packages/auxiliary/mobile_website/src`, the page reloads by itself and stays on the same screen, because the address names the screen. To use the real coding agents instead, start Heidrun Code once with `pnpm dev -- -- --no-splash-screen`, turn the mobile access on, copy the host name of the address that the section shows (for example `words-of-the-tunnel.ngrok-free.dev`), then run `MOBILE_API_TARGET=http://127.0.0.1:47823 MOBILE_API_HOST=<that host name> pnpm --filter mobile_website dev`. The host name changes each time that Heidrun Code opens the tunnel. The page then reloads when you change a file of the website, and you start Heidrun Code again only when the calls between the page and the application change. The development server sends no `Content-Security-Policy` header, so check the strict policy with the mobile server before you finish.
 
-To set an environment variable of the application during development, for example `HEIDRUN_DIR`, copy the file `.env.example` to a file named `.env` at the root of the repository, and remove the `#` at the start of the line of the variable. The file `.env.example` explains every variable that the application reads. Git ignores the file `.env`. Only a development build reads it, once at the start, so run `pnpm dev` again after a change. A variable that is already set in your shell keeps the value of the shell.
+To set an environment variable of the application during development, for example `HEIDRUN_CODE_DIR`, copy the file `.env.example` to a file named `.env` at the root of the repository, and remove the `#` at the start of the line of the variable. The file `.env.example` explains every variable that the application reads. Git ignores the file `.env`. Only a development build reads it, once at the start, so run `pnpm dev` again after a change. A variable that is already set in your shell keeps the value of the shell.
 
 ```bash
 cp .env.example .env
@@ -119,10 +119,10 @@ The command uploads the disk image twice: once with the version in its name, for
 
 The disk image is built for the architecture of your machine only, and it is not signed and not notarized.
 
-When someone downloads the disk image with a web browser, the web browser puts a quarantine mark on the file. Then macOS shows the message "“Heidrun” is damaged and can't be opened" when that person opens Heidrun for the first time. Heidrun is not damaged. macOS shows this message because Apple did not notarize the application. To open Heidrun, drag Heidrun to the Applications folder, run this command in a terminal, then open Heidrun again:
+When someone downloads the disk image with a web browser, the web browser puts a quarantine mark on the file. Then macOS shows the message "“Heidrun Code” is damaged and can't be opened" when that person opens Heidrun Code for the first time. Heidrun Code is not damaged. macOS shows this message because Apple did not notarize the application. To open Heidrun Code, drag Heidrun Code to the Applications folder, run this command in a terminal, then open Heidrun Code again:
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/Heidrun.app
+xattr -dr com.apple.quarantine "/Applications/Heidrun Code.app"
 ```
 
 The text of a GitHub release does not mention this message, because the command `curl` of the next section does not put the quarantine mark.
@@ -133,16 +133,16 @@ The text of a GitHub release does not mention this message, because the command 
 curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun_code/main/scripts/install.sh | sh
 ```
 
-The script [`scripts/install.sh`](scripts/install.sh) installs the latest release in `/Applications`. A web browser puts the quarantine mark `com.apple.quarantine` on a file that it downloads, and macOS checks the signature of an application only when the application has this mark, so it shows the message "damaged" for Heidrun. The command `curl` does not put the mark, so the application opens with no message. The script does these steps, in this order:
+The script [`scripts/install.sh`](scripts/install.sh) installs the latest release in `/Applications`. A web browser puts the quarantine mark `com.apple.quarantine` on a file that it downloads, and macOS checks the signature of an application only when the application has this mark, so it shows the message "damaged" for Heidrun Code. The command `curl` does not put the mark, so the application opens with no message. The script does these steps, in this order:
 
-1. It stops with a message when the computer is not macOS, when the processor is not Apple silicon, when `/Applications/Heidrun.app` is running, or when the user cannot write in `/Applications`.
+1. It stops with a message when the computer is not macOS, when the processor is not Apple silicon, when `/Applications/Heidrun Code.app` is running, or when the user cannot write in `/Applications`.
 2. It downloads `Heidrun_aarch64.dmg` of the latest release into a temporary folder, with `curl -fL`.
 3. It mounts the disk image with `hdiutil attach -nobrowse -readonly -mountpoint`.
-4. It replaces `/Applications/Heidrun.app` with the copy from the disk image, with `ditto`.
+4. It replaces `/Applications/Heidrun Code.app` with the copy from the disk image, with `ditto`.
 5. It ejects the disk image and deletes the temporary folder, also when a step fails.
 6. It prints the installed version, read from `Contents/Info.plist` of the application.
 
-The environment variable `HEIDRUN_APPLICATIONS_FOLDER` changes the folder that receives `Heidrun.app`. The tests use it, and a developer can use it to try the script with no change to `/Applications`. The tests of the script are the package [`packages/dev_tools/install_script_tests`](packages/dev_tools/install_script_tests). The script cannot work for a release that has no file `Heidrun_aarch64.dmg`: v0.2.7 and the releases before it do not have it.
+The environment variable `HEIDRUN_CODE_APPLICATIONS_FOLDER` changes the folder that receives `Heidrun Code.app`. The tests use it, and a developer can use it to try the script with no change to `/Applications`. The tests of the script are the package [`packages/dev_tools/install_script_tests`](packages/dev_tools/install_script_tests). The script cannot work for a release that has no file `Heidrun_aarch64.dmg`: v0.2.7 and the releases before it do not have it.
 
 ## Work in a Git worktree
 

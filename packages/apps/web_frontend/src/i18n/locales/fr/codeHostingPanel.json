@@ -43,9 +43,9 @@
   "help.gitlab.title": "Recherche GitLab — {name}",
   "help.run": "Combine les filtres avec des espaces. Appuie sur Entrée dans le champ de recherche pour rechercher seulement dans {name}. Sans filtre d’état, la liste affiche les éléments ouverts.",
   "help.github.documentation": "GitHub Docs",
-  "help.gitlab.supportedTitle": "Pris en charge par Heidrun pour GitLab",
+  "help.gitlab.supportedTitle": "Pris en charge par Heidrun Code pour GitLab",
   "help.gitlab.supported": "Utilise author:, assignee:, milestone:, label: (un label par filtre), no:label, no:assignee, no:milestone, is:open ou is:closed. Ajoute - devant author:, assignee:, milestone: ou label: pour exclure une valeur. @me désigne ton compte GitLab connecté. Les mots simples et AND sont aussi pris en charge.",
   "help.gitlab.reviews": "Pour les merge requests, is:merged et review-requested:@me sont aussi pris en charge.",
   "help.gitlab.limitsTitle": "Limites",
-  "help.gitlab.limits": "Heidrun traduit ces expressions en filtres GitLab. Le langage complet de recherche GitHub ne fonctionne pas ici. Les expressions non prises en charge affichent une erreur : mentions:, involves:, OR, NOT, parenthèses, virgules dans les labels, sort:, filtres de date, phrases libres entre guillemets et mots simples exclus."
+  "help.gitlab.limits": "Heidrun Code traduit ces expressions en filtres GitLab. Le langage complet de recherche GitHub ne fonctionne pas ici. Les expressions non prises en charge affichent une erreur : mentions:, involves:, OR, NOT, parenthèses, virgules dans les labels, sort:, filtres de date, phrases libres entre guillemets et mots simples exclus."
 }

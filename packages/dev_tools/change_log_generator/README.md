@@ -1,6 +1,6 @@
 # change_log_generator
 
-A command line tool for [Heidrun](../../../README.md). It writes a section of the file `CHANGELOG.md`, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, from the pull requests that were merged between two releases.
+A command line tool for [Heidrun Code](../../../README.md). It writes a section of the file `CHANGELOG.md`, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, from the pull requests that were merged between two releases.
 
 ## What it contains
 

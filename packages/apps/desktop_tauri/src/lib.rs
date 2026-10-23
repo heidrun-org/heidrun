@@ -49,7 +49,7 @@ async fn herdr_request(method: String, params: Option<Value>) -> Result<Value, S
     herdr::request(&method, params.unwrap_or_else(|| json!({}))).await
 }
 
-/// Runs the herdr CLI (used for `pane run`, which handles bracketed paste for us), in the session that Heidrun uses.
+/// Runs the herdr CLI (used for `pane run`, which handles bracketed paste for us), in the session that Heidrun Code uses.
 #[tauri::command]
 async fn herdr_cli(args: Vec<String>) -> Result<String, String> {
     let out = tokio::process::Command::new(herdr::herdr_bin())
@@ -81,8 +81,8 @@ async fn herdr_server_start() -> Result<String, String> {
     let mut cmd = std::process::Command::new(shell);
     let mut server_command = herdr::server_shell_command(&herdr::herdr_bin());
     if let Some(user_bin_folder) = skills::bundled::user_bin_folder() {
-        cmd.env("HEIDRUN_USER_BIN", user_bin_folder);
-        server_command = format!("export PATH=\"$HEIDRUN_USER_BIN:$PATH\"; {server_command}");
+        cmd.env("HEIDRUN_CODE_USER_BIN", user_bin_folder);
+        server_command = format!("export PATH=\"$HEIDRUN_CODE_USER_BIN:$PATH\"; {server_command}");
     }
     cmd.arg("-lc")
         .arg(server_command)
@@ -93,11 +93,11 @@ async fn herdr_server_start() -> Result<String, String> {
         cmd.current_dir(home);
     }
     // Every pane inherits the environment of the server. Without this, a coding agent in a pane connects to Visual
-    // Studio Code when the developer started Heidrun from the terminal of Visual Studio Code.
+    // Studio Code when the developer started Heidrun Code from the terminal of Visual Studio Code.
     herdr::remove_editor_variables(&mut cmd);
     #[cfg(unix)]
     {
-        // Own process group: the server is not stopped by a signal sent to Heidrun. Heidrun stops the server itself
+        // Own process group: the server is not stopped by a signal sent to Heidrun Code. Heidrun Code stops the server itself
         // when the user quits, unless the user chose "Keep agents running after quit".
         use std::os::unix::process::CommandExt;
         cmd.process_group(0);
@@ -142,11 +142,11 @@ fn is_system_language_french() -> bool {
 /// close the app instead of reaching our "close pane" shortcut.
 fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let is_french = is_system_language_french();
-    let about_label = if is_french { "À propos de Heidrun" } else { "About Heidrun" };
-    let quit_label = if is_french { "Quitter Heidrun" } else { "Quit Heidrun" };
+    let about_label = if is_french { "À propos de Heidrun Code" } else { "About Heidrun Code" };
+    let quit_label = if is_french { "Quitter Heidrun Code" } else { "Quit Heidrun Code" };
     let edit_label = if is_french { "Édition" } else { "Edit" };
     let window_label = if is_french { "Fenêtre" } else { "Window" };
-    let app_menu = SubmenuBuilder::new(app, "Heidrun")
+    let app_menu = SubmenuBuilder::new(app, "Heidrun Code")
         // Our own item: the About window is drawn by the web frontend, with an image.
         .item(&tauri::menu::MenuItemBuilder::with_id("hd-about", about_label).build(app)?)
         .separator()
@@ -193,7 +193,7 @@ static MAIN_WINDOW_SHOWN: std::sync::atomic::AtomicBool = std::sync::atomic::Ato
 /// tells that the splash image is ready, for example when the web page fails to load.
 const MAIN_WINDOW_SHOW_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
 
-/// What the window-state plugin saves when Heidrun quits, and puts back when the main window is created: the position,
+/// What the window-state plugin saves when Heidrun Code quits, and puts back when the main window is created: the position,
 /// the size, and the maximized and full screen states. The visible state is not in the list, because the main window
 /// stays hidden until the splash image is ready (see `MAIN_WINDOW_SHOWN`).
 fn window_state_flags() -> tauri_plugin_window_state::StateFlags {
@@ -225,7 +225,7 @@ fn show_main_window(app: AppHandle) {
     show_main_window_once(&app);
 }
 
-/// The command line option that starts Heidrun without the splash screen. A program that drives Heidrun, for example to
+/// The command line option that starts Heidrun Code without the splash screen. A program that drives Heidrun Code, for example to
 /// take a screenshot, uses it so that it never waits for the splash screen to close.
 const NO_SPLASH_SCREEN_OPTION: &str = "--no-splash-screen";
 
@@ -234,7 +234,7 @@ fn has_option(arguments: &[String], option: &str) -> bool {
     arguments.iter().any(|argument| argument == option)
 }
 
-/// Called by the web page at the start: true when Heidrun was started with the option `--no-splash-screen`. The web
+/// Called by the web page at the start: true when Heidrun Code was started with the option `--no-splash-screen`. The web
 /// page then does not show the splash screen, and shows the main window at once.
 #[tauri::command]
 fn is_splash_screen_disabled() -> bool {
@@ -242,7 +242,7 @@ fn is_splash_screen_disabled() -> bool {
     has_option(&arguments, NO_SPLASH_SCREEN_OPTION)
 }
 
-/// The setting "Keep agents running after quit": when true, quitting Heidrun does not stop the Herdr session `heidrun`.
+/// The setting "Keep agents running after quit": when true, quitting Heidrun Code does not stop the Herdr session `heidrun`.
 /// The web page sends the value at the start and at each change. Until then the value is false, the default.
 static KEEP_AGENTS_RUNNING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
@@ -448,7 +448,7 @@ pub fn run() {
             skills::agent_folders::skills_link_agent,
         ])
         .build(context)
-        .expect("error while running Heidrun")
+        .expect("error while running Heidrun Code")
         .run(|app, event| {
             // ⌘Q with unsaved files: the app stays and shows them.
             if let tauri::RunEvent::ExitRequested { api, code, .. } = &event {
@@ -458,7 +458,7 @@ pub fn run() {
                     let _ = app.emit("quit-blocked", ());
                 }
             }
-            // The app leaves for good: the Herdr session of Heidrun stops with it, like the processes of a normal macOS app.
+            // The app leaves for good: the Herdr session of Heidrun Code stops with it, like the processes of a normal macOS app.
             if let tauri::RunEvent::Exit = event {
                 herdr::stop_session_on_quit(KEEP_AGENTS_RUNNING.load(std::sync::atomic::Ordering::Relaxed));
                 mobile::stop_on_quit(app);

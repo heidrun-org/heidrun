@@ -1,6 +1,6 @@
 # worktree_tools
 
-Two command line tools for [Heidrun](../../../README.md). They reduce the cost of the Cargo target folder in each Git worktree. Each new worktree has an empty target folder, and its first build compiles every Rust dependency again: it takes 52 to 65 seconds and about 2.5 GB of disk space.
+Two command line tools for [Heidrun Code](../../../README.md). They reduce the cost of the Cargo target folder in each Git worktree. Each new worktree has an empty target folder, and its first build compiles every Rust dependency again: it takes 52 to 65 seconds and about 2.5 GB of disk space.
 
 ## What it contains
 

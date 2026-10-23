@@ -87,9 +87,9 @@ describe("the word replacement list in the section Voice input", () => {
 		fakeFile.words = [makeWord("a", "one", "1")];
 		const wrapper = await mountEditor();
 		expect(wrapper.get('[data-field="headings"]').text()).toContain("Whisper writes");
-		expect(wrapper.get('[data-field="headings"]').text()).toContain("Heidrun writes instead");
+		expect(wrapper.get('[data-field="headings"]').text()).toContain("Heidrun Code writes instead");
 		expect(wrapper.get('[data-field="whisper-writes"]').attributes("aria-label")).toBe("Whisper writes");
-		expect(wrapper.get('[data-field="heidrun-writes"]').attributes("aria-label")).toBe("Heidrun writes instead");
+		expect(wrapper.get('[data-field="heidrun-writes"]').attributes("aria-label")).toBe("Heidrun Code writes instead");
 	});
 
 	it("adds an entry: the button opens a row, and the button of the row writes it", async () => {
@@ -108,7 +108,7 @@ describe("the word replacement list in the section Voice input", () => {
 		expect(wrapper.get('[data-field="toggle-draft"]').text()).toBe("Add a word");
 	});
 
-	it("adds an entry with the key Enter, and an empty text that Heidrun writes is allowed", async () => {
+	it("adds an entry with the key Enter, and an empty text that Heidrun Code writes is allowed", async () => {
 		const wrapper = await mountEditor();
 		await wrapper.get('[data-field="toggle-draft"]').trigger("click");
 		await wrapper.get('[data-field="draft-whisper-writes"]').setValue(" um");
@@ -147,7 +147,7 @@ describe("the word replacement list in the section Voice input", () => {
 		expect(wrapper.get('[data-field="change-error"]').text()).toContain("The entry a already has the text that Whisper writes.");
 	});
 
-	it("edits the text that Heidrun writes when the developer leaves the input", async () => {
+	it("edits the text that Heidrun Code writes when the developer leaves the input", async () => {
 		fakeFile.words = [makeWord("a", "jerome", "Jerome")];
 		const wrapper = await mountEditor();
 		await wrapper.get('[data-field="heidrun-writes"]').setValue("Jérôme");
@@ -232,7 +232,7 @@ describe("the word replacement list in the section Voice input", () => {
 		fakeFile.words = [makeWord("a", "one", "1")];
 		const wrapper = await mountEditor();
 		expect(wrapper.get('[data-field="headings"]').text()).toContain("Whisper écrit");
-		expect(wrapper.get('[data-field="headings"]').text()).toContain("Heidrun écrit à la place");
+		expect(wrapper.get('[data-field="headings"]').text()).toContain("Heidrun Code écrit à la place");
 		expect(wrapper.get('[data-field="toggle-draft"]').text()).toBe("Ajouter un mot");
 	});
 
