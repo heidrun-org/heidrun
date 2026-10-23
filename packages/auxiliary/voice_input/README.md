@@ -13,7 +13,9 @@ The library has five parts:
 Building the library needs `cmake` (`brew install cmake`), because `whisper-rs` builds the C++ engine whisper.cpp. To test it:
 
 ```bash
-pnpm --filter voice_input test
+pnpm --filter voice_input test:fast   # the fast tests, with no model
+pnpm --filter voice_input test:slow   # the slow tests, with the real model tiny
+pnpm --filter voice_input test        # both
 ```
 
-The first run of the tests downloads the model `tiny` (78 MB) once. To record the real microphone for one second, run `cargo test live_ -- --ignored` in this folder.
+The first run of the slow tests downloads the model `tiny` (78 MB) once. To record the real microphone for one second, run `cargo test live_ -- --ignored` in this folder.

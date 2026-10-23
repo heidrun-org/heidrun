@@ -1,11 +1,15 @@
 import Fs from 'node:fs';
 import Path from 'node:path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TargetPaths } from '../src/target_paths.ts';
 import { WorktreeCreate } from '../src/worktree_create.ts';
 import { TestRepository } from './test_repository.ts';
 
 describe('WorktreeCreate', () => {
+	beforeEach(() => {
+		vi.stubEnv('PATH', TestRepository.pathWithFakePnpm());
+	});
+
 	afterEach(() => {
 		vi.unstubAllEnvs();
 		TestRepository.removeAll();
@@ -106,6 +110,7 @@ describe('WorktreeCreate', () => {
 		});
 
 		it('installs the packages: the new worktree has a folder node_modules', () => {
+			vi.stubEnv('PATH', TestRepository.pathWithRealPnpm());
 			const mainCheckoutPath = TestRepository.create();
 			const result = WorktreeCreate.run({
 				workingDirectory: mainCheckoutPath,
@@ -116,6 +121,7 @@ describe('WorktreeCreate', () => {
 		});
 
 		it('installs the packages from the lockfile and does not change the lockfile', () => {
+			vi.stubEnv('PATH', TestRepository.pathWithRealPnpm());
 			const mainCheckoutPath = TestRepository.create();
 			const result = WorktreeCreate.run({
 				workingDirectory: mainCheckoutPath,
@@ -126,6 +132,7 @@ describe('WorktreeCreate', () => {
 		});
 
 		it('throws with the output of pnpm when the installation fails, and keeps the worktree', () => {
+			vi.stubEnv('PATH', TestRepository.pathWithRealPnpm());
 			const mainCheckoutPath = TestRepository.createWithOutdatedLockfile();
 			const worktreePath = Path.join(mainCheckoutPath, '.claude', 'worktrees', 'bad-lockfile');
 			expect(() => {

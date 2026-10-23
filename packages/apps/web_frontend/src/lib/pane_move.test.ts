@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { PaneMove, type PaneMovePlanInput } from './pane_move';
 import type { Box } from './reorder';

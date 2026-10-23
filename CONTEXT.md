@@ -10,7 +10,7 @@ The Heidrun repository contains the macOS application, its supporting packages, 
 - [README.md](README.md): application overview and development setup.
 - [AGENTS.md](AGENTS.md): project rules and development commands.
 - Command to run the application: `pnpm dev`.
-- Command to test the repository: `pnpm test`.
+- Command to test the repository: `pnpm test` (the fast tests), `pnpm test:slow` (the slow tests), and `pnpm test:full` (both).
 
 ## Rules
 - Git submodules stay outside the pnpm workspace packages.
