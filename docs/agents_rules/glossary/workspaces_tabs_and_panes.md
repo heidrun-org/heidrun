@@ -1,11 +1,11 @@
 # Glossary of Heidrun: workspaces, tabs, and panes
 
 - Created: 14 October 2026
-- Last updated: 22 October 2026
+- Last updated: 23 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: workspaces, tabs, and panes](../user_interface/workspaces_tabs_and_panes/index.md)
-- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 726](https://github.com/heidrun-org/heidrun/issues/726), [issue 714](https://github.com/heidrun-org/heidrun/issues/714), [issue 786](https://github.com/heidrun-org/heidrun/issues/786), [issue 784](https://github.com/heidrun-org/heidrun/issues/784)
+- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 726](https://github.com/heidrun-org/heidrun/issues/726), [issue 714](https://github.com/heidrun-org/heidrun/issues/714), [issue 786](https://github.com/heidrun-org/heidrun/issues/786), [issue 784](https://github.com/heidrun-org/heidrun/issues/784), [issue 810](https://github.com/heidrun-org/heidrun/issues/810)
 
 This document gives one short definition for each word of the workspaces, the tabs, the panes, the coding agents that run in a pane, and the parts of the window that hold the panes. The other words of Heidrun are in [index.md](index.md).
 
@@ -93,6 +93,26 @@ The large picture of one image of the composition bar, with a button on each sid
 
 A temporary mode entered from the header of a pane. It shows only the pane whose header button was pressed, hides the surrounding interface, and keeps that pane's header visible.
 
+## Moving a pane
+
+The rules are in [pane_move.md](../user_interface/workspaces_tabs_and_panes/pane_move.md).
+
+### Dragged pane
+
+The pane whose header the developer presses and moves with the pointer.
+
+### Destination pane
+
+The pane under the pointer when the developer releases the button. The dragged pane goes next to the destination pane.
+
+### Drop triangle
+
+One of the four triangles, top, bottom, left, and right, that two diagonal lines from corner to corner cut in a destination pane. The drop triangle that holds the pointer at the release decides on which side of the destination pane the dragged pane goes.
+
+### Move preview
+
+The half of the destination pane where the dragged pane goes. The window shows it while the pointer is over a destination pane, before the release.
+
 ## Rules
 
 - The word "tab" means only a tab of Herdr, as defined above. An icon of a sidebar icon bar is not a tab.
@@ -100,4 +120,5 @@ A temporary mode entered from the header of a pane. It shows only the pane whose
 - Write "coding agent" in full. Never write "agent" alone, "AI agent", or "AI coding agent" for Claude Code, Codex, or Antigravity.
 - Write "pinned pane" and "column of pinned panes". Do not write "docked pane", "side view", or "alongside".
 - Write "composition bar". Do not write "composition box", "image zone", "attachment bar", or "drop zone" for the area under the focused pane. Write "big view", not "lightbox" or "full screen view", for the large picture.
+- Write "dragged pane", "destination pane", "drop triangle", and "move preview" for the parts of a pane move. Do not write "target pane" or "drop zone" for them.
 - Write "usage wheel". Do not write "context bar", "gauge", or "ring" for the circle in the header of a pane.

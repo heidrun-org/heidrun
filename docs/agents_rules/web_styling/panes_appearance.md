@@ -1,11 +1,11 @@
 # Web styling of Heidrun: appearance of the viewport and the panes
 
 - Created: 22 October 2026
-- Last updated: 22 October 2026
+- Last updated: 23 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Shared design rules](shared_design.md), [Colors and scroll bars](colors_and_scroll_bars.md), [Glossary of Heidrun](../glossary/index.md)
-- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 345](https://github.com/heidrun-org/heidrun/issues/345), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 749](https://github.com/heidrun-org/heidrun/issues/749), [issue 784](https://github.com/heidrun-org/heidrun/issues/784), [issue 786](https://github.com/heidrun-org/heidrun/issues/786), [issue 799](https://github.com/heidrun-org/heidrun/issues/799)
+- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 345](https://github.com/heidrun-org/heidrun/issues/345), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 749](https://github.com/heidrun-org/heidrun/issues/749), [issue 784](https://github.com/heidrun-org/heidrun/issues/784), [issue 786](https://github.com/heidrun-org/heidrun/issues/786), [issue 799](https://github.com/heidrun-org/heidrun/issues/799), [issue 810](https://github.com/heidrun-org/heidrun/issues/810)
 
 This file gives the rules about how the frames of the window, the panes, the pane header, the composition bar, and the file view pane look. What each part contains and does is in the folder `user_interface`. Each rule names its test, and the paths of the tests start at `packages/apps/web_frontend/src`.
 
@@ -18,6 +18,8 @@ This file gives the rules about how the frames of the window, the panes, the pan
 - The frame of the viewport has no padding, so a pane at the edge of the viewport touches the border of the viewport: the border of the viewport is the only line there, with no gap and no second border. A pane has no rounded corner. A pane that touches a corner of the viewport follows the rounded corner of the viewport, because the frame of the viewport clips it. The top corners of the viewport belong to the tab bar, so no pane touches them ([issue #326](https://github.com/heidrun-org/heidrun/issues/326)). Test: `pane_joints.test.ts`.
 - Two panes that touch have one thin line between them and no gap, as in VS Code. This holds for two panes side by side, for two panes one above the other, for three panes that meet, and for the pinned panes in the column of pinned panes. The line is the 1 pixel border of the panes: a pane that has a neighbour on its left or above it starts 1 pixel early, so the borders of two panes make one line, and every pane ends exactly at the edge of its share. The place to grab the line shows a color while the pointer is over it. The line is never a gap, and no corner of a pane is rounded where lines meet. Tests: `pane_joints.test.ts` and `components/PaneGrid.test.ts`.
 - The border of the panes goes 1 pixel past the frame of the viewport on its left, on its right, and at its bottom, so the frame clips it. At the top, the border of the panes is the line under the tab bar. The ring of the selected pane and the ring of a blocked pane have the color of the state. At the top, the ring is the top border of the pane, so that it joins the selected tab. On the left, on the right, and at the bottom, the ring is drawn just inside the border of the pane, so that it also shows at the edge of the viewport, where the frame hides the border ([issue #326](https://github.com/heidrun-org/heidrun/issues/326)). Test: `pane_joints.test.ts`.
+
+- The move preview, the half of the destination pane where a dragged pane goes, has the look of the layer of a drop of images: a solid border of 3 pixels in the color `--accent` and a background of the same color at 12 percent strength, over the panes. It lets the pointer through. The rules of the move are in [pane_move.md](../user_interface/workspaces_tabs_and_panes/pane_move.md) ([issue 810](https://github.com/heidrun-org/heidrun/issues/810)). Test: `components/PaneGrid.test.ts` checks the place and the pointer events of the preview; no automated test checks its colors.
 
 ## Pane header
 

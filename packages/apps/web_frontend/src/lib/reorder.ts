@@ -135,7 +135,7 @@ export function useReorder(axis: "x" | "y", drop: (id: string, insertIndex: numb
 }
 
 /** Stops the click that the browser sends after the release of a drag, so that the drag does not select or rename an item. */
-function ignoreNextClick() {
+export function ignoreNextClick() {
   const stop = (e: Event) => {
     e.stopPropagation();
     e.preventDefault();

@@ -68,6 +68,55 @@ export async function split(paneId: string, direction: "right" | "down", cwd?: s
   return r.pane;
 }
 
+/** What Herdr answers to the call `pane.move`. */
+type PaneMoveAnswer = { move_result: { changed: boolean; reason?: string | null } };
+
+/**
+ * Moves a pane into a new tab of its workspace. The terminal of the pane keeps running. Herdr closes the tab that the pane
+ * leaves when it has no other pane.
+ * @param paneId - the pane to move
+ * @param workspaceId - the workspace that gets the new tab
+ * @returns the answer of Herdr; `move_result.changed` is false when Herdr did not move the pane
+ */
+export function movePaneToNewTab(paneId: string, workspaceId: string): Promise<PaneMoveAnswer> {
+  return request<PaneMoveAnswer>("pane.move", {
+    pane_id: paneId,
+    destination: { type: "new_tab", workspace_id: workspaceId },
+    focus: false,
+  });
+}
+
+/**
+ * Moves a pane into a tab, as the second half of a split of a pane of that tab. The terminal of the pane keeps running.
+ * @param paneId - the pane to move
+ * @param tabId - the tab that receives the pane
+ * @param destinationPaneId - the pane that gets a neighbor
+ * @param direction - `right`: side by side. `down`: one above the other. The moved pane is the second one.
+ * @returns the answer of Herdr; `move_result.changed` is false when Herdr did not move the pane
+ */
+export function movePaneNextToPane(
+  paneId: string,
+  tabId: string,
+  destinationPaneId: string,
+  direction: "right" | "down",
+): Promise<PaneMoveAnswer> {
+  return request<PaneMoveAnswer>("pane.move", {
+    pane_id: paneId,
+    destination: { type: "tab", tab_id: tabId, split: direction, target_pane_id: destinationPaneId, ratio: 0.5 },
+    focus: false,
+  });
+}
+
+/**
+ * Exchanges the places of two panes of one tab.
+ * @param paneId - the first pane
+ * @param destinationPaneId - the second pane
+ * @returns the answer of Herdr; `swap.changed` is false when Herdr did not swap the panes
+ */
+export function swapPanes(paneId: string, destinationPaneId: string): Promise<{ swap: { changed: boolean; reason?: string | null } }> {
+  return request("pane.swap", { source_pane_id: paneId, target_pane_id: destinationPaneId });
+}
+
 /**
  * Sets the share that the first group of a split takes. Herdr keeps the value between 0.1 and 0.9.
  * @param tabId - the tab that holds the split

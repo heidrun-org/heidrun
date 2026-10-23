@@ -477,3 +477,45 @@ describe("PaneCard file view pane (issue #714)", () => {
     expect(wrapper.find(".name").text()).toBe("build");
   });
 });
+
+describe("PaneCard: moving the pane", () => {
+  it("starts a move of the pane when the header is pressed", async () => {
+    const wrapper = await mountPaneCard();
+    const { PaneMoveDrag } = await import("../stores/pane_move");
+    const start = vi.spyOn(PaneMoveDrag, "onPointerDown").mockImplementation(() => {});
+    await wrapper.get("header.head").trigger("pointerdown");
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(start.mock.calls[0][1]).toBe("w1:p1");
+  });
+
+  it("starts a move from a press on a button of the header too, and lets the move code refuse it", async () => {
+    const wrapper = await mountPaneCard();
+    const { PaneMoveDrag } = await import("../stores/pane_move");
+    const start = vi.spyOn(PaneMoveDrag, "onPointerDown").mockImplementation(() => {});
+    await wrapper.get("header.head button").trigger("pointerdown");
+    expect(start).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts no move from a pinned pane of the column of pinned panes", async () => {
+    const wrapper = await mountPaneCard({}, true);
+    const { PaneMoveDrag } = await import("../stores/pane_move");
+    const start = vi.spyOn(PaneMoveDrag, "onPointerDown").mockImplementation(() => {});
+    await wrapper.get("header.head").trigger("pointerdown");
+    expect(start).not.toHaveBeenCalled();
+  });
+
+  it("marks a pane of the grid as a destination for a drop, with its identifier", async () => {
+    const wrapper = await mountPaneCard();
+    expect(wrapper.get("section.pane").attributes("data-pane-move-destination")).toBe("w1:p1");
+  });
+
+  it("does not mark a pinned pane of the column of pinned panes as a destination", async () => {
+    const wrapper = await mountPaneCard({}, true);
+    expect(wrapper.get("section.pane").attributes("data-pane-move-destination")).toBeUndefined();
+  });
+
+  it("marks the destination with the attribute that the move code looks for", async () => {
+    const { PANE_MOVE_DESTINATION_ATTRIBUTE } = await import("../stores/pane_move");
+    expect(paneCardSource).toContain(PANE_MOVE_DESTINATION_ATTRIBUTE);
+  });
+});
