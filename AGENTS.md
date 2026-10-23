@@ -56,7 +56,7 @@ This restriction follows [issue 769](https://github.com/heidrun-org/heidrun/issu
 Clone Heidrun with its submodules:
 
 ```sh
-git clone --recurse-submodules git@github.com:heidrun-org/heidrun.git
+git clone --recurse-submodules git@github.com:heidrun-org/heidrun_code.git
 ```
 
 After a pull, or in an existing clone without initialized submodules, run this command from the checkout root:
@@ -162,7 +162,7 @@ Never commit an image to the repository, and never push an image to a branch, on
 
 These two rules apply to the body of an issue, and to every comment that you write in an issue.
 
-- Every file name of the repository that you write in the text of an issue is a link to the file. Write the file name as the label of the link, and the address of the file on GitHub as the target, for example `[HOW_TO_RELEASE.md](https://github.com/heidrun-org/heidrun/blob/main/HOW_TO_RELEASE.md)`. Link to the branch `main`, or to the branch that holds the file when `main` does not have the file yet. On GitLab, the address of a file has the form `https://<host>/<group>/<project>/-/blob/main/<path>`.
+- Every file name of the repository that you write in the text of an issue is a link to the file. Write the file name as the label of the link, and the address of the file on GitHub as the target, for example `[HOW_TO_RELEASE.md](https://github.com/heidrun-org/heidrun_code/blob/main/HOW_TO_RELEASE.md)`. Link to the branch `main`, or to the branch that holds the file when `main` does not have the file yet. On GitLab, the address of a file has the form `https://<host>/<group>/<project>/-/blob/main/<path>`.
 - Every issue that you write in the text of an issue is its own bullet that starts with a dash, and the bullet holds only the plain address of the issue, for example `- https://github.com/heidrun-org/heidrun/issues/506`. GitHub changes such a bullet into the title, the state, and the number of the issue. A numbered list, a link with a label, or an issue number inside a sentence shows only the number. Write the words that explain the issues above the list, not inside the bullet. On GitLab, write each issue as its own bullet in the same way, with a plus sign after the reference, for example `- #506+`, so that GitLab shows the title.
 
 ## Starting Heidrun to test it or to take a screenshot

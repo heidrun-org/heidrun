@@ -7,7 +7,7 @@
 The repository's [Agent Plugin catalog](../../../.agents/plugins/marketplace.json) points to this package. In Codex, add the Heidrun repository as a marketplace, then install the Agent Plugin:
 
 ```bash
-codex plugin marketplace add heidrun-org/heidrun --ref dev_jerome
+codex plugin marketplace add heidrun-org/heidrun_code --ref dev_jerome
 codex plugin add heidrun-control@heidrun
 ```
 
@@ -16,7 +16,7 @@ The skill requires the `heidrun_ctrl` command. The installed Heidrun application
 To install only the skill through the skills CLI, use its direct GitHub folder address. The [repository skill copy](../../../.agents/skills/heidrun-ctrl/SKILL.md) lets the skills CLI find the skill from the repository root and must stay in sync with the package skill. The direct address selects the package source on the `dev_jerome` branch:
 
 ```bash
-npx skills add https://github.com/heidrun-org/heidrun/tree/dev_jerome/packages/auxiliary/heidrun_ctrl/skills/heidrun-ctrl
+npx skills add https://github.com/heidrun-org/heidrun_code/tree/dev_jerome/packages/auxiliary/heidrun_ctrl/skills/heidrun-ctrl
 ```
 
 The skills.sh listing is based on installs made through the skills CLI. Its public listing may appear after people install the skill; the direct address works without waiting for a listing.

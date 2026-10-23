@@ -22,7 +22,7 @@ const __dirname = import.meta.dirname;
 class ReleaseDmg {
 	/**
 	 * The name of the second copy of the disk image for Apple silicon. This name never changes, so the web address
-	 * https://github.com/heidrun-org/heidrun/releases/latest/download/Heidrun_aarch64.dmg is always the latest disk
+	 * https://github.com/heidrun-org/heidrun_code/releases/latest/download/Heidrun_aarch64.dmg is always the latest disk
 	 * image, and the script scripts/install.sh downloads it.
 	 */
 	private static readonly LATEST_DMG_FILE_NAME = 'Heidrun_aarch64.dmg';

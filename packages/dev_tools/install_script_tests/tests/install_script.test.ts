@@ -3,7 +3,7 @@ import Path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { InstallScriptRunner } from './install_script_runner.ts';
 
-const DMG_URL = 'https://github.com/heidrun-org/heidrun/releases/latest/download/Heidrun_aarch64.dmg';
+const DMG_URL = 'https://github.com/heidrun-org/heidrun_code/releases/latest/download/Heidrun_aarch64.dmg';
 
 describe('scripts/install.sh', () => {
 	let runner: InstallScriptRunner;

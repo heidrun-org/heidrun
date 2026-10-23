@@ -52,6 +52,6 @@ describe('VitePress configuration', () => {
 	});
 
 	it('links to the GitHub repository of the organization', () => {
-		expect(themeConfig.socialLinks).toContainEqual({ icon: 'github', link: 'https://github.com/heidrun-org/heidrun' });
+		expect(themeConfig.socialLinks).toContainEqual({ icon: 'github', link: 'https://github.com/heidrun-org/heidrun_code' });
 	});
 });

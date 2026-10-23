@@ -3,11 +3,11 @@
 - Created: 17 October 2026
 - Last updated: 17 October 2026
 - Status: Maintained description of the stored token usage and of the estimated cost
-- Related framing: [Project instructions](https://github.com/heidrun-org/heidrun/blob/dev_jerome/AGENTS.md)
-- Related rules: [Source "AI cost"](https://github.com/heidrun-org/heidrun/blob/dev_jerome/docs/agents_rules/user_interface/window/statistics_ai_cost.md), [Workspace selector](https://github.com/heidrun-org/heidrun/blob/dev_jerome/docs/agents_rules/user_interface/window/statistics_person_work_workspace.md), [Glossary of Heidrun: work of one person](https://github.com/heidrun-org/heidrun/blob/dev_jerome/docs/agents_rules/glossary/person_work.md)
+- Related framing: [Project instructions](https://github.com/heidrun-org/heidrun_code/blob/dev_jerome/AGENTS.md)
+- Related rules: [Source "AI cost"](https://github.com/heidrun-org/heidrun_code/blob/dev_jerome/docs/agents_rules/user_interface/window/statistics_ai_cost.md), [Workspace selector](https://github.com/heidrun-org/heidrun_code/blob/dev_jerome/docs/agents_rules/user_interface/window/statistics_person_work_workspace.md), [Glossary of Heidrun: work of one person](https://github.com/heidrun-org/heidrun_code/blob/dev_jerome/docs/agents_rules/glossary/person_work.md)
 - Related issue: [issue 616](https://github.com/heidrun-org/heidrun/issues/616), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 559](https://github.com/heidrun-org/heidrun/issues/559)
 
-This file says how Heidrun stores the tokens that the coding agents used, how it turns them into an estimated cost in US dollars, and how to ask for them. The package [`data_layer_coding_agents`](https://github.com/heidrun-org/heidrun/blob/dev_jerome/packages/data_layers/data_layer_coding_agents/README.md) owns the tables. The command `usage` of [`heidrun_data`](https://github.com/heidrun-org/heidrun/blob/dev_jerome/packages/data_layers/heidrun_data/README.md) and the source "AI cost" of the Statistics window read them. The general rules of the data layers are in [the four data layers](https://github.com/heidrun-org/heidrun/blob/dev_jerome/docs/statistics/the_four_data_layers.md).
+This file says how Heidrun stores the tokens that the coding agents used, how it turns them into an estimated cost in US dollars, and how to ask for them. The package [`data_layer_coding_agents`](https://github.com/heidrun-org/heidrun_code/blob/dev_jerome/packages/data_layers/data_layer_coding_agents/README.md) owns the tables. The command `usage` of [`heidrun_data`](https://github.com/heidrun-org/heidrun_code/blob/dev_jerome/packages/data_layers/heidrun_data/README.md) and the source "AI cost" of the Statistics window read them. The general rules of the data layers are in [the four data layers](https://github.com/heidrun-org/heidrun_code/blob/dev_jerome/docs/statistics/the_four_data_layers.md).
 
 ## What is stored
 
@@ -161,7 +161,7 @@ Run a SQL example with `pnpm --silent data_layer:heidrun_data query --format tab
 
 ## The Statistics window
 
-The source "AI cost" of the tab "Work of one person" reads these tables ([the AI cost rules](https://github.com/heidrun-org/heidrun/blob/dev_jerome/docs/agents_rules/user_interface/window/statistics_ai_cost.md)).
+The source "AI cost" of the tab "Work of one person" reads these tables ([the AI cost rules](https://github.com/heidrun-org/heidrun_code/blob/dev_jerome/docs/agents_rules/user_interface/window/statistics_ai_cost.md)).
 
 - It never opens a chat session file by itself. The first import of a workspace opens every chat session file of the workspace once, and it only starts when the developer clicks the button "Import the history". Until then the tab says that the history is not imported, and the chart does not hold the workspace.
 - A workspace that was imported is brought up to date each time that the tab reads it: the command `ai_cost_synchronize` calls the function `refresh_ai_cost`, with the scan cache next to the SQLite file. This opens only the files that changed.

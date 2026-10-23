@@ -115,7 +115,7 @@ Options:
 
 When the release already exists and you do not use `--recreate`, the command replaces the disk image and rewrites the text of the release. The release keeps its first date.
 
-The command uploads the disk image twice: once with the version in its name, for example `Heidrun_0.2.7_aarch64.dmg`, and once with a name that never changes, `Heidrun_aarch64.dmg`. The second copy gives the web address of the latest disk image, `https://github.com/heidrun-org/heidrun/releases/latest/download/Heidrun_aarch64.dmg`, which the script `scripts/install.sh` uses. The command stops when the build does not give a disk image for Apple silicon (a file that ends with `_aarch64.dmg`).
+The command uploads the disk image twice: once with the version in its name, for example `Heidrun_0.2.7_aarch64.dmg`, and once with a name that never changes, `Heidrun_aarch64.dmg`. The second copy gives the web address of the latest disk image, `https://github.com/heidrun-org/heidrun_code/releases/latest/download/Heidrun_aarch64.dmg`, which the script `scripts/install.sh` uses. The command stops when the build does not give a disk image for Apple silicon (a file that ends with `_aarch64.dmg`).
 
 The disk image is built for the architecture of your machine only, and it is not signed and not notarized.
 
@@ -130,7 +130,7 @@ The text of a GitHub release does not mention this message, because the command 
 ## Install the application with one command
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun_code/main/scripts/install.sh | sh
 ```
 
 The script [`scripts/install.sh`](scripts/install.sh) installs the latest release in `/Applications`. A web browser puts the quarantine mark `com.apple.quarantine` on a file that it downloads, and macOS checks the signature of an application only when the application has this mark, so it shows the message "damaged" for Heidrun. The command `curl` does not put the mark, so the application opens with no message. The script does these steps, in this order:
