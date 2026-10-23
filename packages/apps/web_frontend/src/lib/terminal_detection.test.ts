@@ -37,6 +37,7 @@ class TerminalDetectionTestHelper {
 			row: 0,
 			rows: 1,
 			columns: 100,
+			textEndsAtLastLine: true,
 			context: GITHUB,
 			knownCommands: new Set(['compact']),
 			agent: 'claude',

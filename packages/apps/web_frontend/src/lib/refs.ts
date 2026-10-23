@@ -3,6 +3,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { DetectionPatterns } from "./detection_patterns";
 import { parseReferences } from "./project_config";
+import { WrappedLines } from "./wrapped_lines";
 
 export type RefKind = "issue" | "mr" | "ticket" | "commit";
 export type Forge = "github" | "gitlab";
@@ -385,46 +386,66 @@ export interface ShellBlock {
 }
 
 const NEW_ITEM = /^\s*(?:[!•⏺⎿>❯$#*-]|\d{1,2}[.)]\s)/;
+/** A new command or a new item of the agent: it ends a command, also after a line that the agent wrapped. */
+const NEW_COMMAND = /^\s*[!•⏺⎿❯]/;
 const BANG = DetectionPatterns.SHELL_BLOCK_START;
 const indentOf = (s: string) => s.length - s.trimStart().length;
 
 /**
  * "! docker builder prune -af && docker image prune -af", possibly spread over
- * several screen lines (wrapped by the agent, or continued with \, &&, |).
+ * several screen lines: wrapped by the agent, or continued with \, &&, ||, | or ;.
  * `lineAt(i)` returns the text of screen line i (or null past the end).
+ * `textEndsAtLastLine` is true for a sample text, which ends at its last line.
+ * A line that the agent wrapped is joined with one space, or with no space after a
+ * word cut at the right edge (`WrappedLines`). A line that starts with "-" goes on
+ * the command when the line before was wrapped or continued ("--reporter verbose").
+ * A command of more than `WrappedLines.MAX_ROWS` lines, or that reaches the last line
+ * of the screen (it may go on below, out of sight), is not proposed, rather than cut.
+ * The "!" needs a space after it, so "!48 is merged" (a merge request) is not a
+ * command (issue #574).
  */
-export function findShellBlock(lineAt: (i: number) => string | null, y: number, cols: number): ShellBlock | null {
-  // The hovered line may be a continuation: look a few lines up for the "!".
-  for (let first = y; first >= Math.max(0, y - 8); first--) {
+export function findShellBlock(
+  lineAt: (i: number) => string | null,
+  y: number,
+  cols: number,
+  textEndsAtLastLine = false,
+): ShellBlock | null {
+  // The hovered line may be a continuation: look up for the "!".
+  for (let first = y; first >= Math.max(0, y - WrappedLines.MAX_ROWS); first--) {
     const head = lineAt(first);
     if (head == null) break;
     const m = BANG.exec(head);
-    if (!m || /^!\w/.test(m[2])) {
+    if (!m || /^!\w/.test(m[2]) || !/^\s*!\s/.test(head)) {
       if (!head.trim()) break; // a blank line ends any block
       continue;
     }
     const bangIndent = m[1].length;
-    const parts = [m[2].trimEnd()];
+    let command = m[2].trimEnd();
     let last = first;
     let prev = head.trimEnd();
-    for (let i = first + 1; i < first + 12; i++) {
+    for (let i = first + 1; ; i++) {
       const line = lineAt(i);
+      // Past the bottom of the screen: the command may go on out of sight. Past the end of a sample text, it is complete.
+      if (line == null && !textEndsAtLastLine) return null;
       if (line == null || !line.trim()) break;
+      if (i - first >= WrappedLines.MAX_ROWS) return null;
       const indent = indentOf(line);
       const continued = /(\\|&&|\|\||\||;)$/.test(prev);
-      const wrapped = prev.length >= cols - 12; // the previous line ran to the edge
-      if (indent < bangIndent || (!continued && NEW_ITEM.test(line))) break;
-      if (!continued && !wrapped && indent <= bangIndent) break;
-      parts.push(line.trim());
+      const wrapped = WrappedLines.isWrapped(prev, line, cols);
+      if (indent < bangIndent || (!continued && NEW_COMMAND.test(line))) break;
+      if (!continued && !wrapped && (NEW_ITEM.test(line) || indent <= bangIndent)) break;
+      if (continued) {
+        command = command.replace(/\s*\\$/, "") + " " + line.trim();
+      } else if (wrapped) {
+        command += WrappedLines.separator(prev, cols) + line.trim();
+      } else {
+        command += " " + line.trim();
+      }
       prev = line.trimEnd();
       last = i;
     }
     if (y > last) return null;
-    const command = parts
-      .map((p) => p.replace(/\s*\\$/, ""))
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim();
+    command = command.replace(/\s*\\$/, "").trim();
     if (command.length < 2) return null;
     return { first, last, start: bangIndent, command };
   }

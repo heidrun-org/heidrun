@@ -14,7 +14,7 @@
   "chipSameAsClick": "⌘-click on the text does the same",
   "previewInApp": "Preview in the app (⌘-click on the text)",
   "copy": "Copy",
-  "copyFailed": "The terminal changed or the selection could not be read. Select the text again and retry copying.",
+  "copyFailed": "The selection could not be copied to the clipboard. Select the text again and retry copying.",
   "copyTitle": "Copy the selected text",
   "pin": "Pin",
   "pinTitle": "Pin the selected text",

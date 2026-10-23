@@ -250,8 +250,9 @@ const subtitle = computed(() => {
 .file-view-controls { flex-shrink: 0; display: flex; align-items: center; gap: 8px; margin-left: 4px; }
 .spacer { flex: 1; }
 /* The information card of the usage wheel is inside the pane, so the pane that holds the open card goes above the panes
-   that come after it. Without this, the next pane hides the part of the card that goes over it. */
-.pane:has(.information-card-part.is-open) { z-index: 3; }
+   that come after it. Without this, the next pane hides the part of the card that goes over it. The level 8 is also above
+   the lines between the panes (5), the line of the right sidebar (6), and the corners of the viewport (7) (issue #586). */
+.pane:has(.information-card-part.is-open) { z-index: 8; }
 /* The usage wheel is the first item of the tools, so it appears and disappears with the buttons, and it is 2 pixels from the first button. */
 .tools {
   flex-shrink: 0; display: flex; align-items: center; gap: 2px;

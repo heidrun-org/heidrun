@@ -373,7 +373,7 @@ onBeforeUnmount(() => {
         <!-- A collapsed sidebar has no line to drag, but it keeps the gap that the line fills. -->
         <div v-else class="sidebar-gap"></div>
       </template>
-      <main class="center" :class="{ 'zen-mode': ZenMode.state.isActive }">
+      <main class="center" :class="{ 'zen-mode': ZenMode.state.isActive }" data-information-card-boundary>
         <template v-if="state.snapshot">
           <TabBar v-if="ZenMode.state.isActive === false" />
           <div class="stage" :class="{ 'zen-mode': ZenMode.state.isActive, 'zen-mode-pinned-pane': isZenPanePinned }">

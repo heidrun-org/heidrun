@@ -5,13 +5,14 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [User interface of Heidrun: panes](../workspaces_tabs_and_panes/panes.md), [User interface of Heidrun: workspace](../workspaces_tabs_and_panes/workspace.md)
-- Related issue: [issue 417](https://github.com/heidrun-org/heidrun/issues/417), [issue 556](https://github.com/heidrun-org/heidrun/issues/556)
+- Related issue: [issue 417](https://github.com/heidrun-org/heidrun/issues/417), [issue 556](https://github.com/heidrun-org/heidrun/issues/556), [issue 807](https://github.com/heidrun-org/heidrun/issues/807)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
 ## The list of workspaces
 
-- The Needs you sidebar section shows the list of all the workspaces at its bottom, under the cards of the agents. The list stays at the bottom edge of the sidebar section. When there are many cards, only the cards scroll. The list is never taller than 40 percent of the sidebar section, and it scrolls by itself above that height.
+- The Needs you sidebar section shows the list of all the workspaces at its bottom, under the cards of the agents. The list stays at the bottom edge of the sidebar section. When there are many cards, only the cards scroll. By default, the list takes the height of its rows, up to 40 percent of the sidebar section.
+- The separator line above the title is a line to drag, like the line between the viewport and the right sidebar: the cursor `row-resize`, the color under the pointer and while dragging, and the same title. Dragging it up makes the list taller. The height is the setting `needsYouWorkspacesHeight`, saved when the drag ends and read again after a restart; 0 is the default height. A chosen height is never smaller than 84 pixels (the title and one row), and the cards keep at least 80 pixels. The default height has no smallest height. A double click goes back to the default height. The keyboard reaches the line, and the up and down arrow keys change the height by 10 pixels, or by 40 pixels with Shift. When the rows do not fit, only the rows scroll, with a scroll bar, and the title stays ([issue 807](https://github.com/heidrun-org/heidrun/issues/807)). The limits are in `lib/needs_you_workspaces_height.ts`.
 - From the top, the list has one separator line, the title "Workspaces", and one row for each workspace.
 - A row shows the status dot and the name of the workspace, with the same dot as the list of the information card of the workspace status bar section: the color of the status of the agents, or a hollow ring when no agent runs. The background of the row of the selected workspace is in [sidebars_appearance.md](../../web_styling/sidebars_appearance.md). A row is 40 pixels tall, and two rows have no space between them.
 - The Git branch of the workspace sits at the right end of the row, in the secondary color, and a long branch is cut with an ellipsis (at most half of the row). The tooltip gives the whole name. A workspace without a Git branch shows no branch. The branch comes from `git.status` of the store `git.ts`, which Herdr reads every 10 seconds for the selected workspace and every 60 seconds for the others.
