@@ -1,6 +1,6 @@
 [package]
 name = "heidrun_data"
-version = "0.2.7"
+version = "0.3.0"
 description = "One command line that reads and queries the four data layers of Heidrun, for a coding agent"
 license = "MIT"
 edition = "2021"
