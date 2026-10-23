@@ -78,7 +78,7 @@ export default defineConfig({
 			},
 		],
 		socialLinks: [
-			{ icon: 'github', link: 'https://github.com/heidrun-org/heidrun' },
+			{ icon: 'github', link: 'https://github.com/heidrun-org/heidrun_code' },
 		],
 	},
 });

@@ -111,16 +111,16 @@ export type HomeLink = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /** The page of the latest release on GitHub, with the file of the application for macOS. */
-export const DOWNLOAD_URL = 'https://github.com/heidrun-org/heidrun/releases/latest';
+export const DOWNLOAD_URL = 'https://github.com/heidrun-org/heidrun_code/releases/latest';
 
 /** The repository of Heidrun on GitHub. */
-export const REPOSITORY_URL = 'https://github.com/heidrun-org/heidrun';
+export const REPOSITORY_URL = 'https://github.com/heidrun-org/heidrun_code';
 
 /** The issues of Heidrun on GitHub. */
-export const ISSUES_URL = 'https://github.com/heidrun-org/heidrun/issues';
+export const ISSUES_URL = 'https://github.com/heidrun-org/heidrun_code/issues';
 
 /** The rules for the contributors, in the repository. */
-export const AGENTS_URL = 'https://github.com/heidrun-org/heidrun/blob/main/AGENTS.md';
+export const AGENTS_URL = 'https://github.com/heidrun-org/heidrun_code/blob/main/AGENTS.md';
 
 /** The website of Herdr, the terminal multiplexer that Heidrun needs. */
 export const HERDR_URL = 'https://herdr.dev';
@@ -454,7 +454,7 @@ export const QUICK_START = {
 		title: 'Build it from the source',
 		text: 'You need Herdr 0.9 or later, Rust stable, Node.js 20 or later, and pnpm.',
 		commands: [
-			'git clone https://github.com/heidrun-org/heidrun.git',
+			'git clone https://github.com/heidrun-org/heidrun_code.git',
 			'cd heidrun',
 			'pnpm install',
 			'pnpm dev',

@@ -13,17 +13,17 @@
 
 <!-- identity:end -->
 
-[![License: MIT](https://img.shields.io/github/license/heidrun-org/heidrun?color=blue)](LICENSE)
-[![Platform: macOS](https://img.shields.io/badge/platform-macOS-black?logo=apple)](https://github.com/heidrun-org/heidrun)
+[![License: MIT](https://img.shields.io/github/license/heidrun-org/heidrun_code?color=blue)](LICENSE)
+[![Platform: macOS](https://img.shields.io/badge/platform-macOS-black?logo=apple)](https://github.com/heidrun-org/heidrun_code)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/backend-Rust-DEA584?logo=rust&logoColor=black)](packages/apps/desktop_tauri)
 [![Vue 3](https://img.shields.io/badge/frontend-Vue%203-4FC08D?logo=vuedotjs&logoColor=white)](packages/apps/web_frontend)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](packages/apps/web_frontend)
-[![Issues](https://img.shields.io/github/issues/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/issues)
-[![Last commit](https://img.shields.io/github/last-commit/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/commits)
+[![Issues](https://img.shields.io/github/issues/heidrun-org/heidrun_code)](https://github.com/heidrun-org/heidrun_code/issues)
+[![Last commit](https://img.shields.io/github/last-commit/heidrun-org/heidrun_code)](https://github.com/heidrun-org/heidrun_code/commits)
 [![Mead: unlimited](https://img.shields.io/badge/mead-unlimited-f5b700)](https://heidrun-org.github.io/heidrun_code/about)
 
-[**Enter Valhalla (read the documentation)**](https://heidrun-org.github.io/heidrun_code/documentation/) · [Who is Heiðrún?](https://heidrun-org.github.io/heidrun_code/about) · [Report a Ragnarök](https://github.com/heidrun-org/heidrun/issues)
+[**Enter Valhalla (read the documentation)**](https://heidrun-org.github.io/heidrun_code/documentation/) · [Who is Heiðrún?](https://heidrun-org.github.io/heidrun_code/about) · [Report a Ragnarök](https://github.com/heidrun-org/heidrun_code/issues)
 
 </div>
 
@@ -71,7 +71,7 @@ When a program is missing, Heidrun says so at the start, with the command that i
 Then, on a Mac with Apple silicon, run this command in a terminal. It installs the latest Heidrun in `/Applications`, and macOS opens Heidrun with no message "damaged". Quit Heidrun before you run it.
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun_code/main/scripts/install.sh | sh
 ```
 
 The script [`scripts/install.sh`](scripts/install.sh) downloads the disk image of the latest release with `curl`, copies Heidrun to `/Applications`, and prints the installed version. Heidrun is not signed and not notarized, and `curl` does not put the quarantine mark on the disk image that it downloads, so macOS does not check the signature.
@@ -81,7 +81,7 @@ The script [`scripts/install.sh`](scripts/install.sh) downloads the disk image o
 You need [Herdr](https://herdr.dev) 0.9 or later, Rust stable, Node.js 20 or later, and [pnpm](https://pnpm.io).
 
 ```sh
-git clone --recurse-submodules git@github.com:heidrun-org/heidrun.git
+git clone --recurse-submodules git@github.com:heidrun-org/heidrun_code.git
 cd heidrun
 pnpm install
 pnpm dev
@@ -109,7 +109,7 @@ To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Appli
 
 ## Contributing
 
-Read [`AGENTS.md`](AGENTS.md) for the rules of this repository, then open an [issue](https://github.com/heidrun-org/heidrun/issues) before you start a change.
+Read [`AGENTS.md`](AGENTS.md) for the rules of this repository, then open an [issue](https://github.com/heidrun-org/heidrun_code/issues) before you start a change.
 
 ## License
 

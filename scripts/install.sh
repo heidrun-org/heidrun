@@ -1,6 +1,6 @@
 #!/bin/sh
 # Installs the latest Heidrun in the Applications folder, with no message "damaged" from macOS.
-# curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh
+# curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun_code/main/scripts/install.sh | sh
 #
 # The command line tool curl does not put the quarantine mark com.apple.quarantine on a file that it downloads.
 # macOS checks the signature of an application only when the application has this mark.
@@ -10,7 +10,7 @@
 
 set -eu
 
-DMG_URL="https://github.com/heidrun-org/heidrun/releases/latest/download/Heidrun_aarch64.dmg"
+DMG_URL="https://github.com/heidrun-org/heidrun_code/releases/latest/download/Heidrun_aarch64.dmg"
 APPLICATIONS_FOLDER="${HEIDRUN_APPLICATIONS_FOLDER:-/Applications}"
 APP_PATH="${APPLICATIONS_FOLDER}/Heidrun.app"
 WORK_FOLDER=""

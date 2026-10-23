@@ -23,14 +23,14 @@ A Rust library and one command line tool for [Heidrun](../../../README.md). It g
 The repository's [Agent Plugin catalog](../../../.agents/plugins/marketplace.json) points to this package. In Codex, add the Heidrun repository as a marketplace, then install the Agent Plugin:
 
 ```bash
-codex plugin marketplace add heidrun-org/heidrun --ref dev_jerome
+codex plugin marketplace add heidrun-org/heidrun_code --ref dev_jerome
 codex plugin add heidrun-data@heidrun
 ```
 
 To install only the skill with the skills CLI, use the direct package address:
 
 ```bash
-npx skills add https://github.com/heidrun-org/heidrun/tree/dev_jerome/packages/data_layers/heidrun_data/skills/heidrun-data
+npx skills add https://github.com/heidrun-org/heidrun_code/tree/dev_jerome/packages/data_layers/heidrun_data/skills/heidrun-data
 ```
 
 The [repository skill copy](../../../.agents/skills/heidrun-data/SKILL.md) lets the skills CLI find the skill from the repository root and stays in sync with the package skill. Installing the skill does not install the `heidrun_data` command. Install the Heidrun application; it places `heidrun_data` in `~/.local/bin` when it starts. When working in the Heidrun repository, run the command through `pnpm --silent data_layer:heidrun_data` instead.

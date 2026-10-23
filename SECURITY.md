@@ -10,7 +10,7 @@ Only the latest version of Heidrun receives security fixes.
 
 Do **not** open a public issue for a vulnerability. A public report gives the trolls a map.
 
-1. Go to the [Security tab](https://github.com/heidrun-org/heidrun/security) of the repository.
+1. Go to the [Security tab](https://github.com/heidrun-org/heidrun_code/security) of the repository.
 2. Choose "Report a vulnerability" to open a private report.
 3. Describe the problem: what you did, what happened, and which version of Heidrun and macOS you use.
 

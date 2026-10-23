@@ -4,7 +4,7 @@ Welcome to Valhalla. Every warrior who wants to help is welcome, and the mead is
 
 ## Before you start
 
-1. Search the [open issues](https://github.com/heidrun-org/heidrun/issues). Someone may already be fighting the same battle.
+1. Search the [open issues](https://github.com/heidrun-org/heidrun_code/issues). Someone may already be fighting the same battle.
 2. If no issue exists, open one and describe the problem or the idea. Do this before you write code, so nobody wastes a day of mead on a change that cannot be merged.
 
 ## Set up the project

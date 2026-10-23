@@ -7,7 +7,7 @@ The scripts that the maintainers run from the root of the repository: the releas
 - `release_dmg.ts`: builds the macOS disk image and uploads it to the GitHub release, twice: with its version in its name, and as `Heidrun_aarch64.dmg`, the file that `install.sh` downloads. Command: `pnpm release:dmg`.
 - `shortcuts-readme.mjs`: writes the page of shortcuts of the website. Command: `pnpm docs:shortcuts`.
 - `identity-texts.mjs`: writes the title, the motto, and the description of Heidrun from `data/identity.json` into `README.md`, and the description into `AGENTS.md` and `docs/release_notes/prefix.md`. Command: `pnpm docs:identity`.
-- `install.sh`: installs the latest Heidrun in `/Applications`, with no macOS message "damaged", and links its command lines in `~/.local/bin`. The users run it with `curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh`, so this path never changes. Its tests are the package `packages/dev_tools/install_script_tests`.
+- `install.sh`: installs the latest Heidrun in `/Applications`, with no macOS message "damaged", and links its command lines in `~/.local/bin`. The users run it with `curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun_code/main/scripts/install.sh | sh`, so this path never changes. Its tests are the package `packages/dev_tools/install_script_tests`.
 - `build_command_line_tools.sh`: builds `heidrun_ctrl` and `heidrun_data` into the resources of the Heidrun application bundle before Tauri packages the app.
 - `claude-statusline.sh`: the status line of Claude Code for this repository.
 - `antigravity-statusline.sh`: reports Antigravity quota to Herdr and keeps the previous Antigravity status line visible.

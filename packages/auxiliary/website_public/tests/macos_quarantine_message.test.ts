@@ -8,7 +8,7 @@ const quarantineCommand = 'xattr -dr com.apple.quarantine /Applications/Heidrun.
 
 /** The command that installs Heidrun with no quarantine mark, as the issue 515 gives it. */
 const installCommand =
-	'curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh';
+	'curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun_code/main/scripts/install.sh | sh';
 
 /** The developer documents that must give the quarantine command, relative to the root of the repository. */
 const filesWithCommand = ['README_DEV.md', 'HOW_TO_RELEASE.md'];
