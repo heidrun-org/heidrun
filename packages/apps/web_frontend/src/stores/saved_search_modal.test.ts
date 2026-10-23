@@ -17,8 +17,21 @@ describe("savedSearchModal", () => {
 
   it("opens in the mode edit with the list, the name of the saved search, and no search to keep", () => {
     openSaveSearchModal("issues", "label:bug");
-    openEditSavedSearchModal("requests", "Bugs");
-    expect(savedSearchModal).toMatchObject({ open: true, mode: "edit", group: "requests", query: "", name: "Bugs" });
+    openEditSavedSearchModal("requests", "Bugs", "workspace");
+    expect(savedSearchModal).toMatchObject({
+      open: true,
+      mode: "edit",
+      group: "requests",
+      query: "",
+      name: "Bugs",
+      level: "workspace",
+    });
+  });
+
+  it("opens in the mode save with the level user, even after a window that edited the level workspace", () => {
+    openEditSavedSearchModal("requests", "Bugs", "workspace");
+    openSaveSearchModal("issues", "label:bug");
+    expect(savedSearchModal.level).toBe("user");
   });
 
   it("closes", () => {

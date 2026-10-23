@@ -1,11 +1,11 @@
 # Glossary of Heidrun: voice input
 
 - Created: 18 October 2026
-- Last updated: 19 October 2026
+- Last updated: 23 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: voice input](../user_interface/window/settings_voice_input.md), [User interface of Heidrun: composition bar](../user_interface/workspaces_tabs_and_panes/composition_bar.md)
-- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712)
+- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 820](https://github.com/heidrun-org/heidrun/issues/820)
 
 This document gives one short definition for each word of the voice input. The other words of Heidrun are in [index.md](index.md).
 
@@ -21,7 +21,7 @@ The button that the developer uses to speak. A long press is push to talk: the d
 
 ### Level bars
 
-The row of thin vertical bars inside the text input of the composition bar, at its right end, that shows how loud the voice is while the microphone is open. The newest bar is on the right, and a silent moment is a dot. The elapsed recording time is written after the bars. The level bars stay visible during transcription. A small X button immediately to the left of the level bars cancels recording or transcription.
+The row of thin vertical bars inside the text input of the composition bar, at its right end, that shows how loud the voice is while the microphone is open. The newest bar is on the right, and a silent moment is a dot. The elapsed recording time is written after the bars. The level bars stay visible during transcription: they become flat dots, and one green sine wave goes across them, again and again. A small X button immediately to the left of the level bars cancels recording or transcription.
 
 ### Whisper model
 

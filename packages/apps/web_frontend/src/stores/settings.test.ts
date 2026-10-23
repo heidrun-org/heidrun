@@ -204,6 +204,51 @@ describe("saved searches of the Code hosting sidebar section", () => {
     const reloaded = await settingsFrom({ codeHostingSavedSearches: "Mine" });
     expect(reloaded.codeHostingSavedSearches).toEqual({ issues: [], requests: [] });
   });
+
+  it("are none at the workspace level by default", () => {
+    expect(settings.codeHostingWorkspaceSavedSearches).toEqual({});
+  });
+
+  it("are read again at the workspace level, for each workspace folder and each list", async () => {
+    const saved = {
+      "/work/heidrun": {
+        issues: [{ name: "Bugs", query: "label:bug" }],
+        requests: [{ name: "Drafts", query: "is:draft" }],
+      },
+      "/work/other": { issues: [{ name: "Mine", query: "author:@me" }], requests: [] },
+    };
+    const reloaded = await settingsFrom({ codeHostingWorkspaceSavedSearches: saved });
+    expect(reloaded.codeHostingWorkspaceSavedSearches).toEqual(saved);
+  });
+
+  it("keep the user level as it was when a saved search of the workspace level exists", async () => {
+    const reloaded = await settingsFrom({
+      codeHostingSavedSearches: { issues: [{ name: "Mine", query: "author:@me" }], requests: [] },
+      codeHostingWorkspaceSavedSearches: { "/work/heidrun": { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] } },
+    });
+    expect(reloaded.codeHostingSavedSearches).toEqual({ issues: [{ name: "Mine", query: "author:@me" }], requests: [] });
+  });
+
+  it("drop the entries of the workspace level that have no name or no text, and the workspaces that keep nothing", async () => {
+    const reloaded = await settingsFrom({
+      codeHostingWorkspaceSavedSearches: {
+        "/work/heidrun": { issues: [{ name: "", query: "label:bug" }, { name: "Bugs", query: 3 }, { name: "Ok", query: "a" }], requests: "x" },
+        "/work/empty": { issues: [], requests: [] },
+        "/work/broken": "Mine",
+        "": { issues: [{ name: "Ok", query: "a" }], requests: [] },
+      },
+    });
+    expect(reloaded.codeHostingWorkspaceSavedSearches).toEqual({
+      "/work/heidrun": { issues: [{ name: "Ok", query: "a" }], requests: [] },
+    });
+  });
+
+  it("are none at the workspace level when the saved value is not an object", async () => {
+    for (const value of ["Mine", ["Mine"], 3, null]) {
+      const reloaded = await settingsFrom({ codeHostingWorkspaceSavedSearches: value });
+      expect(reloaded.codeHostingWorkspaceSavedSearches).toEqual({});
+    }
+  });
 });
 
 describe("goat sound", () => {

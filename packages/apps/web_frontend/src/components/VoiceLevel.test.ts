@@ -41,6 +41,32 @@ describe("VoiceLevel", () => {
 		wrapper.unmount();
 	});
 
+	it("shows flat dots, whatever the levels, and marks the row while Whisper transcribes", () => {
+		const levels = new Array<number>(LEVEL_COUNT).fill(1);
+		const wrapper = mount(VoiceLevel, { props: { levels, isTranscribing: true } });
+		expect(wrapper.classes()).toContain("is-transcribing");
+		expect(heightsOf(wrapper).length).toBe(LEVEL_COUNT);
+		expect(heightsOf(wrapper).every((height) => height === 4)).toBe(true);
+		wrapper.unmount();
+	});
+
+	it("shows the levels and no mark while the microphone is open", () => {
+		const levels = new Array<number>(LEVEL_COUNT).fill(1);
+		const wrapper = mount(VoiceLevel, { props: { levels } });
+		expect(wrapper.classes()).not.toContain("is-transcribing");
+		expect(heightsOf(wrapper).every((height) => height === 36)).toBe(true);
+		wrapper.unmount();
+	});
+
+	it("gives each bar its position, so that the green sine wave reaches the bars one after the other", () => {
+		const wrapper = mount(VoiceLevel, { props: { levels: [], isTranscribing: true } });
+		const positions = wrapper
+			.findAll(".bar")
+			.map((bar) => Number.parseInt((bar.element as HTMLElement).style.getPropertyValue("--bar-index"), 10));
+		expect(positions).toEqual(Array.from({ length: LEVEL_COUNT }, (_, index) => index));
+		wrapper.unmount();
+	});
+
 	it("has a name for the screen reader", () => {
 		const wrapper = mount(VoiceLevel, { props: { levels: [] } });
 		expect(wrapper.attributes("role")).toBe("img");

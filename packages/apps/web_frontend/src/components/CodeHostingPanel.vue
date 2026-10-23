@@ -11,11 +11,13 @@
 // - issue #374
 // - issue #378
 // - issue #607
+// - issue #822
 import { computed, reactive, ref, watch } from "vue";
 import ChatReferenceDetails from "./ChatReferenceDetails.vue";
 import CodeHostingSearchHelp from "./CodeHostingSearchHelp.vue";
 import Icon from "./Icon.vue";
 import InformationCard from "./InformationCard.vue";
+import InformationCardTooltip from "./InformationCardTooltip.vue";
 import ScrollingLine from "./ScrollingLine.vue";
 import { codeHostingDetailLines } from "../lib/code_hosting_rows";
 import { referenceLabelStyle, type ChatReference } from "../lib/chat_references";
@@ -24,9 +26,9 @@ import type { Forge } from "../lib/refs";
 import { startScrolling, stopScrolling } from "../lib/scroll_on_hover";
 import type { ChatReferenceDetails as Details, ChatReferenceLabel } from "../stores/chat_references";
 import { loadForgeReferenceDetails } from "../stores/forge_reference_details";
+import { shownSavedSearches, type ShownSavedSearch } from "../stores/code_hosting_searches";
 import { currentGit } from "../stores/git";
-import { state } from "../stores/session";
-import { settings } from "../stores/settings";
+import { selectedWorkspace, state } from "../stores/session";
 import {
   CODE_HOSTING_GROUPS,
   CODE_HOSTING_LIMIT,
@@ -175,7 +177,7 @@ function runningSearch(group: CodeHostingGroup) {
   if (search === "") {
     return undefined;
   }
-  return settings.codeHostingSavedSearches[group].find((saved) => saved.query === search);
+  return shownSavedSearches(group).find((saved) => saved.query === search);
 }
 
 /**
@@ -185,7 +187,7 @@ function runningSearch(group: CodeHostingGroup) {
  */
 function canSaveSearch(group: CodeHostingGroup): boolean {
   const search = searchTexts[group].trim();
-  return search !== "" && settings.codeHostingSavedSearches[group].some((saved) => saved.query === search) === false;
+  return search !== "" && shownSavedSearches(group).some((saved) => saved.query === search) === false;
 }
 
 /**
@@ -232,8 +234,26 @@ function saveCurrentSearch(group: CodeHostingGroup) {
 function editRunningSearch(group: CodeHostingGroup) {
   const running = runningSearch(group);
   if (running !== undefined) {
-    openEditSavedSearchModal(group, running.name);
+    openEditSavedSearchModal(group, running.name, running.level);
   }
+}
+
+/**
+ * The blocks of the information card tooltip of a saved search: the search, the level, and the list.
+ * @param saved - the saved search
+ * @param group - the list that the saved search is for
+ * @returns the blocks, each with a title and a text
+ */
+function savedSearchBlocks(saved: ShownSavedSearch, group: CodeHostingGroup): { title: string; text: string }[] {
+  const levelText =
+    saved.level === "user"
+      ? t("codeHostingPanel.savedCard.levelUser")
+      : t("codeHostingPanel.savedCard.levelWorkspace", { name: selectedWorkspace.value?.label ?? "" });
+  return [
+    { title: t("codeHostingPanel.savedCard.search"), text: saved.query },
+    { title: t("codeHostingPanel.savedCard.level"), text: levelText },
+    { title: t("codeHostingPanel.savedCard.list"), text: codeHostingGroupTitle(group, codeHosting.forge) },
+  ];
 }
 
 function toggleGroup(group: CodeHostingGroup) {
@@ -342,7 +362,7 @@ async function readDetails(row: Row) {
                 </button>
               </form>
               <div
-                v-if="settings.codeHostingSavedSearches[section.group].length > 0"
+                v-if="shownSavedSearches(section.group).length > 0"
                 class="saved d-flex flex-wrap align-items-center gap-1"
                 role="group"
                 :aria-label="t('codeHostingPanel.savedSearches')"
@@ -357,19 +377,26 @@ async function readDetails(row: Row) {
                 >
                   {{ t("codeHostingPanel.allItems") }}
                 </button>
-                <button
-                  v-for="saved in settings.codeHostingSavedSearches[section.group]"
-                  :key="saved.name"
-                  type="button"
-                  class="btn btn-sm saved-button"
-                  data-saved-search
-                  :class="{ active: codeHosting.search[section.group] === saved.query }"
-                  :aria-pressed="codeHosting.search[section.group] === saved.query"
-                  :title="saved.query"
-                  @click="applySearch(section.group, saved.query)"
+                <InformationCardTooltip
+                  v-for="saved in shownSavedSearches(section.group)"
+                  :key="`${saved.level}:${saved.name}`"
+                  :title="saved.name"
+                  :blocks="savedSearchBlocks(saved, section.group)"
+                  v-slot="{ triggerProps }"
                 >
-                  <span class="saved-name">{{ saved.name }}</span>
-                </button>
+                  <button
+                    v-bind="triggerProps"
+                    type="button"
+                    class="btn btn-sm saved-button"
+                    data-saved-search
+                    :data-saved-search-level="saved.level"
+                    :class="{ active: codeHosting.search[section.group] === saved.query }"
+                    :aria-pressed="codeHosting.search[section.group] === saved.query"
+                    @click="applySearch(section.group, saved.query)"
+                  >
+                    <span class="saved-name">{{ saved.name }}</span>
+                  </button>
+                </InformationCardTooltip>
               </div>
               <div class="list-separator" role="separator"></div>
               <div v-if="codeHosting.listStatus[section.group] === 'loading'" class="muted empty">

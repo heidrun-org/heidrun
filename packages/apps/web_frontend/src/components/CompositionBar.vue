@@ -236,7 +236,7 @@ async function send() {
           >
             <Icon name="x-lg" />
           </button>
-          <VoiceLevel :levels="voiceInput.levels" />
+          <VoiceLevel :levels="voiceInput.levels" :is-transcribing="voiceInput.state === 'transcribing'" />
           <span class="elapsed ms-1">{{ elapsedText }}</span>
         </div>
       </div>

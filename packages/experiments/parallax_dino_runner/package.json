@@ -2,7 +2,7 @@
   "name": "parallax_dino_runner",
   "private": true,
   "license": "MIT",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

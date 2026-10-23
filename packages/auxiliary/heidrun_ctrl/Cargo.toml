@@ -1,6 +1,6 @@
 [package]
 name = "heidrun_ctrl"
-version = "0.2.7"
+version = "0.3.0"
 description = "The command line that controls the Heidrun application, for a coding agent"
 license = "MIT"
 edition = "2021"
