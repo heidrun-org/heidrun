@@ -27,9 +27,25 @@ async function mountModal() {
   return wrapper;
 }
 
+/** The folder of the selected workspace of the tests. */
+const FOLDER = "/work/heidrun";
+
+/** A snapshot that holds the selected workspace "w1", with its folder and its name. */
+function snapshotWithWorkspace(): typeof state.snapshot {
+  return {
+    workspaces: [{ workspace_id: "w1", workspace_folder: FOLDER, number: 1, label: "heidrun", agent_status: "idle" }],
+    tabs: [],
+    panes: [],
+    agents: [],
+    layouts: [],
+  } as unknown as typeof state.snapshot;
+}
+
 beforeEach(() => {
   vi.mocked(searchCodeHosting).mockClear();
   settings.codeHostingSavedSearches = { issues: [], requests: [] };
+  settings.codeHostingWorkspaceSavedSearches = {};
+  state.snapshot = snapshotWithWorkspace();
   settings.confirmSavedSearchDelete = true;
   codeHosting.search = { issues: "", requests: "" };
   codeHosting.forge = "github";
@@ -45,6 +61,7 @@ afterEach(() => {
   confirmDialog.resolve?.(false);
   confirmDialog.open = false;
   state.selectedWorkspaceId = null;
+  state.snapshot = null;
   git.status = {};
 });
 
@@ -181,7 +198,7 @@ describe("SavedSearchModal, the window Edit the saved search", () => {
       ],
       requests: [{ name: "Mine", query: "author:@me is:draft" }],
     };
-    openEditSavedSearchModal("issues", "Bugs");
+    openEditSavedSearchModal("issues", "Bugs", "user");
   });
 
   it("shows the title, the fields Name and Search filled with the saved search, and the buttons Delete, Cancel, and Save", async () => {
@@ -235,7 +252,7 @@ describe("SavedSearchModal, the window Edit the saved search", () => {
   });
 
   it("edits a saved search of the list of pull requests, and leaves the saved search of the same name in the list of issues", async () => {
-    openEditSavedSearchModal("requests", "Mine");
+    openEditSavedSearchModal("requests", "Mine", "user");
     const wrapper = await mountModal();
     expect(wrapper.get("[data-saved-search-list]").text()).toBe("Pull requests");
     await wrapper.get("#saved-search-query").setValue("is:draft author:eric");
@@ -272,7 +289,7 @@ describe("SavedSearchModal, the window Edit the saved search", () => {
     wrapper.unmount();
     mountedModals.pop();
     codeHosting.search.issues = "";
-    openEditSavedSearchModal("issues", "Mine");
+    openEditSavedSearchModal("issues", "Mine", "user");
     wrapper = await mountModal();
     await wrapper.get("#saved-search-query").setValue("author:eric");
     await wrapper.get("form").trigger("submit");
@@ -316,5 +333,110 @@ describe("SavedSearchModal, the window Edit the saved search", () => {
     settings.codeHostingSavedSearches = { issues: [], requests: [] };
     await mountModal();
     expect(savedSearchModal.open).toBe(false);
+  });
+});
+
+describe("SavedSearchModal, the level of a saved search", () => {
+  it("offers the buttons User and Workspace, with the level User chosen, and says where the saved search shows", async () => {
+    openSaveSearchModal("issues", "label:bug");
+    const wrapper = await mountModal();
+    const user = wrapper.get("[data-saved-search-level='user']").element as HTMLInputElement;
+    const workspace = wrapper.get("[data-saved-search-level='workspace']").element as HTMLInputElement;
+    expect(user.checked).toBe(true);
+    expect(workspace.checked).toBe(false);
+    expect(wrapper.findAll(".btn-group label").map((label) => label.text())).toEqual(["User", "Workspace"]);
+    expect(wrapper.get("[data-saved-search-level-hint]").text()).toBe("The saved search shows in every workspace.");
+  });
+
+  it("names the workspace when the level Workspace is chosen", async () => {
+    openSaveSearchModal("issues", "label:bug");
+    const wrapper = await mountModal();
+    await wrapper.get("[data-saved-search-level='workspace']").setValue();
+    expect(wrapper.get("[data-saved-search-level-hint]").text()).toBe(
+      "The saved search shows only in the workspace heidrun.",
+    );
+  });
+
+  it("keeps the saved search at the workspace level, under the folder of the workspace, when the level Workspace is chosen", async () => {
+    openSaveSearchModal("issues", "label:bug");
+    const wrapper = await mountModal();
+    await wrapper.get("[data-saved-search-level='workspace']").setValue();
+    await wrapper.get("#saved-search-name").setValue("Bugs");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(settings.codeHostingSavedSearches).toEqual({ issues: [], requests: [] });
+    expect(settings.codeHostingWorkspaceSavedSearches).toEqual({
+      [FOLDER]: { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] },
+    });
+    expect(searchCodeHosting).toHaveBeenCalledWith(FOLDER, "issues", "label:bug");
+  });
+
+  it("disables the button Workspace when no workspace is selected", async () => {
+    state.selectedWorkspaceId = null;
+    openSaveSearchModal("issues", "label:bug");
+    const wrapper = await mountModal();
+    expect(wrapper.get("[data-saved-search-level='workspace']").attributes("disabled")).toBeDefined();
+    expect(wrapper.get("[data-saved-search-level='user']").attributes("disabled")).toBeUndefined();
+  });
+
+  it("says that a name replaces the search of the saved search of the chosen level only", async () => {
+    settings.codeHostingSavedSearches = { issues: [{ name: "Bugs", query: "label:old" }], requests: [] };
+    openSaveSearchModal("issues", "label:bug");
+    const wrapper = await mountModal();
+    await wrapper.get("#saved-search-name").setValue("Bugs");
+    expect(wrapper.find(".hint[role='status']").exists()).toBe(true);
+    await wrapper.get("[data-saved-search-level='workspace']").setValue();
+    expect(wrapper.find(".hint[role='status']").exists()).toBe(false);
+  });
+
+  it("shows the level of the saved search in the window Edit the saved search", async () => {
+    settings.codeHostingWorkspaceSavedSearches = {
+      [FOLDER]: { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] },
+    };
+    openEditSavedSearchModal("issues", "Bugs", "workspace");
+    const wrapper = await mountModal();
+    expect((wrapper.get("[data-saved-search-level='workspace']").element as HTMLInputElement).checked).toBe(true);
+    expect((wrapper.get("#saved-search-name").element as HTMLInputElement).value).toBe("Bugs");
+    expect((wrapper.get("#saved-search-query").element as HTMLInputElement).value).toBe("label:bug");
+  });
+
+  it("moves a saved search to another level when the level changes", async () => {
+    settings.codeHostingSavedSearches = { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] };
+    openEditSavedSearchModal("issues", "Bugs", "user");
+    const wrapper = await mountModal();
+    await wrapper.get("[data-saved-search-level='workspace']").setValue();
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(settings.codeHostingSavedSearches).toEqual({ issues: [], requests: [] });
+    expect(settings.codeHostingWorkspaceSavedSearches).toEqual({
+      [FOLDER]: { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] },
+    });
+  });
+
+  it("disables Save and says why when the new level already has a saved search with the name", async () => {
+    settings.codeHostingSavedSearches = { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] };
+    settings.codeHostingWorkspaceSavedSearches = {
+      [FOLDER]: { issues: [{ name: "Bugs", query: "label:other" }], requests: [] },
+    };
+    openEditSavedSearchModal("issues", "Bugs", "user");
+    const wrapper = await mountModal();
+    expect(wrapper.get("button[type='submit']").attributes("disabled")).toBeUndefined();
+    await wrapper.get("[data-saved-search-level='workspace']").setValue();
+    expect(wrapper.get("button[type='submit']").attributes("disabled")).toBeDefined();
+    expect(wrapper.get(".problem").text()).toBe("Another saved search has this name.");
+  });
+
+  it("deletes a saved search of the workspace level and keeps the user level", async () => {
+    settings.codeHostingSavedSearches = { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] };
+    settings.codeHostingWorkspaceSavedSearches = {
+      [FOLDER]: { issues: [{ name: "Bugs", query: "label:other" }], requests: [] },
+    };
+    settings.confirmSavedSearchDelete = false;
+    openEditSavedSearchModal("issues", "Bugs", "workspace");
+    const wrapper = await mountModal();
+    await wrapper.get(".delete").trigger("click");
+    await flushPromises();
+    expect(settings.codeHostingSavedSearches.issues).toEqual([{ name: "Bugs", query: "label:bug" }]);
+    expect(settings.codeHostingWorkspaceSavedSearches[FOLDER].issues).toEqual([]);
   });
 });

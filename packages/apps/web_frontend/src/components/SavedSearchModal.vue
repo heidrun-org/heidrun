@@ -5,14 +5,22 @@
 // and it shows the title of this list.
 // - issue #378
 // - issue #607
+// - issue #822
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "./Icon.vue";
 import { codeHosting, codeHostingGroupTitle, searchCodeHosting } from "../stores/code_hosting";
-import { deleteSavedSearch, saveSearch, updateSavedSearch } from "../stores/code_hosting_searches";
+import {
+  currentWorkspaceFolder,
+  deleteSavedSearch,
+  saveSearch,
+  savedSearchesOfLevel,
+  updateSavedSearch,
+} from "../stores/code_hosting_searches";
 import { askConfirm } from "../stores/confirm";
 import { currentGit } from "../stores/git";
+import { selectedWorkspace } from "../stores/session";
 import { closeSavedSearchModal, savedSearchModal } from "../stores/saved_search_modal";
-import { settings } from "../stores/settings";
+import { settings, type SavedSearchLevel } from "../stores/settings";
 import { t } from "../i18n/index";
 
 /** True for the window "Edit the saved search", false for the window "Save this search". */
@@ -24,16 +32,39 @@ const group = savedSearchModal.group;
 /** The title of the list that the window works for: "Issues", "Pull requests", or "Merge requests". */
 const groupTitle = codeHostingGroupTitle(group, codeHosting.forge);
 
-/** The saved searches of the list that the window works for. */
-function savedSearches() {
-  return settings.codeHostingSavedSearches[group];
+/** The folder of the workspace that was selected when the window opened, or null when there is none. */
+const workspaceFolder = currentWorkspaceFolder();
+
+/** The name of the workspace that was selected when the window opened. */
+const workspaceName = selectedWorkspace.value?.label ?? "";
+
+/**
+ * The saved searches of the list that the window works for, at one level.
+ * @param ofLevel - the level
+ * @returns the saved searches of this level, in the order of their buttons
+ */
+function savedSearches(ofLevel: SavedSearchLevel) {
+  return savedSearchesOfLevel(group, ofLevel, workspaceFolder);
 }
 
 /** In the mode "edit": the name of the saved search that the window edits, as it was when the window opened. */
 const editedName = savedSearchModal.name;
 
+/** In the mode "edit": the level of the saved search that the window edits, as it was when the window opened. */
+const editedLevel = savedSearchModal.level;
+
 /** In the mode "edit": the saved search that the window edits, or undefined when it no longer exists. */
-const editedSaved = savedSearches().find((saved) => saved.name === editedName);
+const editedSaved = savedSearches(editedLevel).find((saved) => saved.name === editedName);
+
+/** The level that the developer chose with the two buttons "User" and "Workspace". */
+const level = ref<SavedSearchLevel>(isEdit ? editedLevel : "user");
+
+/** The sentence that tells where the saved search shows, for the chosen level. */
+const levelHint = computed(() => {
+  return level.value === "user"
+    ? t("savedSearchModal.levelUserHint")
+    : t("savedSearchModal.levelWorkspaceHint", { name: workspaceName });
+});
 
 /** The text of the field "Name". */
 const nameText = ref(isEdit ? (editedSaved?.name ?? "") : "");
@@ -50,9 +81,9 @@ const cleanName = computed(() => nameText.value.trim());
 /** The search without the spaces around it. */
 const cleanQuery = computed(() => queryText.value.trim());
 
-/** The place of the edited saved search in the list, or -1 when it no longer exists. */
+/** The place of the edited saved search in the list of its level, or -1 when it no longer exists. */
 function editedIndex(): number {
-  return savedSearches().findIndex((saved) => saved.name === editedName);
+  return savedSearches(editedLevel).findIndex((saved) => saved.name === editedName);
 }
 
 /** In the mode "edit": the reason why the window cannot save, or an empty text. */
@@ -67,8 +98,9 @@ const problem = computed((): string => {
     return t("savedSearchModal.problemQueryEmpty");
   }
   const index = editedIndex();
-  const isUsed = savedSearches().some((saved, savedIndex) => {
-    return savedIndex !== index && saved.name === cleanName.value;
+  const isUsed = savedSearches(level.value).some((saved, savedIndex) => {
+    const isEdited = level.value === editedLevel && savedIndex === index;
+    return isEdited === false && saved.name === cleanName.value;
   });
   return isUsed ? t("savedSearchModal.problemNameUsed") : "";
 });
@@ -78,7 +110,7 @@ const canSave = computed(() => (isEdit ? problem.value === "" : cleanName.value 
 
 /** In the mode "save": another saved search has the name, so "Save" replaces its search. */
 const isReplacing = computed(() => {
-  return isEdit === false && savedSearches().some((saved) => saved.name === cleanName.value);
+  return isEdit === false && savedSearches(level.value).some((saved) => saved.name === cleanName.value);
 });
 
 /**
@@ -100,7 +132,7 @@ async function submit(): Promise<void> {
     return;
   }
   if (isEdit === false) {
-    saveSearch(group, cleanName.value, cleanQuery.value);
+    saveSearch(group, cleanName.value, cleanQuery.value, level.value, workspaceFolder);
     closeSavedSearchModal();
     if (codeHosting.search[group] !== cleanQuery.value) {
       await runSearch(cleanQuery.value);
@@ -112,9 +144,9 @@ async function submit(): Promise<void> {
     closeSavedSearchModal();
     return;
   }
-  const oldQuery = savedSearches()[index].query;
+  const oldQuery = savedSearches(editedLevel)[index].query;
   const wasRunning = codeHosting.search[group] === oldQuery;
-  updateSavedSearch(group, index, cleanName.value, cleanQuery.value);
+  updateSavedSearch(group, editedLevel, index, cleanName.value, cleanQuery.value, level.value, workspaceFolder);
   closeSavedSearchModal();
   if (wasRunning && cleanQuery.value !== oldQuery) {
     await runSearch(cleanQuery.value);
@@ -137,7 +169,7 @@ async function remove(): Promise<void> {
   }
   const index = editedIndex();
   if (index !== -1) {
-    deleteSavedSearch(group, index);
+    deleteSavedSearch(group, editedLevel, index, workspaceFolder);
   }
   closeSavedSearchModal();
 }
@@ -189,6 +221,26 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
       <div class="content">
         <div class="field-label">{{ t("savedSearchModal.list") }}</div>
         <div class="list-title" data-saved-search-list>{{ groupTitle }}</div>
+        <div class="field-label">{{ t("savedSearchModal.level") }}</div>
+        <div class="btn-group" role="group" :aria-label="t('savedSearchModal.level')">
+          <label class="btn btn-check btn-outline theme-secondary">
+            <input v-model="level" type="radio" name="saved-search-level" autocomplete="off" value="user" data-saved-search-level="user" />
+            {{ t("savedSearchModal.levelUser") }}
+          </label>
+          <label class="btn btn-check btn-outline theme-secondary" :title="workspaceFolder === null ? t('savedSearchModal.levelWorkspaceMissing') : ''">
+            <input
+              v-model="level"
+              type="radio"
+              name="saved-search-level"
+              autocomplete="off"
+              value="workspace"
+              data-saved-search-level="workspace"
+              :disabled="workspaceFolder === null"
+            />
+            {{ t("savedSearchModal.levelWorkspace") }}
+          </label>
+        </div>
+        <div class="form-text" data-saved-search-level-hint>{{ levelHint }}</div>
         <label class="field-label" for="saved-search-name">{{ t("savedSearchModal.name") }}</label>
         <input class="form-control" id="saved-search-name" ref="nameField" v-model="nameText" spellcheck="false" autocomplete="off" />
         <template v-if="isEdit">

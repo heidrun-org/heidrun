@@ -108,6 +108,7 @@ beforeEach(() => {
   codeHosting.folded.requests = false;
   codeHosting.search = { issues: "", requests: "" };
   settings.codeHostingSavedSearches = { issues: [], requests: [] };
+  settings.codeHostingWorkspaceSavedSearches = {};
   savedSearchModal.open = false;
 });
 
@@ -116,6 +117,7 @@ afterEach(() => {
     wrapper.unmount();
   }
   state.selectedWorkspaceId = null;
+  state.snapshot = null;
   git.status = {};
 });
 
@@ -899,7 +901,7 @@ describe("CodeHostingPanel searches", () => {
     const wrapper = await mountPanel();
     const buttons = groupOf(wrapper, "issues").findAll(".saved-button");
     expect(buttons.map((button) => button.text())).toEqual(["All", "Bugs", "Mine"]);
-    expect(buttons[1].attributes("title")).toBe("label:bug");
+    expect(buttons[1].attributes("title")).toBeUndefined();
     await buttons[2].trigger("click");
     await flushPromises();
     expect(fieldValue(wrapper, "issues")).toBe("author:@me");
@@ -1079,4 +1081,112 @@ describe('CodeHostingPanel search help', () => {
 		expect(codeHosting.search).toEqual(searchBefore);
 		expect(invoke).toHaveBeenCalledTimes(calls);
 	});
+});
+
+describe("CodeHostingPanel, the level of a saved search", () => {
+  /** The delay of the information card tooltip, in milliseconds. */
+  const TOOLTIP_DELAY = 1500;
+
+  /** Selects the workspace "w1", which has a folder and a name, and the workspace "w2", which is another one. */
+  function selectWorkspaceWithFolder() {
+    state.snapshot = {
+      workspaces: [
+        { workspace_id: "w1", workspace_folder: "/work/heidrun", number: 1, label: "heidrun", agent_status: "idle" },
+        { workspace_id: "w2", workspace_folder: "/work/other", number: 2, label: "other", agent_status: "idle" },
+      ],
+      tabs: [],
+      panes: [],
+      agents: [],
+      layouts: [],
+    } as unknown as typeof state.snapshot;
+  }
+
+  /** The saved searches of the two levels: one of each level in the list of issues. */
+  function saveBothLevels() {
+    settings.codeHostingSavedSearches = { issues: [{ name: "Mine", query: "author:@me" }], requests: [] };
+    settings.codeHostingWorkspaceSavedSearches = {
+      "/work/heidrun": { issues: [{ name: "Bugs", query: "label:bug" }], requests: [{ name: "Drafts", query: "is:draft" }] },
+      "/work/other": { issues: [{ name: "Elsewhere", query: "label:other" }], requests: [] },
+    };
+  }
+
+  /** The tooltip that is open in the page, or null. */
+  function openTooltip(): HTMLElement | null {
+    return document.body.querySelector<HTMLElement>("[role='tooltip']");
+  }
+
+  it("shows the saved searches of the user level, then the ones of the selected workspace, and no other workspace", async () => {
+    answerSearches();
+    selectWorkspaceWithFolder();
+    saveBothLevels();
+    const wrapper = await mountPanel();
+    const buttons = groupOf(wrapper, "issues").findAll("[data-saved-search]:not([data-saved-search='all'])");
+    expect(buttons.map((button) => button.text())).toEqual(["Mine", "Bugs"]);
+    expect(buttons.map((button) => button.attributes("data-saved-search-level"))).toEqual(["user", "workspace"]);
+    expect(groupOf(wrapper, "requests").findAll(".saved-button").map((button) => button.text())).toEqual(["All", "Drafts"]);
+  });
+
+  it("shows only the saved searches of the user level when the workspace has no folder", async () => {
+    answerSearches();
+    saveBothLevels();
+    const wrapper = await mountPanel();
+    expect(groupOf(wrapper, "issues").findAll(".saved-button").map((button) => button.text())).toEqual(["All", "Mine"]);
+  });
+
+  it("opens an information card tooltip after the delay, with the name, the search, the level User, and the list", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      answerSearches();
+      selectWorkspaceWithFolder();
+      saveBothLevels();
+      const wrapper = await mountPanel();
+      const mine = groupOf(wrapper, "issues").get("[data-saved-search-level='user']");
+      await mine.trigger("pointerenter");
+      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY - 1);
+      expect(openTooltip()).toBeNull();
+      await vi.advanceTimersByTimeAsync(1);
+      await flushPromises();
+      const text = openTooltip()?.textContent ?? "";
+      expect(text).toContain("Mine");
+      expect(text).toContain("author:@me");
+      expect(text).toContain("User: the saved search shows in every workspace.");
+      expect(text).toContain("Issues");
+      await mine.trigger("pointerleave");
+      expect(openTooltip()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("names the workspace in the information card tooltip of a saved search of the workspace level", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      answerSearches();
+      selectWorkspaceWithFolder();
+      saveBothLevels();
+      const wrapper = await mountPanel();
+      await groupOf(wrapper, "requests").get("[data-saved-search-level='workspace']").trigger("pointerenter");
+      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY);
+      await flushPromises();
+      const text = openTooltip()?.textContent ?? "";
+      expect(text).toContain("Drafts");
+      expect(text).toContain("is:draft");
+      expect(text).toContain("Workspace heidrun: the saved search shows only in this workspace.");
+      expect(text).toContain("Pull requests");
+      await groupOf(wrapper, "requests").get("[data-saved-search-level='workspace']").trigger("pointerleave");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("opens the window Edit the saved search with the level of the saved search that runs now", async () => {
+    answerSearches();
+    selectWorkspaceWithFolder();
+    saveBothLevels();
+    const wrapper = await mountPanel();
+    await groupOf(wrapper, "issues").get("[data-saved-search-level='workspace']").trigger("click");
+    await flushPromises();
+    await groupOf(wrapper, "issues").get("button[data-edit-saved-search]").trigger("click");
+    expect(savedSearchModal).toMatchObject({ open: true, mode: "edit", group: "issues", name: "Bugs", level: "workspace" });
+  });
 });
