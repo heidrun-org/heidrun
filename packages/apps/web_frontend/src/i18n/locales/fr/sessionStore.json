@@ -10,6 +10,7 @@
   "notify.patternFound": "{name} : motif trouvé",
   "error.agentBlocked": "L’agent attend une décision : réponds-lui d’abord.",
   "error.herdrUnreachable": "Herdr ne répond pas. Lance « herdr » dans un terminal.",
+  "error.paneMove": "Le panneau n’a pas bougé : {reason}",
   "error.lastTab": "Tu ne peux pas fermer le dernier onglet d’un workspace.",
   "outputSent": "Sortie envoyée à {name}"
 }

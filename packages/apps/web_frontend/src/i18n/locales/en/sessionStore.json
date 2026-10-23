@@ -10,6 +10,7 @@
   "notify.patternFound": "{name}: pattern found",
   "error.agentBlocked": "The agent is waiting for a decision: answer it first.",
   "error.herdrUnreachable": "Herdr does not answer. Run \"herdr\" in a terminal.",
+  "error.paneMove": "The pane did not move: {reason}",
   "error.lastTab": "You cannot close the last tab of a workspace.",
   "outputSent": "Output sent to {name}"
 }
