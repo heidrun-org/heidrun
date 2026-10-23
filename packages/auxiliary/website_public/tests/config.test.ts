@@ -20,7 +20,7 @@ describe('VitePress configuration', () => {
 	});
 
 	it('uses the GitHub Pages path of the repository as base', () => {
-		expect(config.base).toBe('/heidrun/');
+		expect(config.base).toBe('/heidrun_code/');
 	});
 
 	it('starts and ends the base with a slash', () => {
