@@ -121,3 +121,11 @@ describe('PaneMove.plan', () => {
 		}
 	});
 });
+
+describe('PaneMove.planNewTab', () => {
+	it('moves a pane into a new tab with one step, and starts no other step', () => {
+		expect(PaneMove.planNewTab({ paneId: 'w1:p3', workspaceId: 'w1' })).toEqual([
+			{ kind: 'move-to-new-tab', paneId: 'w1:p3', workspaceId: 'w1' },
+		]);
+	});
+});
