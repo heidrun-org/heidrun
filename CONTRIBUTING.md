@@ -1,4 +1,4 @@
-# Contributing to Heidrun
+# Contributing to Heidrun Code
 
 Welcome to Valhalla. Every warrior who wants to help is welcome, and the mead is free.
 
@@ -38,7 +38,7 @@ The full rules of this repository, for people and for agents, are in [`AGENTS.md
 ## Writing style
 
 - Write in plain English. Short sentences. No slang.
-- Write the application name as "Heidrun". Write the goat as "Heiðrún", only when the text is about the mythology.
+- Write the application name as "Heidrun Code". Write the goat as "Heiðrún", only when the text is about the mythology.
 - A joke is welcome, but it never replaces an explanation. Explain first, then joke.
 
 ## Be kind

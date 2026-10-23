@@ -195,6 +195,8 @@ importers:
 
   packages/auxiliary/coding_agent_cli: {}
 
+  packages/auxiliary/heidrun_code_ctrl: {}
+
   packages/auxiliary/heidrun_ctrl: {}
 
   packages/auxiliary/mobile_server: {}
@@ -252,6 +254,8 @@ importers:
   packages/data_layers/data_layer_source_control: {}
 
   packages/data_layers/data_layer_user_activity: {}
+
+  packages/data_layers/heidrun_code_data: {}
 
   packages/data_layers/heidrun_data: {}
 

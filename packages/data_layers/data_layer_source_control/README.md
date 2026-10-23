@@ -1,6 +1,6 @@
 # data_layer_source_control
 
-A Rust library and a command line tool for [Heidrun](../../../README.md). Both read every commit of a Git repository, merges included, and write the facts of each one in the table `commits` of a SQLite file. It is the Source control source of the data layer of Heidrun. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 462](https://github.com/heidrun-org/heidrun/issues/462). The name `data_layer_source_control` is the name of the package and the name of the executable. The package has the same structure as [data_layer_code_hosting](../data_layer_code_hosting/README.md), and the two packages write in the same SQLite file.
+A Rust library and a command line tool for [Heidrun Code](../../../README.md). Both read every commit of a Git repository, merges included, and write the facts of each one in the table `commits` of a SQLite file. It is the Source control source of the data layer of Heidrun Code. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 462](https://github.com/heidrun-org/heidrun/issues/462). The name `data_layer_source_control` is the name of the package and the name of the executable. The package has the same structure as [data_layer_code_hosting](../data_layer_code_hosting/README.md), and the two packages write in the same SQLite file.
 
 ## What it contains
 
@@ -25,11 +25,11 @@ pnpm --silent data_layer:source_control initialize --database /path/to/a.sqlite 
 pnpm --silent data_layer:source_control query "SELECT count(*) AS count FROM commits"
 ```
 
-The command runs in the folder of the package, so give a database file with an absolute path. The folder of the package is inside the repository of Heidrun, so the command reads the repository of Heidrun when the option `--folder` is not given.
+The command runs in the folder of the package, so give a database file with an absolute path. The folder of the package is inside the repository of Heidrun Code, so the command reads the repository of Heidrun Code when the option `--folder` is not given.
 
 | Option | Commands | Effect |
 | --- | --- | --- |
-| `--database <path>` | all three | The SQLite file. The default is `~/.config/heidrun/data_layer.sqlite`. The commands `initialize` and `update` create the file and its folder when they do not exist. The command `query` needs the file to exist. |
+| `--database <path>` | all three | The SQLite file. The default is `~/.config/heidrun_code/data_layer.sqlite`. The commands `initialize` and `update` create the file and its folder when they do not exist. The command `query` needs the file to exist. |
 | `--repository <owner/name>` | `initialize`, `update` | The name of the repository in the database. The default comes from the address of the remote `origin`, for GitHub and for GitLab alike. |
 | `--folder <path>` | `initialize`, `update` | The folder of the Git repository, or a folder inside it. The default is the current folder. |
 | `--verbose` | `initialize`, `update` | Prints the progress on the standard error output: the number of commits, each batch that is read, and each write. The report stays on the standard output. |
@@ -173,4 +173,4 @@ pnpm --filter data_layer_source_control test        # run the Rust tests (cargo 
 
 ## Operation log
 
-Every public function of this package writes a start line and an end line in the operation log of the data layer, with the library [data_layer_operation_log](../data_layer_operation_log/README.md): the package `source_control`, the operation, the parameters that decide the workload, the duration, and the outcome. A synchronization, its collection, its writes, and its lock appear as nested operations. The command `heidrun_data operations summary` shows the usage patterns and the durations, and `heidrun_data operations replay` runs a recorded operation again. The log never changes a result and never holds a secret. The description is in [data_layer_operation_log.md](../../../docs/statistics/data_layer_operation_log.md).
+Every public function of this package writes a start line and an end line in the operation log of the data layer, with the library [data_layer_operation_log](../data_layer_operation_log/README.md): the package `source_control`, the operation, the parameters that decide the workload, the duration, and the outcome. A synchronization, its collection, its writes, and its lock appear as nested operations. The command `heidrun_code_data operations summary` shows the usage patterns and the durations, and `heidrun_code_data operations replay` runs a recorded operation again. The log never changes a result and never holds a secret. The description is in [data_layer_operation_log.md](../../../docs/statistics/data_layer_operation_log.md).

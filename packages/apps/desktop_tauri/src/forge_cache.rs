@@ -1,7 +1,7 @@
 //! Forge cache: the answers of the read-only calls of `gh` and `glab`, kept on the disk for a short time.
 //!
 //! The card of an issue or of a pull request reads the title, the state, and the description from the forge, which takes
-//! about a second for each call. An answer is kept in `forge_cache.json`, in the folder of the data of Heidrun, for ten
+//! about a second for each call. An answer is kept in `forge_cache.json`, in the folder of the data of Heidrun Code, for ten
 //! minutes. When the forge does not answer (no network, no login), an answer that is at most seven days old is used
 //! instead of the failure.
 
@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// The name of the file of the cache, in the folder of the data of Heidrun.
+/// The name of the file of the cache, in the folder of the data of Heidrun Code.
 const CACHE_FILE: &str = "forge_cache.json";
 
 /// The version of the content of the cache. A cache with another version is thrown away and made again.
@@ -110,7 +110,7 @@ impl ForgeCache {
     }
 }
 
-/// The file of the cache: `forge_cache.json` in the folder of the data of Heidrun.
+/// The file of the cache: `forge_cache.json` in the folder of the data of Heidrun Code.
 fn cache_path() -> PathBuf {
     crate::app_data::data_dir().join(CACHE_FILE)
 }

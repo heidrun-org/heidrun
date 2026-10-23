@@ -60,11 +60,11 @@ class TerminalDetectionTestHelper {
 
 describe('TerminalDetection, the paths of the screenshot of the issue #793', () => {
 	it('finds the whole folder name, and names it in the label of the hover button', () => {
-		const text = '- ~/Library/WebKit/dev.heidrun-org.heidrun.development';
+		const text = '- ~/Library/WebKit/dev.heidrun-org.heidrun_code.development';
 		const { items } = TerminalDetectionTestHelper.detect(text);
 		expect(items).toHaveLength(1);
-		expect(items[0]).toMatchObject({ family: 'filePaths', text: '~/Library/WebKit/dev.heidrun-org.heidrun.development' });
-		expect(items[0].primary?.labelParams).toEqual({ name: 'dev.heidrun-org.heidrun.development' });
+		expect(items[0]).toMatchObject({ family: 'filePaths', text: '~/Library/WebKit/dev.heidrun-org.heidrun_code.development' });
+		expect(items[0].primary?.labelParams).toEqual({ name: 'dev.heidrun-org.heidrun_code.development' });
 		expect(items[0].end).toBe(text.length);
 	});
 });

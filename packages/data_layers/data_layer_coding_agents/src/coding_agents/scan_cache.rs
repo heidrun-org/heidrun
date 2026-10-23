@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 /// The most lines of a file of Claude Code that are read to find its folder. The first lines hold the field `cwd`.
 const CLAUDE_FOLDER_LINES: usize = 200;
 
-/// The name of the file of the cache, in the folder of the data of Heidrun.
+/// The name of the file of the cache, in the folder of the data of Heidrun Code.
 pub const CACHE_FILE_NAME: &str = "chats_cache.json";
 
 /// The version of the content of the cache. A cache with another version is thrown away and made again.

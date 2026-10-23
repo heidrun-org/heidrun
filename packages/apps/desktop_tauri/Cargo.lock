@@ -2075,7 +2075,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
-name = "heidrun"
+name = "heidrun_code"
 version = "0.3.0"
 dependencies = [
  "base64 0.22.1",
@@ -2088,8 +2088,8 @@ dependencies = [
  "data_layer_user_activity",
  "dirs 6.0.0",
  "dotenvy",
- "heidrun_ctrl",
- "heidrun_data",
+ "heidrun_code_ctrl",
+ "heidrun_code_data",
  "mobile_server",
  "portable-pty",
  "reqwest 0.12.28",
@@ -2109,7 +2109,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heidrun_ctrl"
+name = "heidrun_code_ctrl"
 version = "0.3.0"
 dependencies = [
  "dirs 6.0.0",
@@ -2118,7 +2118,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heidrun_data"
+name = "heidrun_code_data"
 version = "0.3.0"
 dependencies = [
  "data_layer_code_hosting",

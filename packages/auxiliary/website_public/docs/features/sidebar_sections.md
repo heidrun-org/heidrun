@@ -4,9 +4,9 @@ description: "The File explorer, Source control, Code hosting, Launchers, and Cl
 
 # The sidebar sections
 
-Around your coding agents, you need more: the files of the project, the Git changes, the issues, the commands of the project, and the pieces of text that you want to keep. Without Heidrun, each one is in a different application.
+Around your coding agents, you need more: the files of the project, the Git changes, the issues, the commands of the project, and the pieces of text that you want to keep. Without Heidrun Code, each one is in a different application.
 
-## What Heidrun does
+## What Heidrun Code does
 
 The left sidebar and the right sidebar each hold several sidebar sections. The sidebar icon bar, at the outer edge of each sidebar, shows one icon for each sidebar section. Click an icon to show its sidebar section.
 
@@ -48,7 +48,7 @@ The Launchers sidebar section, in the left sidebar, lists the launchers of the s
 - Import launchers from the scripts of the file `package.json` in one click.
 - Create a custom launcher that runs a command line, or a coding agent with a prompt.
 
-Heidrun saves the launchers in the file `.heidrun/config.json` of the repository, so your team shares them.
+Heidrun Code saves the launchers in the file `.heidrun/config.json` of the repository, so your team shares them.
 
 ![The Launchers sidebar section with five launchers, each with its description and its button Run.](/screenshots/features/launchers.png){width=300}
 

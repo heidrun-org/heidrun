@@ -98,8 +98,8 @@ type RefreshFn = dyn Fn(&Path, &str) -> Result<(), String>;
 fn synchronize(folder: &Path, database_path: &Path, refresh_hosting: &RefreshFn) -> Result<PersonWorkSynchronization, String> {
     let repository = find_repository(folder)?;
     // Two commands that write the SQLite file at the same time would fail with "database is locked". The command line
-    // heidrun_data takes the same lock.
-    let _guard = heidrun_data::lock_database(database_path)?;
+    // heidrun_code_data takes the same lock.
+    let _guard = heidrun_code_data::lock_database(database_path)?;
     refresh_source_control(database_path, folder, &repository)?;
     let code_hosting_error = refresh_hosting(database_path, &repository).err();
     Ok(PersonWorkSynchronization { repository, code_hosting_error })

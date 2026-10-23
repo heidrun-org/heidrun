@@ -1,7 +1,7 @@
 # Directory Context: `/packages/data_layers/data_layer_code_hosting`
 
 ## Purpose
-The Code hosting source of Heidrun: reads GitHub issues and pull requests into SQLite. The library and executable are named `data_layer_code_hosting`; desktop callers use `refresh_code_hosting` and `find_*`.
+The Code hosting source of Heidrun Code: reads GitHub issues and pull requests into SQLite. The library and executable are named `data_layer_code_hosting`; desktop callers use `refresh_code_hosting` and `find_*`.
 
 ## Key Exports & Entry Points
 - `src/lib.rs`: the only public interface; its `pub use` lines list the readers, databases, synchronization and query functions, schemas, and data types.
@@ -24,7 +24,7 @@ The Code hosting source of Heidrun: reads GitHub issues and pull requests into S
 - Only `src/github/graphql_runner.rs` runs the command `gh`. The tests give a fake runner or a fake `gh` command, so they need no network.
 - The package stores facts only: no review, no reaction, no milestone, and no comment text.
 - `query` and `CodeHostingDatabase::query` open SQLite read only, never changing or creating a file; `src/storage/query_formatter.rs` only formats rows.
-- The default SQLite file is `data_layer.sqlite` in `HEIDRUN_DIR`, or `~/.config/heidrun/data_layer.sqlite` when the variable is unset or empty. The option `--database` changes it.
+- The default SQLite file is `data_layer.sqlite` in `HEIDRUN_CODE_DIR`, or `~/.config/heidrun_code/data_layer.sqlite` when the variable is unset or empty. The option `--database` changes it.
 - `--verbose` sends progress through a log function; only `src/main.rs` prints it.
 - The folder `src/model/` imports from no other folder of `src/`. The folder `src/github/` and the folder `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` uses `src/github/` and `src/storage/` together.
 - Calls are blocking; the package imports only `data_layer_operation_log` from other repository packages and knows nothing about Tauri. Every public function records its operation and tests its events ([rule](../../../docs/agents_rules/data_layer_operation_log.md)).

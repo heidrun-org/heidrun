@@ -3,15 +3,15 @@
 use std::path::{Path, PathBuf};
 
 /// The environment variable that holds the path of the log file. The value `off` turns the log off.
-pub const LOG_FILE_VARIABLE: &str = "HEIDRUN_OPERATION_LOG_FILE";
+pub const LOG_FILE_VARIABLE: &str = "HEIDRUN_CODE_OPERATION_LOG_FILE";
 
 /// The environment variable that holds the name of the caller, for a program that wants another name than its own.
-pub const CALLER_VARIABLE: &str = "HEIDRUN_OPERATION_LOG_CALLER";
+pub const CALLER_VARIABLE: &str = "HEIDRUN_CODE_OPERATION_LOG_CALLER";
 
-/// The value of the variable `HEIDRUN_OPERATION_LOG_FILE` that turns the log off.
+/// The value of the variable `HEIDRUN_CODE_OPERATION_LOG_FILE` that turns the log off.
 pub const OFF_VALUE: &str = "off";
 
-/// The name of the log file in the folder of the data of Heidrun.
+/// The name of the log file in the folder of the data of Heidrun Code.
 pub const LOG_FILE_NAME: &str = "data_layer_operations.jsonl";
 
 /// The size at which the log file is replaced by a new one, in bytes: 8 MiB. The old file stays, so the log never holds more
@@ -30,8 +30,8 @@ pub struct LogSettings {
 }
 
 impl LogSettings {
-    /// The configuration of the environment: the variable `HEIDRUN_OPERATION_LOG_FILE` gives the file, or else the file
-    /// `data_layer_operations.jsonl` in the folder of the data of Heidrun, and the variable `HEIDRUN_OPERATION_LOG_CALLER` gives
+    /// The configuration of the environment: the variable `HEIDRUN_CODE_OPERATION_LOG_FILE` gives the file, or else the file
+    /// `data_layer_operations.jsonl` in the folder of the data of Heidrun Code, and the variable `HEIDRUN_CODE_OPERATION_LOG_CALLER` gives
     /// the caller. A test program of Cargo writes no log unless the variable gives a file, so the tests of the packages never
     /// fill the log of the developer.
     pub fn from_environment() -> Self {
@@ -55,12 +55,12 @@ impl LogSettings {
     }
 }
 
-/// The path of the log file when nobody gives another one: in the folder of the variable `HEIDRUN_DIR`, or else in
-/// `~/.config/heidrun`, the folder of the SQLite file of the data layer.
+/// The path of the log file when nobody gives another one: in the folder of the variable `HEIDRUN_CODE_DIR`, or else in
+/// `~/.config/heidrun_code`, the folder of the SQLite file of the data layer.
 pub fn default_log_file() -> PathBuf {
-    let folder = match non_empty_variable("HEIDRUN_DIR") {
+    let folder = match non_empty_variable("HEIDRUN_CODE_DIR").or_else(|| non_empty_variable("HEIDRUN_DIR")) {
         Some(folder) => PathBuf::from(folder),
-        None => dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"),
+        None => default_data_folder(&dirs::home_dir().unwrap_or_default()),
     };
     folder.join(LOG_FILE_NAME)
 }
@@ -83,6 +83,16 @@ pub fn is_cargo_test_program() -> bool {
 /// The value of an environment variable, or `None` when it is not set or empty.
 fn non_empty_variable(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|value| value.is_empty() == false)
+}
+
+/// `~/.config/heidrun_code`, or the former folder `~/.config/heidrun` when it exists and the new folder does not.
+fn default_data_folder(home: &std::path::Path) -> PathBuf {
+    let current = home.join(".config").join("heidrun_code");
+    let former = home.join(".config").join("heidrun");
+    if current.is_dir() == false && former.is_dir() {
+        return former;
+    }
+    current
 }
 
 #[cfg(test)]

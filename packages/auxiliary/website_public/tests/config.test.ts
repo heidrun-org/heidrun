@@ -11,8 +11,8 @@ const themeConfig = config.themeConfig as {
 };
 
 describe('VitePress configuration', () => {
-	it('names the site Heidrun', () => {
-		expect(config.title).toBe('Heidrun');
+	it('names the site Heidrun Code', () => {
+		expect(config.title).toBe('Heidrun Code');
 	});
 
 	it('has a description', () => {

@@ -33,7 +33,7 @@
   "forgeMissingTitle": "Cannot open in {forge}: the file does not exist on the default branch.",
   "outsideTitle": "Cannot open the file: it is not in the repository.",
   "openFileLabel": "Open this file",
-  "heidrunTitle": "Open in Heidrun",
+  "heidrunTitle": "Open in Heidrun Code",
   "openReferenceLabel": "Open this issue or pull request",
   "copyWebAddressTitle": "Copy the {forge} web address",
   "webAddressCopied": "Web address copied",

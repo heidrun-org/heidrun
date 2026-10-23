@@ -763,7 +763,7 @@ describe("PersonWorkTab", () => {
   });
 
   describe("the memory of the filter of the legend", () => {
-    /** Puts what a previous run of Heidrun saved for the legend filters into the settings, before the tab is built. */
+    /** Puts what a previous run of Heidrun Code saved for the legend filters into the settings, before the tab is built. */
     async function rememberFilters(filters: Record<string, string>): Promise<void> {
       const { settings } = await import("../stores/settings");
       settings.statisticsLegendFilters = filters;
@@ -1686,7 +1686,7 @@ describe("PersonWorkTab: the memory of the choices (issue 707)", () => {
     return mountPersonWorkTab();
   }
 
-  /** Starts Heidrun again: every module is loaded again, and the settings are read from `localStorage`. */
+  /** Starts Heidrun Code again: every module is loaded again, and the settings are read from `localStorage`. */
   async function restart(wrapper: Tab): Promise<Tab> {
     await flushPromises();
     wrapper.unmount();
@@ -1754,7 +1754,7 @@ describe("PersonWorkTab: the memory of the choices (issue 707)", () => {
     expect(aiCostTotalsOf(reopened)).toHaveLength(3);
   });
 
-  it("keeps the choices after Heidrun starts again", async () => {
+  it("keeps the choices after Heidrun Code starts again", async () => {
     const wrapper = await mountPersonWorkTab();
     await wrapper.get("#statistics-person-metric-lines").setValue(true);
     await wrapper.get("#statistics-person").setValue("eric");

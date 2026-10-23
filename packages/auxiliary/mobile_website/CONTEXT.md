@@ -1,7 +1,7 @@
 # Directory Context: `/packages/auxiliary/mobile_website`
 
 ## Purpose
-The mobile website of Heidrun Mobile: the page that the phone opens to keep the coding agents working when the developer is away from the desk. The mobile server serves the built page from the computer, and the page talks only to the mobile server.
+The mobile website of Heidrun Code Mobile: the page that the phone opens to keep the coding agents working when the developer is away from the desk. The mobile server serves the built page from the computer, and the page talks only to the mobile server.
 
 ## Key Exports & Entry Points
 - `index.html`: the entry of Vite. It names `src/main.ts` and `public/manifest.webmanifest`.

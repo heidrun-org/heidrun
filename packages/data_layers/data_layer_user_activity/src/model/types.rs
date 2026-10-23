@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-/// One active period of the developer in front of Heidrun, in one workspace, as the database stores it in the column `data`
+/// One active period of the developer in front of Heidrun Code, in one workspace, as the database stores it in the column `data`
 /// of the table `user_activity_records`. The file `schemas/user_activity_record.schema.json` describes the same shape. The
 /// three times are in UTC in the database. In the file `user_activity.jsonl`, they carry the offset of the time zone of the
 /// computer.

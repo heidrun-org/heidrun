@@ -4,7 +4,7 @@
 - Last updated: 23 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../AGENTS.md)
-- Related rules: [Glossary of Heidrun: test levels](glossary/test_levels.md)
+- Related rules: [Glossary of Heidrun Code: test levels](glossary/test_levels.md)
 - Related issue: [issue 826](https://github.com/heidrun-org/heidrun/issues/826)
 
 This file gives the rule for the tests of the repository. The tests have two levels: the fast tests, which the developer runs often, and the slow tests, which run when the developer asks for them. The words are defined in [test_levels.md](glossary/test_levels.md) of the glossary.

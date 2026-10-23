@@ -6,7 +6,7 @@ export type VoiceWord = {
 	id: string;
 	/** The text that Whisper writes. It is never empty. */
 	whisper_writes: string;
-	/** The text that Heidrun writes instead. It may be empty: the entry then removes the text that Whisper writes. */
+	/** The text that Heidrun Code writes instead. It may be empty: the entry then removes the text that Whisper writes. */
 	heidrun_writes: string;
 };
 
@@ -18,7 +18,7 @@ export type VoiceWordsFile = {
 	error: string | null;
 };
 
-/** The word replacement list (issue 836). The file `voice_words.json` is the truth: the desktop application and the command line `heidrun_ctrl` change it. */
+/** The word replacement list (issue 836). The file `voice_words.json` is the truth: the desktop application and the command line `heidrun_code_ctrl` change it. */
 export const voiceWords = reactive<{
 	/** The entries of the file, as last read. */
 	list: VoiceWord[];

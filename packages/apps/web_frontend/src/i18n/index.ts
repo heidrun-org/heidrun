@@ -21,7 +21,7 @@ for (const [languageId, texts] of Object.entries(localeMessages)) {
   messages[languageId] = { ...texts };
 }
 
-// The title, the motto, and the description of Heidrun come from data/identity.json, not from a locale file.
+// The title, the motto, and the description of Heidrun Code come from data/identity.json, not from a locale file.
 for (const { id } of LANGUAGES) {
   messages[id] ??= {};
   messages[id]["identity.title"] = identity.title;

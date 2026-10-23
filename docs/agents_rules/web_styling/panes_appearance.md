@@ -1,10 +1,10 @@
-# Web styling of Heidrun: appearance of the viewport and the panes
+# Web styling of Heidrun Code: appearance of the viewport and the panes
 
 - Created: 22 October 2026
 - Last updated: 23 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related rules: [Shared design rules](shared_design.md), [Colors and scroll bars](colors_and_scroll_bars.md), [Glossary of Heidrun](../glossary/index.md)
+- Related rules: [Shared design rules](shared_design.md), [Colors and scroll bars](colors_and_scroll_bars.md), [Glossary of Heidrun Code](../glossary/index.md)
 - Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 345](https://github.com/heidrun-org/heidrun/issues/345), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 749](https://github.com/heidrun-org/heidrun/issues/749), [issue 784](https://github.com/heidrun-org/heidrun/issues/784), [issue 786](https://github.com/heidrun-org/heidrun/issues/786), [issue 799](https://github.com/heidrun-org/heidrun/issues/799), [issue 810](https://github.com/heidrun-org/heidrun/issues/810)
 
 This file gives the rules about how the frames of the window, the panes, the pane header, the composition bar, and the file view pane look. What each part contains and does is in the folder `user_interface`. Each rule names its test, and the paths of the tests start at `packages/apps/web_frontend/src`.

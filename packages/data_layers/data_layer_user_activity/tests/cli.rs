@@ -23,7 +23,7 @@ fn line(hour: u32) -> String {
 }
 
 /// A folder with a fake file of user activity records, the path of a database file, and the path of a folder for the
-/// variable `HEIDRUN_DIR`.
+/// variable `HEIDRUN_CODE_DIR`.
 struct Fixture {
     folder: PathBuf,
     file_path: PathBuf,
@@ -49,17 +49,17 @@ impl Fixture {
         Fixture { folder, file_path, database_path }
     }
 
-    /// Runs the executable with `arguments`, in the folder of the fixture, with no variable `HEIDRUN_DIR`.
+    /// Runs the executable with `arguments`, in the folder of the fixture, with no variable `HEIDRUN_CODE_DIR`.
     fn run(&self, arguments: &[&str]) -> CliResult {
         self.run_with_environment(arguments, None)
     }
 
-    /// Runs the executable with `arguments`, with the variable `HEIDRUN_DIR` set to `heidrun_dir` when it is given.
+    /// Runs the executable with `arguments`, with the variable `HEIDRUN_CODE_DIR` set to `heidrun_dir` when it is given.
     fn run_with_environment(&self, arguments: &[&str], heidrun_dir: Option<&Path>) -> CliResult {
         let mut command = Command::new(env!("CARGO_BIN_EXE_data_layer_user_activity"));
-        command.args(arguments).env_remove("HEIDRUN_DIR").env("HEIDRUN_OPERATION_LOG_FILE", "off").current_dir(&self.folder);
+        command.args(arguments).env_remove("HEIDRUN_CODE_DIR").env("HEIDRUN_CODE_OPERATION_LOG_FILE", "off").current_dir(&self.folder);
         if let Some(heidrun_dir) = heidrun_dir {
-            command.env("HEIDRUN_DIR", heidrun_dir);
+            command.env("HEIDRUN_CODE_DIR", heidrun_dir);
         }
         let output = command.output().unwrap();
         CliResult {
@@ -345,7 +345,7 @@ fn shows_the_three_commands_in_the_help() {
     let fixture = Fixture::new("help");
     let result = fixture.run(&["--help"]);
     assert_eq!(result.exit_code, Some(0));
-    for command in ["initialize", "update", "query", "--file", "HEIDRUN_DIR"] {
+    for command in ["initialize", "update", "query", "--file", "HEIDRUN_CODE_DIR"] {
         assert!(result.stdout.contains(command), "{command}");
     }
 }

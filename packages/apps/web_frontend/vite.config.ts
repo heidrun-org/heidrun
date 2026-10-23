@@ -56,7 +56,7 @@ function localeMessagesPlugin(): Plugin {
 export default defineConfig({
   plugins: [vue(), localeMessagesPlugin()],
   clearScreen: false,
-  // The date and time of the build, for the window "About Heidrun". In development, it is the start of the dev server.
+  // The date and time of the build, for the window "About Heidrun Code". In development, it is the start of the dev server.
   define: {
     __BUILD_TIME__: JSON.stringify(formatBuildTime(new Date())),
   },

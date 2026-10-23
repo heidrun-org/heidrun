@@ -1,7 +1,7 @@
 # Directory Context: `/packages/apps/desktop_tauri/src/skills`
 
 ## Purpose
-The backend of the windows Installed skill and Find new skills: it finds, reads, installs, links, and deletes the skills (the folders with a `SKILL.md` file) that the coding agents read. It also installs the two skills shipped with Heidrun on the first launch of each version. The file `mod.rs` describes the folders of each agent and the cache.
+The backend of the windows Installed skill and Find new skills: it finds, reads, installs, links, and deletes the skills (the folders with a `SKILL.md` file) that the coding agents read. It also installs the two skills shipped with Heidrun Code on the first launch of each version. The file `mod.rs` describes the folders of each agent and the cache.
 
 ## Key Exports & Entry Points
 - `installed.rs`: the commands `skills_list`, `skills_read`, and `skills_delete`.
@@ -24,8 +24,8 @@ The backend of the windows Installed skill and Find new skills: it finds, reads,
 - `repository_paths.rs`, `folder_address.rs`, `skill_text.rs`, and `types.rs` do no input or output, and import no other module of this folder except `types.rs`.
 - A command name and an error code never change without a matching change in `stores/skills.ts` and in `skillsStore.json` of the frontend.
 - Each file keeps its own tests at its end. Helpers shared by several test modules go in `test_support.rs`.
-- Heidrun never replaces a real folder with a link.
-- The four installations (skills.sh, a web address, a local folder, and a bundled Heidrun skill) share `plan_install`, `prepare_staging`, and `finish_install`, so they give the same folders, links, and origin file. Only the origin of a web address has `folder_url`, and only the origin of a local folder has `folder_path` and an empty `source`.
+- Heidrun Code never replaces a real folder with a link.
+- The four installations (skills.sh, a web address, a local folder, and a bundled Heidrun Code skill) share `plan_install`, `prepare_staging`, and `finish_install`, so they give the same folders, links, and origin file. Only the origin of a web address has `folder_url`, and only the origin of a local folder has `folder_path` and an empty `source`.
 - A local folder is copied, never linked, and nothing is sent over the network.
 - A GitLab test uses the fake server of `test_support.rs`, so no test needs the network.
 - The web address does not say where the branch ends, because a branch name can hold slashes: `list_folder_files` (GitHub) and `list_gitlab_folder_files` try the shortest branch first, and the text of `SKILL.md` is read with the whole address.

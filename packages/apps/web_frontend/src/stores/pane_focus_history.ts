@@ -1,5 +1,5 @@
-// The history of the focus between panes: Heidrun records each pane that gets the focus, and the "Back" button and the
-// "Forward" button of the top bar move through the history. The history lives in memory, until Heidrun quits.
+// The history of the focus between panes: Heidrun Code records each pane that gets the focus, and the "Back" button and the
+// "Forward" button of the top bar move through the history. The history lives in memory, until Heidrun Code quits.
 // - issue #380
 import { reactive, watch } from "vue";
 import { allPanes, selectPane, state } from "./session";

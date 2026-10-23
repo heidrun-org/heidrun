@@ -5,7 +5,7 @@
 <!-- identity:start -->
 <!-- Generated from data/identity.json: pnpm docs:identity -->
 
-# Heidrun
+# Heidrun Code
 
 ### With AI, every developer is THE GOAT!
 
@@ -31,7 +31,7 @@
 
 ## What it does
 
-You run many coding agents. Each coding agent wants a decision, a permission, or a code review, and each one waits in a different terminal. Heidrun puts all of them in one window, and tells you which one needs you right now.
+You run many coding agents. Each coding agent wants a decision, a permission, or a code review, and each one waits in a different terminal. Heidrun Code puts all of them in one window, and tells you which one needs you right now.
 
 Think of Valhalla: the coding agents are the einherjar (the warriors who feast and fight all day), and you are the goat who keeps the mead flowing.
 
@@ -50,7 +50,7 @@ The full list of features, shortcuts, and settings is in the [documentation](htt
 
 ## Blog posts
 
-Read the three-part series about developing software with Heidrun. These posts are drafts:
+Read the three-part series about developing software with Heidrun Code. These posts are drafts:
 
 1. [Three Features in Progress. Which One Needs Me?](docs/blog_posts/three-features.blog_post.md)
 2. [Why Did We Write This Code? Ask the Development History](docs/blog_posts/development-history.blog_post.md)
@@ -58,7 +58,7 @@ Read the three-part series about developing software with Heidrun. These posts a
 
 ## Installation
 
-First install [Herdr](https://herdr.dev) 0.9 or later. Heidrun needs it, and does not install it:
+First install [Herdr](https://herdr.dev) 0.9 or later. Heidrun Code needs it, and does not install it:
 
 ```sh
 curl -fsSL https://herdr.dev/install.sh | sh
@@ -66,15 +66,15 @@ curl -fsSL https://herdr.dev/install.sh | sh
 
 The program ngrok is optional: only the mobile access uses it. Install it only if you want to answer your coding agents from your phone, with `brew install ngrok`. Then create a free account at ngrok.com, and run `ngrok config add-authtoken` followed by your token.
 
-When a program is missing, Heidrun says so at the start, with the command that installs it.
+When a program is missing, Heidrun Code says so at the start, with the command that installs it.
 
-Then, on a Mac with Apple silicon, run this command in a terminal. It installs the latest Heidrun in `/Applications`, and macOS opens Heidrun with no message "damaged". Quit Heidrun before you run it.
+Then, on a Mac with Apple silicon, run this command in a terminal. It installs the latest Heidrun Code in `/Applications`, and macOS opens Heidrun Code with no message "damaged". Quit Heidrun Code before you run it.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun_code/main/scripts/install.sh | sh
 ```
 
-The script [`scripts/install.sh`](scripts/install.sh) downloads the disk image of the latest release with `curl`, copies Heidrun to `/Applications`, and prints the installed version. Heidrun is not signed and not notarized, and `curl` does not put the quarantine mark on the disk image that it downloads, so macOS does not check the signature.
+The script [`scripts/install.sh`](scripts/install.sh) downloads the disk image of the latest release with `curl`, copies Heidrun Code to `/Applications`, and prints the installed version. Heidrun Code is not signed and not notarized, and `curl` does not put the quarantine mark on the disk image that it downloads, so macOS does not check the signature.
 
 ## Quick start
 
@@ -89,7 +89,7 @@ pnpm dev
 
 After pulling changes, run `git submodule update --init --recursive` to check out the recorded submodule commits. The independent [coding agent skills repository](https://github.com/jeromeetienne/coding_agent_plugin) is included at [`submodules/coding_agent_plugin`](submodules/coding_agent_plugin).
 
-To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Applications`.
+To build the application, run `pnpm build`, then drag `Heidrun Code.app` into `/Applications`.
 
 ## What is in this repository
 

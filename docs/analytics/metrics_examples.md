@@ -7,7 +7,7 @@
 - Related rules: [The four data layers](../statistics/the_four_data_layers.md)
 - Related issue: [issue 564](https://github.com/heidrun-org/heidrun/issues/564), [issue 561](https://github.com/heidrun-org/heidrun/issues/561)
 
-This file lists the metrics that the join of the three inputs of [inputs.md](inputs.md) gives, and that no single input gives alone: the chat sessions of the coding agents, the commits, and the issues and the pull requests. Each metric has one definition, one SQL query on the SQLite file of the data layers, its result on this repository, what the result says, and its limits. The metrics are independent from the user interface of Heidrun: every query runs with `sqlite3 -readonly ~/.config/heidrun/data_layer.sqlite`, or with the command `query` of a data layer. The links that the queries use, and their gaps, are in [inputs_links.md](inputs_links.md).
+This file lists the metrics that the join of the three inputs of [inputs.md](inputs.md) gives, and that no single input gives alone: the chat sessions of the coding agents, the commits, and the issues and the pull requests. Each metric has one definition, one SQL query on the SQLite file of the data layers, its result on this repository, what the result says, and its limits. The metrics are independent from the user interface of Heidrun Code: every query runs with `sqlite3 -readonly ~/.config/heidrun_code/data_layer.sqlite`, or with the command `query` of a data layer. The links that the queries use, and their gaps, are in [inputs_links.md](inputs_links.md).
 
 The results were taken on 16 October 2026 on the repository `heidrun-org/heidrun`: 306 chat sessions from 9 to 14 October 2026, 900 commits from 5 to 16 October 2026, 313 issues, and 248 pull requests. Every query filters on `repository = 'heidrun-org/heidrun'`, because the SQLite file holds the commits of three repositories.
 
@@ -247,4 +247,4 @@ ORDER BY output_tokens DESC;
 
 - Fix the links first, as [inputs_links.md](inputs_links.md) says: relative paths in `chat_session_files`, the chat sessions of the worktrees, and a link from a chat session to a commit. Every metric above inherits their gaps.
 - Add the price per model and per kind of token, so that metrics 1, 3, 6, and 10 can be written in dollars.
-- Give the ten queries to a coding agent through the command `heidrun_data` of [issue 564](https://github.com/heidrun-org/heidrun/issues/564), so that the coding agent answers "why" on top of the numbers.
+- Give the ten queries to a coding agent through the command `heidrun_code_data` of [issue 564](https://github.com/heidrun-org/heidrun/issues/564), so that the coding agent answers "why" on top of the numbers.

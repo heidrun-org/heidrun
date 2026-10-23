@@ -1,4 +1,4 @@
-//! The voice input of Heidrun: it records the microphone, downloads a Whisper model, and changes the speech into text on the
+//! The voice input of Heidrun Code: it records the microphone, downloads a Whisper model, and changes the speech into text on the
 //! computer. It knows nothing about Tauri and the web page. The audio stays in memory, and only the download of a model file
 //! uses the network.
 

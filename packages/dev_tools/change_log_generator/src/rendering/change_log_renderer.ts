@@ -81,7 +81,7 @@ export class ChangeLogRenderer {
 			].join('\n');
 		});
 		return [
-			'You write the change log of the application Heidrun.',
+			'You write the change log of the application Heidrun Code.',
 			'',
 			`Below is the list of the pull requests that were merged since ${sinceStr}${untilStr}. Each item has the `
 				+ 'number of the pull request, the name of its branch, and the message of its merge commit.',

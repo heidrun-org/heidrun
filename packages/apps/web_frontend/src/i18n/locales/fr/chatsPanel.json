@@ -33,7 +33,7 @@
   "forgeMissingTitle": "Impossible d’ouvrir dans {forge} : le fichier n’existe pas sur la branche par défaut.",
   "outsideTitle": "Impossible d’ouvrir le fichier : il n’est pas dans le dépôt.",
   "openFileLabel": "Ouvrir ce fichier",
-  "heidrunTitle": "Ouvrir dans Heidrun",
+  "heidrunTitle": "Ouvrir dans Heidrun Code",
   "openReferenceLabel": "Ouvrir cette issue ou cette pull request",
   "copyWebAddressTitle": "Copier l’adresse web {forge}",
   "webAddressCopied": "Adresse web copiée",

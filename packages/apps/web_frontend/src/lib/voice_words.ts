@@ -66,7 +66,7 @@ export class VoiceWords {
 	/**
 	 * Adds an entry at the end of the list.
 	 * @param whisperWrites The text that Whisper writes. It cannot be empty.
-	 * @param heidrunWrites The text that Heidrun writes instead. It may be empty.
+	 * @param heidrunWrites The text that Heidrun Code writes instead. It may be empty.
 	 * @returns True when the entry was written. False when the desktop application refused it: the reason is in
 	 * `voiceWords.changeError`.
 	 */

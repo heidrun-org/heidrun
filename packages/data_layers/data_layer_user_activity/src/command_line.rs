@@ -7,7 +7,7 @@ pub const HELP: &str = r#"Usage: data_layer_user_activity <command> [options]
 
 Reads the user activity records of the developer from the file "user_activity.jsonl",
 and writes them in the table "user_activity_records" of a SQLite file. A user activity
-record is one active period of the developer in front of Heidrun, in one workspace.
+record is one active period of the developer in front of Heidrun Code, in one workspace.
 Each row holds the record as JSON in the column "data". The times are in UTC.
 The command never writes the file of the records.
 
@@ -23,12 +23,12 @@ Commands:
 
 Options:
   --database <path>          The SQLite file.
-                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
-                             "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_CODE_DIR, or
+                             "~/.config/heidrun_code/data_layer.sqlite")
   --file <path>              The file of the user activity records. For initialize
                              and update.
                              (default: "user_activity.jsonl" in the folder of the
-                             variable HEIDRUN_DIR, or else in "~/.config/heidrun")
+                             variable HEIDRUN_CODE_DIR, or else in "~/.config/heidrun_code")
   --verbose                  Print the progress on the standard error output: each
                              line that is skipped, the number of records, and each
                              write. For initialize and update.

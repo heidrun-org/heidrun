@@ -105,8 +105,8 @@ describe('WorktreeCreate', () => {
 				name: 'with-bundled-commands',
 			});
 			const bundledCommandsPath = TargetPaths.bundledCommandsPath(result.worktreePath);
-			expect(Fs.readFileSync(Path.join(bundledCommandsPath, 'heidrun_ctrl'), 'utf8')).toBe('heidrun_ctrl');
-			expect(Fs.readFileSync(Path.join(bundledCommandsPath, 'heidrun_data'), 'utf8')).toBe('heidrun_data');
+			expect(Fs.readFileSync(Path.join(bundledCommandsPath, 'heidrun_code_ctrl'), 'utf8')).toBe('heidrun_code_ctrl');
+			expect(Fs.readFileSync(Path.join(bundledCommandsPath, 'heidrun_code_data'), 'utf8')).toBe('heidrun_code_data');
 		});
 
 		it('installs the packages: the new worktree has a folder node_modules', () => {

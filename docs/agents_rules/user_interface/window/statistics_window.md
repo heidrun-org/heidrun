@@ -1,13 +1,13 @@
-# User interface of Heidrun: Statistics window
+# User interface of Heidrun Code: Statistics window
 
 - Created: 15 October 2026
-- Last updated: 22 October 2026
+- Last updated: 23 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun: user activity](../../glossary/user_activity.md), [User activity sidebar section](../sidebars/user_activity.md), [layout.md](layout.md), [Tab "User activity"](statistics_user_activity.md), [Tab "Work of one person"](statistics_person_work.md), [Glossary of Heidrun: status bar and information card tooltip](../../glossary/status_bar.md), [Data layer access](../../data_layer_access.md)
+- Related rules: [Glossary of Heidrun Code: user activity](../../glossary/user_activity.md), [User activity sidebar section](../sidebars/user_activity.md), [layout.md](layout.md), [Tab "User activity"](statistics_user_activity.md), [Tab "Work of one person"](statistics_person_work.md), [Glossary of Heidrun Code: status bar and information card tooltip](../../glossary/status_bar.md), [Data layer access](../../data_layer_access.md)
 - Related issue: [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 474](https://github.com/heidrun-org/heidrun/issues/474), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue 494](https://github.com/heidrun-org/heidrun/issues/494), [issue 617](https://github.com/heidrun-org/heidrun/issues/617), [issue 629](https://github.com/heidrun-org/heidrun/issues/629)
 
-This file is a part of the rules of the window of Heidrun. The words are defined in [glossary/user_activity.md](../../glossary/user_activity.md).
+This file is a part of the rules of the window of Heidrun Code. The words are defined in [glossary/user_activity.md](../../glossary/user_activity.md).
 
 ## The item in the More menu
 
