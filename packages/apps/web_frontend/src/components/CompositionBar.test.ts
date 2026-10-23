@@ -372,9 +372,12 @@ describe("CompositionBar voice input (issue 662)", () => {
 		const field = wrapper.get("textarea.text").element.parentElement as HTMLElement;
 		expect([...field.children].map((child) => child.tagName)).toEqual(["TEXTAREA", "DIV"]);
 		expect(field.querySelector(".voice-level")).not.toBeNull();
+		expect(wrapper.get(".voice-level").classes()).not.toContain("is-transcribing");
 		voiceInput.state = "transcribing";
 		await wrapper.vm.$nextTick();
 		expect(wrapper.find(".voice-level").exists()).toBe(true);
+		expect(wrapper.get(".voice-level").classes()).toContain("is-transcribing");
+		expect(wrapper.findAll(".voice-level .bar").every((bar) => (bar.element as HTMLElement).style.height === "4px")).toBe(true);
 		expect(findButton(wrapper, 'Cancel voice input').exists()).toBe(true);
 		expect(placeholder()).toBe("Changing the speech into text…");
 		voiceInput.state = "idle";
