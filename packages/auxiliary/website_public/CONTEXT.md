@@ -15,7 +15,7 @@ The public website of Heidrun: a homepage and the user documentation, built with
 - `docs/.vitepress/theme/youtube_video.vue`: the component `YoutubeVideo`, registered in `docs/.vitepress/theme/index.ts`. A page shows a YouTube video with `<YoutubeVideo video-id="..." title="..." />`.
 - `docs/.vitepress/theme/home_flux_lines.vue`: the component `HomeFluxLines`, put in the slot `layout-top` of the layout by `docs/.vitepress/theme/index.ts`. It shows the Flux Lines background on the pages with the layout `home` only, in golden lines on the dark theme and in dark golden ink on the light theme.
 - `docs/.vitepress/theme/flux_lines.vue`: the component `FluxLines`, a canvas that the class `FluxLinesRenderer` (`flux_lines_renderer.ts`) draws into with WebGL2. The shaders are in `flux_lines_shaders.ts`, the types in `flux_lines_types.ts`.
-- `tests/`: the Vitest tests of the website (configuration, pages, shortcuts page, identity texts, the macOS quarantine message in the release text and the developer documents, splash image, YouTube video, favicon, Flux Lines background, sections and texts of the homepage, link preview cards, complete build).
+- `tests/`: the Vitest tests of the website (configuration, pages, shortcuts page, identity texts, the macOS quarantine message in the developer documents and its absence from the release text, splash image, YouTube video, favicon, Flux Lines background, sections and texts of the homepage, link preview cards, complete build).
 - Command to run this folder: `pnpm --filter website_public dev`
 - Command to test this folder: `pnpm --filter website_public test`
 
