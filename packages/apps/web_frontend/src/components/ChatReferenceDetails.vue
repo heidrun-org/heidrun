@@ -14,18 +14,21 @@ import {
 import { searchHasLabel } from "../lib/code_hosting_search";
 import type { Forge } from "../lib/refs";
 import type { ChatReferenceDetails } from "../stores/chat_references";
+import { chatAboutReference } from "../stores/chat_open";
 import { openIssue } from "../stores/issues";
 import { toast } from "../stores/session";
 import { t } from "../i18n/index";
 
 // What the forge says about one issue or one pull request, with the layout of the card that GitHub shows: the repository
-// (a link to its web page) and the date, with three buttons at the right of the same line that open the description and the
-// comments in Heidrun Code, open the web page on GitHub or GitLab, or copy the address of this web page into the clipboard; the
+// (a link to its web page) and the date, with four buttons at the right of the same line that open the description and the
+// comments in Heidrun Code, open the web page on GitHub or GitLab, copy the address of this web page into the clipboard, or
+// start a chat about it with a coding agent in a new tab; the
 // whole title with its number, when the row above does not show them; the state; a separator; the beginning of the
 // description, and the labels (or the two branches of a pull request); a separator; and the person who opened it. In the
 // Code hosting sidebar section, a label is a button that adds the label to the search of its list, or removes it.
 // - issue #607
 // - issue #808
+// - issue #851
 
 const props = withDefaults(defineProps<{
   /** The issue or the pull request. */
@@ -157,6 +160,19 @@ async function openOnForge() {
   }
 }
 
+/** The title of the chat button, which is also its label for a screen reader. */
+const chatTitle = computed(() =>
+  t(props.reference.kind === "issue" ? "chatsPanel.chatAboutIssueTitle" : "chatsPanel.chatAboutPullRequestTitle"),
+);
+
+/** Starts a coding agent in a new tab of the selected workspace, with the first message about the web page of the item. */
+async function chatAbout() {
+  if (props.reference.url === null) {
+    return;
+  }
+  await chatAboutReference(props.reference.url, `#${props.reference.number}`, props.folder);
+}
+
 /**
  * Writes the address of the web page that the button "Open in GitHub" opens into the clipboard, then shows for a short time
  * whether the clipboard took it.
@@ -238,6 +254,17 @@ function showCopyState(state: "idle" | "copied" | "failed") {
           @click="copyWebAddress"
         >
           <Icon :name="copyIcon" />
+        </button>
+        <button
+          type="button"
+          class="btn"
+          data-reference-chat
+          :disabled="reference.url === null"
+          :title="chatTitle"
+          :aria-label="chatTitle"
+          @click="chatAbout"
+        >
+          <Icon name="chat-dots" />
         </button>
       </div>
     </div>
