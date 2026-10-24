@@ -27,6 +27,7 @@ mod statistics;
 mod status_item;
 mod status_item_icon;
 mod status_item_picture;
+mod system_sound;
 mod topic_clusters;
 mod usage;
 mod user_activity;
@@ -431,6 +432,7 @@ pub fn run() {
             mobile::mobile_reply,
             mobile::mobile_status,
             mobile::mobile_push,
+            system_sound::play_system_sound,
             mobile::mobile_enable,
             mobile::mobile_disable,
             mobile::mobile_revoke,

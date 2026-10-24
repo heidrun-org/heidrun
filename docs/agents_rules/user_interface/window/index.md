@@ -1,7 +1,7 @@
 # Window rules index
 
 - Created: 13 October 2026
-- Last updated: 23 October 2026
+- Last updated: 24 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun Code](../../glossary/index.md)
@@ -31,6 +31,7 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [find_new_skills_window.md](find_new_skills_window.md): the window "Find new skills": its four lines, the three sources (skills.sh, Local folder, Code hosting), the information cards, and the rows of the result.
 - [settings_voice_input.md](settings_voice_input.md): the Voice input section of the Settings window, the download of a Whisper model, the push-to-talk button, the microphone permission, and the tests. Read it each time that you change the voice input.
 - [settings_voice_words.md](settings_voice_words.md): the word replacement list of the voice input: the list in the Voice input section of the Settings window, the matching rules, the file `voice_words.json`, and the tests. Read it each time that you change the word replacement list or the function `replace_words`.
+- [settings_notifications.md](settings_notifications.md): the rows of the Notifications section of the Settings window: the system notification, the sound, and the button "Test" of each kind of notification. Read it each time that you add a kind of notification or change the function `notify`.
 - [terminal_text_detection.md](terminal_text_detection.md): the detection in the text of the terminals: the 11 detection families, the fixed precedence, the hover buttons, the switches, and the tests. Read it each time that you add or change a detection in the text of a terminal.
 - [terminal_text_detection_references.md](terminal_text_detection_references.md): the forms of issues, requests, tickets, and commits that the detection accepts and refuses, and their destination. Read it each time that you change the file `lib/refs.ts`.
 - [terminal_text_detection_other_families.md](terminal_text_detection_other_families.md): the forms, the refused examples, the context, and the visible result of the web addresses, file paths, shell commands, slash commands, numbered steps, agent list, and questions and choices.

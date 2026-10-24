@@ -13,7 +13,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsAgentsSection.vue`: the section "Coding agents": one switch per coding agent (`ownedAgents`), quota monitoring, the default command of a new tab (`newTabCommand`), the initial composition bar visibility, and `keepAgentsRunningAfterQuit`. Switching off the selected coding agent changes the default command to Terminal.
 - `SettingsConfirmationsSection.vue`: the headings "Ask before closing" (workspace, tab, pane) and "Ask before deleting" (saved search).
 - `SettingsGuardsSection.vue`: the project guards, then the built-in guards. It opens `../GuardModal.vue` through `../../stores/guard_window.ts`, and `../../stores/project.ts` writes the changes.
-- `SettingsNotificationsSection.vue`: the notification settings, and the switch `showStatusItem`.
+- `SettingsNotificationsSection.vue`: the notification settings, one row for each kind of notification (system notification, sound, list of sounds, button "Test"), and the switch `showStatusItem`. See [the rules](../../../../../../docs/agents_rules/user_interface/window/settings_notifications.md).
 - `SettingsSidebarsSection.vue`: one heading for each sidebar section: "Needs you", "Past chats", and "Source control".
 - `SettingsDynamicTopicsSection.vue`: the switches `dynamicTopics` and `clusteredDynamicTopics`, the extraction method, and the button "Rebuild the clusters".
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the switch `mobileTerminalTyping`, the QR code, and the paired devices.
