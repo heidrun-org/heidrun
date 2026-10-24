@@ -49,6 +49,29 @@ export async function openChatInHeidrun(agent: ChatAgent, chat: Chat, folder: st
  * @param folder - the folder of the selected workspace, where the new tab starts
  */
 export async function chatAboutReference(url: string, label: string, folder: string | null) {
+  await startChatAbout(url, label, folder);
+}
+
+/**
+ * Starts a chat about a file: a new tab of the selected workspace starts a coding agent, then the coding agent gets the
+ * first message "Let's chat about <absolute path>". The coding agent is the one of the setting "New tab", or Claude when
+ * this setting is a terminal (issue #854).
+ * @param absolutePath - the absolute path of the file, or of the folder
+ * @param label - the name of the new tab, for example "main.ts"
+ * @param folder - the folder of the selected workspace, where the new tab starts
+ */
+export async function chatAboutFile(absolutePath: string, label: string, folder: string | null) {
+  await startChatAbout(absolutePath, label, folder);
+}
+
+/**
+ * Starts a new tab of the selected workspace with a coding agent, then sends the coding agent the first message
+ * "Let's chat about <subject>". Nothing starts when no workspace is selected.
+ * @param subject - the web address or the absolute path that the chat is about
+ * @param label - the name of the new tab
+ * @param folder - the folder of the selected workspace, where the new tab starts
+ */
+async function startChatAbout(subject: string, label: string, folder: string | null) {
   if (state.selectedWorkspaceId === null) {
     return;
   }
@@ -59,6 +82,6 @@ export async function chatAboutReference(url: string, label: string, folder: str
     agent: null,
     model: null,
     label,
-    prompt: `Let's chat about ${url}`,
+    prompt: `Let's chat about ${subject}`,
   });
 }
