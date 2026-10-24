@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { launchAgent } from "./agents";
-import { chatAboutReference } from "./chat_open";
+import { chatAboutFile, chatAboutReference } from "./chat_open";
 import { state } from "./session";
 import { settings } from "./settings";
 
@@ -39,6 +39,33 @@ describe("chatAboutReference", () => {
   it("starts nothing when no workspace is selected", async () => {
     state.selectedWorkspaceId = null;
     await chatAboutReference(URL, "#851", "/work/app");
+    expect(launchAgent).not.toHaveBeenCalled();
+  });
+});
+
+describe("chatAboutFile", () => {
+  it("starts Claude in a new tab named after the file with the first message about the absolute path", async () => {
+    await chatAboutFile("/work/app/src/main.ts", "main.ts", "/work/app");
+    expect(launchAgent).toHaveBeenCalledWith({
+      workspaceId: "w1",
+      cwd: "/work/app",
+      tool: "claude",
+      agent: null,
+      model: null,
+      label: "main.ts",
+      prompt: "Let's chat about /work/app/src/main.ts",
+    });
+  });
+
+  it("starts the coding agent of the setting New tab when this setting is a coding agent", async () => {
+    settings.newTabCommand = "codex";
+    await chatAboutFile("/work/app/src/main.ts", "main.ts", "/work/app");
+    expect(vi.mocked(launchAgent).mock.calls[0][0].tool).toBe("codex");
+  });
+
+  it("starts nothing when no workspace is selected", async () => {
+    state.selectedWorkspaceId = null;
+    await chatAboutFile("/work/app/src/main.ts", "main.ts", "/work/app");
     expect(launchAgent).not.toHaveBeenCalled();
   });
 });
