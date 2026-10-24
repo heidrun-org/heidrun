@@ -3,6 +3,7 @@ import { chatAppUrl } from "../lib/chat_links";
 import { launchAgent } from "./agents";
 import type { Chat, ChatAgent } from "./chats";
 import { state, toast } from "./session";
+import { settings } from "./settings";
 
 /**
  * Opens a chat in the desktop application of its coding agent, with the address of the application.
@@ -36,5 +37,28 @@ export async function openChatInHeidrun(agent: ChatAgent, chat: Chat, folder: st
     label: chat.title,
     prompt: "",
     resumeId: chat.id,
+  });
+}
+
+/**
+ * Starts a chat about an issue or a pull request: a new tab of the selected workspace starts a coding agent, then the coding
+ * agent gets the first message "Let's chat about <web address>". The coding agent is the one of the setting "New tab", or
+ * Claude when this setting is a terminal (issue #851).
+ * @param url - the web address of the issue or of the pull request
+ * @param label - the name of the new tab, for example "#851"
+ * @param folder - the folder of the selected workspace, where the new tab starts
+ */
+export async function chatAboutReference(url: string, label: string, folder: string | null) {
+  if (state.selectedWorkspaceId === null) {
+    return;
+  }
+  await launchAgent({
+    workspaceId: state.selectedWorkspaceId,
+    cwd: folder,
+    tool: settings.newTabCommand === "terminal" ? "claude" : settings.newTabCommand,
+    agent: null,
+    model: null,
+    label,
+    prompt: `Let's chat about ${url}`,
   });
 }

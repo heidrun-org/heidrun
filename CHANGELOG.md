@@ -4,6 +4,48 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-23
+
+### Added
+
+- Use Heidrun Mobile to access workspaces, terminals, launchers, macros, and voice input from a mobile browser. ([#529](https://github.com/heidrun-org/heidrun/pull/529), [#544](https://github.com/heidrun-org/heidrun/pull/544), [#550](https://github.com/heidrun-org/heidrun/pull/550), [#599](https://github.com/heidrun-org/heidrun/pull/599), [#775](https://github.com/heidrun-org/heidrun/pull/775))
+- Dictate into the composition bar with optional push-to-talk voice input, and cancel transcription when needed. ([#668](https://github.com/heidrun-org/heidrun/pull/668), [#740](https://github.com/heidrun-org/heidrun/pull/740), [#766](https://github.com/heidrun-org/heidrun/pull/766), [#823](https://github.com/heidrun-org/heidrun/pull/823))
+- Use a composition bar and draft for each pane, choose whether it opens when a coding agent starts, and keep it open after sending a message. ([#665](https://github.com/heidrun-org/heidrun/pull/665), [#672](https://github.com/heidrun-org/heidrun/pull/672), [#718](https://github.com/heidrun-org/heidrun/pull/718), [#732](https://github.com/heidrun-org/heidrun/pull/732))
+- Turn on Zen Mode for focused work, and keep the Zen button available in every pane. ([#713](https://github.com/heidrun-org/heidrun/pull/713), [#735](https://github.com/heidrun-org/heidrun/pull/735))
+- Browse Git worktrees and submodules in the File explorer, and open a worktree as a workspace. ([#689](https://github.com/heidrun-org/heidrun/pull/689), [#763](https://github.com/heidrun-org/heidrun/pull/763))
+- View a selected file in a read-only pane, with its front matter displayed in a card. ([#801](https://github.com/heidrun-org/heidrun/pull/801), [#783](https://github.com/heidrun-org/heidrun/pull/783))
+- Save searches at the user or workspace level, with an information card explaining each level. ([#824](https://github.com/heidrun-org/heidrun/pull/824))
+- Manage macros and launchers from the command line, and create, edit, or delete macros from the macro menu. ([#604](https://github.com/heidrun-org/heidrun/pull/604), [#659](https://github.com/heidrun-org/heidrun/pull/659), [#757](https://github.com/heidrun-org/heidrun/pull/757))
+- Open a workspace from the workspace selector, which now shows a link to its repository. ([#782](https://github.com/heidrun-org/heidrun/pull/782))
+- See more activity and usage information in Statistics, including cost or token use across multiple workspaces, and choose the time range and measures to display. ([#528](https://github.com/heidrun-org/heidrun/pull/528), [#555](https://github.com/heidrun-org/heidrun/pull/555), [#563](https://github.com/heidrun-org/heidrun/pull/563), [#625](https://github.com/heidrun-org/heidrun/pull/625), [#628](https://github.com/heidrun-org/heidrun/pull/628), [#633](https://github.com/heidrun-org/heidrun/pull/633), [#710](https://github.com/heidrun-org/heidrun/pull/710))
+- Find skills from three sources, including folders in GitLab, with help cards for search options. ([#614](https://github.com/heidrun-org/heidrun/pull/614))
+- View and change project guards in Settings. ([#606](https://github.com/heidrun-org/heidrun/pull/606))
+- Choose an optional goat sound in Settings. ([#623](https://github.com/heidrun-org/heidrun/pull/623))
+- Install Heidrun with one command, and visit the expanded public website. ([#516](https://github.com/heidrun-org/heidrun/pull/516), [#518](https://github.com/heidrun-org/heidrun/pull/518), [#519](https://github.com/heidrun-org/heidrun/pull/519), [#520](https://github.com/heidrun-org/heidrun/pull/520), [#535](https://github.com/heidrun-org/heidrun/pull/535))
+- Explore experiments that animate repository activity and turn Git commits into a parallax dinosaur runner. ([#532](https://github.com/heidrun-org/heidrun/pull/532), [#539](https://github.com/heidrun-org/heidrun/pull/539), [#543](https://github.com/heidrun-org/heidrun/pull/543))
+
+### Changed
+
+- Move panes within a tab or between tabs by dragging and dropping them. ([#819](https://github.com/heidrun-org/heidrun/pull/819))
+- Keep coding agents running after Heidrun quits by default. ([#765](https://github.com/heidrun-org/heidrun/pull/765))
+- Keep saved options when Heidrun updates. ([#794](https://github.com/heidrun-org/heidrun/pull/794))
+- See the selected workspace name in the top bar search button, and resize the workspace list in the Needs you section. ([#755](https://github.com/heidrun-org/heidrun/pull/755), [#809](https://github.com/heidrun-org/heidrun/pull/809))
+- Search each code hosting list separately, with clearer search help and expanded cards. ([#612](https://github.com/heidrun-org/heidrun/pull/612), [#746](https://github.com/heidrun-org/heidrun/pull/746))
+- Find Settings options in eight topic sections, with an information card for each option. ([#560](https://github.com/heidrun-org/heidrun/pull/560), [#615](https://github.com/heidrun-org/heidrun/pull/615))
+- Choose how Heidrun detects terminal text in Settings. ([#797](https://github.com/heidrun-org/heidrun/pull/797))
+- Use Codex with the light theme. ([#651](https://github.com/heidrun-org/heidrun/pull/651))
+- Run Heidrun on macOS 11 or later. ([#671](https://github.com/heidrun-org/heidrun/pull/671))
+
+### Fixed
+
+- Copy selected terminal text reliably, preserve command lines when copying wrapped text, and copy issue or pull request web addresses from their information cards. ([#804](https://github.com/heidrun-org/heidrun/pull/804), [#806](https://github.com/heidrun-org/heidrun/pull/806), [#774](https://github.com/heidrun-org/heidrun/pull/774), [#817](https://github.com/heidrun-org/heidrun/pull/817), [#821](https://github.com/heidrun-org/heidrun/pull/821))
+- Keep the usage wheel information card inside the window and hide the wheel when the pointer leaves its pane. ([#798](https://github.com/heidrun-org/heidrun/pull/798), [#802](https://github.com/heidrun-org/heidrun/pull/802))
+- Make the macro menu easier to use and keep flying smileys at a consistent size. ([#777](https://github.com/heidrun-org/heidrun/pull/777), [#800](https://github.com/heidrun-org/heidrun/pull/800))
+- Improve status indicators and make Finished results acknowledgeable across the desktop. ([#768](https://github.com/heidrun-org/heidrun/pull/768), [#771](https://github.com/heidrun-org/heidrun/pull/771))
+- Show only open workspaces in Statistics, User activity. ([#684](https://github.com/heidrun-org/heidrun/pull/684))
+- Make mobile access stop old tunnels left running by Heidrun. ([#584](https://github.com/heidrun-org/heidrun/pull/584), [#587](https://github.com/heidrun-org/heidrun/pull/587))
+- Help installed Heidrun find `gh`, and enable installed coding agents. ([#661](https://github.com/heidrun-org/heidrun/pull/661), [#699](https://github.com/heidrun-org/heidrun/pull/699))
+
 ## [0.2.7] - 2026-10-15
 
 ### Added

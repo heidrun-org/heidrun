@@ -38,6 +38,8 @@
   "copyWebAddressTitle": "Copy the {forge} web address",
   "webAddressCopied": "Web address copied",
   "webAddressCopyFailed": "Cannot copy the web address: the clipboard refused it.",
+  "chatAboutIssueTitle": "Let's chat about this issue",
+  "chatAboutPullRequestTitle": "Let's chat about this pull request",
   "referenceDetailsOn": " on {date}",
   "labelToggleTitle": "Add this label to the search, or remove it",
   "referenceLoading": "Reading from {forge}…",

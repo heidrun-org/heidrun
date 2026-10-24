@@ -38,6 +38,8 @@
   "copyWebAddressTitle": "Copier l’adresse web {forge}",
   "webAddressCopied": "Adresse web copiée",
   "webAddressCopyFailed": "Impossible de copier l’adresse web : le presse-papiers l’a refusée.",
+  "chatAboutIssueTitle": "Discutons de cette issue",
+  "chatAboutPullRequestTitle": "Discutons de cette pull request",
   "referenceDetailsOn": ", le {date}",
   "labelToggleTitle": "Ajouter ce label à la recherche, ou le retirer",
   "referenceLoading": "Lecture depuis {forge}…",
