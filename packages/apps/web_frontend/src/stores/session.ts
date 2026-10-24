@@ -779,11 +779,11 @@ async function checkQuestion(
     // Shown again even if an earlier "terminé" card was closed.
     delete state.dismissed[paneId];
     if (pushToPhone) void notifyPhone();
-    if (notifyQuestion) notify(t("sessionStore.notify.question", { name }), `${ws ? `${ws} · ` : ""}${question}`);
+    if (notifyQuestion) notify("question", t("sessionStore.notify.question", { name }), `${ws ? `${ws} · ` : ""}${question}`);
   } else {
     delete state.questions[paneId];
     if (pushToPhone) void notifyPhone();
-    if (notifyDone) notify(t("sessionStore.notify.done", { name }), ws);
+    if (notifyDone) notify("done", t("sessionStore.notify.done", { name }), ws);
   }
 }
 
@@ -864,7 +864,7 @@ function applySnapshot(snap: SessionSnapshot) {
     if (after === "blocked") {
       void notifyPhone();
       if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
-        notify(t("sessionStore.notify.blocked", { name: paneName(view) }), ws);
+        notify("blocked", t("sessionStore.notify.blocked", { name: paneName(view) }), ws);
       }
     } else if ((after === "done" || after === "idle") && (before === "working" || before === "blocked")) {
       // Finished: look at how the answer ends before notifying ("a terminé" or the question).
@@ -1327,7 +1327,7 @@ export function addWatch(paneId: string, regex: string) {
     .waitForOutput(paneId, regex)
     .then((line) => {
       const pane = allPanes.value.find((p) => p.pane_id === paneId);
-      notify(t("sessionStore.notify.patternFound", { name: pane ? paneName(pane) : paneId }), line ?? regex);
+      notify("patternFound", t("sessionStore.notify.patternFound", { name: pane ? paneName(pane) : paneId }), line ?? regex);
     })
     .catch(() => {})
     .finally(() => {

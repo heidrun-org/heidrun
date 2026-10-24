@@ -4,6 +4,7 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { CUSTOM_LAUNCHER_CODING_AGENT_IDS } from "../lib/coding_agents";
 import { AGENTS } from "../lib/agents";
 import { DetectionFamilies } from "../lib/detection_families";
+import { NotificationChannels } from "../lib/notification_channels";
 import { PERSON_WORK_PERIODS, type PersonWorkPeriodId, type PersonWorkSlotHours } from "../lib/person_work";
 import {
   USER_ACTIVITY_RANGE_IDS,
@@ -213,6 +214,8 @@ const defaults = {
   notifEvening: "", // "18:30": summary of the day's finished work ("" = off)
   quietFrom: "", // "20:00" … "08:00": no notification in between ("" = never quiet)
   quietTo: "",
+  /** Notifications: for each kind of notification, the system notification, the sound, and the name of the sound (issue #857). */
+  notificationChannels: NotificationChannels.createDefaults(),
   /** The status item (the dots) is shown in the macOS menu bar. */
   showStatusItem: true,
   /** Git viewer: "unified" | "split" diff, the whole "file", or the "preview" of a Markdown file. */
@@ -569,6 +572,7 @@ function load(): typeof defaults {
     saved.statisticsUserActivityWorkspaces = keepUserActivityWorkspaces(saved.statisticsUserActivityWorkspaces);
     saved.statisticsPersonWorkWorkspaces = keepPersonWorkWorkspaces(saved.statisticsPersonWorkWorkspaces);
     saved.disabledDetectionFamilies = DetectionFamilies.keepKnownIds(saved.disabledDetectionFamilies);
+    saved.notificationChannels = NotificationChannels.keep(saved.notificationChannels);
     return saved;
   } catch {
     return { ...defaults };

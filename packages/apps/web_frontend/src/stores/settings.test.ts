@@ -870,3 +870,32 @@ describe("selections of the tabs of the Statistics window (issue 707)", () => {
     expect(reloaded.statisticsPersonWorkWorkspaces).toEqual({ isSaved: false, workspaceIds: [] });
   });
 });
+
+describe("channels of the notifications (issue #857)", () => {
+  /** The settings, as a new run of Heidrun Code reads them from what `localStorage` holds. */
+  async function settingsFrom(savedText: string) {
+    localStorage.setItem("heidrun.settings", savedText);
+    vi.resetModules();
+    return (await import("./settings")).settings;
+  }
+
+  it("turns the system notification on and the sound off for every kind in an existing installation", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ language: "fr" }));
+    for (const channel of Object.values(reloaded.notificationChannels)) {
+      expect(channel).toEqual({ isSystemEnabled: true, isSoundEnabled: false, soundName: "Ping" });
+    }
+  });
+
+  it("keeps a saved channel after a restart", async () => {
+    const reloaded = await settingsFrom(
+      JSON.stringify({ notificationChannels: { blocked: { isSystemEnabled: true, isSoundEnabled: true, soundName: "Funk" } } }),
+    );
+    expect(reloaded.notificationChannels.blocked).toEqual({ isSystemEnabled: true, isSoundEnabled: true, soundName: "Funk" });
+    expect(reloaded.notificationChannels.done.isSoundEnabled).toBe(false);
+  });
+
+  it("gives the defaults back when the saved value is corrupted", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ notificationChannels: "loud" }));
+    expect(reloaded.notificationChannels.blocked.isSoundEnabled).toBe(false);
+  });
+});
